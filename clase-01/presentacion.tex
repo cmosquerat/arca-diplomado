@@ -1,0 +1,2074 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 1: Fundamentos de Python
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% ── Codificación y lenguaje ──────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+% ── Fuentes ──────────────────────────────────────────────────────────────────
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Gráficos y diagramas ────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc, fit}
+\usepackage{fontawesome5}
+
+% ── Código fuente ────────────────────────────────────────────────────────────
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+
+% ── Tablas y utilidades ──────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+
+% =============================================================================
+%  PALETA DE COLORES CORPORATIVA
+% =============================================================================
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+
+% =============================================================================
+%  CONFIGURACIÓN DEL TEMA BEAMER
+% =============================================================================
+\usetheme{default}
+\usecolortheme{default}
+
+% Quitar elementos de navegación por defecto
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+
+% ── Colores de elementos Beamer ──────────────────────────────────────────────
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+
+% ── Fuentes Beamer ──────────────────────────────────────────────────────────
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+
+% ── Itemize personalizado ───────────────────────────────────────────────────
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+% =============================================================================
+%  HEADER: barra + logos
+% =============================================================================
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    % Barra superior arcaDark
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    % Logo UDLA blanco (izquierda)
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    % Logo Arca Continental blanco (derecha)
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+% =============================================================================
+%  FOOTER: número de frame + título corto
+% =============================================================================
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    % Línea fina
+    \draw[arcaLightGray, line width=0.4pt]
+      ([yshift=0.55cm, xshift=0.6cm]current page.south west) --
+      ([yshift=0.55cm, xshift=-0.6cm]current page.south east);
+    % Texto central
+    \node[anchor=south, font=\tiny\color{textMuted}] at
+      ([yshift=0.15cm]current page.south)
+      {Diplomado en Data Science Aplicada con Python \(\cdot\) Arca Continental Ecuador};
+    % Número de frame
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.6cm, yshift=0.15cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+}
+
+% =============================================================================
+%  FRAMETITLE personalizado con línea roja
+% =============================================================================
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+% =============================================================================
+%  ESTILO DE BLOQUES DE CÓDIGO (minted + tcolorbox)
+% =============================================================================
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted,
+  minted language=python,
+  minted style=friendly,
+  minted options={
+    fontsize=\small,
+    linenos=false,
+    breaklines=true,
+    python3=true
+  },
+  colback=arcaGray,
+  colframe=arcaRed,
+  left=4pt,
+  right=4pt,
+  top=4pt,
+  bottom=4pt,
+  boxrule=0pt,
+  leftrule=3pt,
+  arc=2pt,
+  listing only,
+  #1
+}
+
+\newtcblisting{pyblocknum}[1][]{%
+  listing engine=minted,
+  minted language=python,
+  minted style=friendly,
+  minted options={
+    fontsize=\small,
+    linenos=true,
+    numbersep=8pt,
+    breaklines=true,
+    python3=true
+  },
+  colback=arcaGray,
+  colframe=arcaRed,
+  left=8pt,
+  right=4pt,
+  top=4pt,
+  bottom=4pt,
+  boxrule=0pt,
+  leftrule=3pt,
+  arc=2pt,
+  listing only,
+  #1
+}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted,
+  minted language=text,
+  minted style=bw,
+  minted options={
+    fontsize=\small,
+    breaklines=true
+  },
+  colback=white,
+  colframe=arcaLightGray,
+  left=4pt,
+  right=4pt,
+  top=4pt,
+  bottom=4pt,
+  boxrule=0.5pt,
+  arc=2pt,
+  listing only,
+  title={\small\faTerminal\hspace{6pt}Output},
+  coltitle=textMuted,
+  fonttitle=\small\ttfamily,
+  colbacktitle=white,
+  #1
+}
+
+% =============================================================================
+%  COMANDO PARA SECTION DIVIDERS
+% =============================================================================
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+    \setbeamertemplate{headline}{}
+    \setbeamertemplate{footline}{}
+    \setbeamertemplate{navigation symbols}{}
+    \begin{frame}[plain, noframenumbering]
+      \begin{tikzpicture}[remember picture, overlay]
+        \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+        \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+              align=center] at ([yshift=0.5cm]current page.center) {#1};
+        \node[anchor=center, text=white!80, font=\large, text width=10cm,
+              align=center] at ([yshift=-0.8cm]current page.center) {#2};
+      \end{tikzpicture}
+    \end{frame}
+  \endgroup
+}
+
+% =============================================================================
+%  METADATOS
+% =============================================================================
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 1: Fundamentos de Python}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{9 de Marzo, 2026}
+
+% =============================================================================
+%  DOCUMENTO
+% =============================================================================
+\begin{document}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 1: PORTADA
+% ─────────────────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    % Fondo blanco
+    \fill[white] (current page.south west) rectangle (current page.north east);
+
+    % Franja superior arcaRed
+    \fill[arcaRed]
+      (current page.north west) rectangle
+      ([yshift=-0.35cm]current page.north east);
+
+    % Franja inferior arcaDark
+    \fill[arcaDark]
+      (current page.south west) rectangle
+      ([yshift=0.35cm]current page.south east);
+
+    % Línea decorativa vertical izquierda
+    \fill[arcaRed]
+      ([xshift=1.1cm, yshift=-0.35cm]current page.north west) rectangle
+      ([xshift=1.15cm, yshift=0.35cm]current page.south west);
+
+    % Logo UDLA (superior izquierda)
+    \node[anchor=north west, inner sep=0pt] at
+      ([xshift=1.8cm, yshift=-1.2cm]current page.north west)
+      {\includegraphics[height=1.6cm]{../logo_udla.png}};
+
+    % Logo Arca Continental (superior derecha)
+    \node[anchor=north east, inner sep=0pt] at
+      ([xshift=-1.5cm, yshift=-1.2cm]current page.north east)
+      {\includegraphics[height=1.6cm]{../ArcaContinental.png}};
+
+    % Título principal
+    \node[anchor=center, text=arcaDark, text width=13cm, align=center] at
+      ([yshift=0.5cm]current page.center) {
+        {\huge\bfseries Diplomado en Data Science Aplicada}\\[6pt]
+        {\huge\bfseries con Python para la Toma de Decisiones}
+      };
+
+    % Línea separadora arcaRed
+    \fill[arcaRed]
+      ([yshift=-0.7cm, xshift=-3cm]current page.center) rectangle
+      ([yshift=-0.63cm, xshift=3cm]current page.center);
+
+    % Subtítulo
+    \node[anchor=center, text=arcaRed, font=\Large] at
+      ([yshift=-1.4cm]current page.center) {
+        Clase 1: Fundamentos de Python
+      };
+
+    % Instructor
+    \node[anchor=center, text=textMuted, font=\normalsize] at
+      ([yshift=-2.5cm]current page.center) {
+        {\color{arcaRed}\faUser}\hspace{6pt}Carlos Enrique Mosquera Trujillo
+        \hspace{16pt}
+        {\color{arcaRed}\faCalendar*}\hspace{4pt}9 de Marzo, 2026
+      };
+  \end{tikzpicture}
+\end{frame}
+}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 2: PRESENTACIÓN DEL INSTRUCTOR
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Instructor}
+  \vspace{-2pt}
+  \begin{columns}[T]
+    \begin{column}{0.22\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \clip[rounded corners=3pt] (0,0) rectangle (2.6,2.6);
+        \node[anchor=south west, inner sep=0pt] at (0,0)
+          {\includegraphics[width=2.6cm]{../Foto Carlos.jpg}};
+      \end{tikzpicture}
+
+      \vspace{5pt}
+      {\tiny\color{textMuted}
+        \faEnvelope\hspace{2pt}\texttt{cmosquerat@unal.edu.co}\\[2pt]
+        \faLinkedin\hspace{2pt}cmosquerat56
+      }
+    \end{column}
+
+    \begin{column}{0.75\textwidth}
+      {\normalsize\bfseries\color{arcaDark} Carlos Enrique Mosquera Trujillo}\\[2pt]
+      {\footnotesize\color{textMuted} Ingeniero Electrónico \(\cdot\) M.Sc. Automatización Industrial}
+
+      \vspace{6pt}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faGraduationCap}] Ing. Electrónica y M.Sc. en Automatización Industrial,
+              \textbf{Universidad Nacional de Colombia}.
+
+        \item[{\color{arcaRed}\scriptsize\faPython}] \textbf{6+ años en Python y SQL}:
+              pipelines de datos, automatización de reportes, analítica operativa.
+
+        \item[{\color{arcaRed}\scriptsize\faServer}] \textbf{Gestor de HPC} (BIOS):
+              cómputo de alto rendimiento para cargas intensivas en datos. Administración de sistemas Linux.
+
+        \item[{\color{arcaRed}\scriptsize\faChalkboardTeacher}] \textbf{Profesor UDLA}:
+              Dos años de experiencia en diplomados. PySpark y Metaprogramación. 
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 3: METODOLOGÍA — PROJECT-BASED LEARNING
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Metodología: Project-Based Learning}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \centering
+      \begin{tikzpicture}[
+        node distance=1.1cm,
+        stage/.style={
+          rectangle, rounded corners=4pt,
+          minimum width=3.6cm, minimum height=0.7cm,
+          text=white, font=\scriptsize\bfseries,
+          align=center
+        },
+        arrow/.style={
+          -{Stealth[length=4pt]}, line width=0.8pt, arcaRed
+        },
+        label/.style={
+          font=\tiny\color{textMuted}, align=right, text width=2.5cm, anchor=east
+        }
+      ]
+        % Nodos del ciclo
+        \node[stage, fill=arcaDark]
+          (problema) {\faIndustry\hspace{4pt}Problema Real};
+        \node[stage, fill=arcaRed, below=0.5cm of problema]
+          (concepto) {\faLightbulb\hspace{4pt}Conceptos Clave};
+        \node[stage, fill=arcaRed!80!black, below=0.5cm of concepto]
+          (codigo) {\faCode\hspace{4pt}Código};
+        \node[stage, fill=udlaCrimson, below=0.5cm of codigo]
+          (solucion) {\faChartBar\hspace{4pt}Solución};
+        \node[stage, fill=arcaDark!80, below=0.5cm of solucion]
+          (reflexion) {\faSync\hspace{4pt}Reflexión};
+
+        % Flechas descendentes
+        \draw[arrow] (problema) -- (concepto);
+        \draw[arrow] (concepto) -- (codigo);
+        \draw[arrow] (codigo)   -- (solucion);
+        \draw[arrow] (solucion) -- (reflexion);
+
+        % Flecha de retorno (ciclo)
+        \draw[arrow, arcaDark!50]
+          (reflexion.east) -- ++(0.5,0) |- (problema.east);
+
+        % Etiquetas laterales
+        \node[label] at ([xshift=-0.25cm]problema.west)
+          {Contexto de negocio\\Arca Continental};
+        \node[label] at ([xshift=-0.25cm]concepto.west)
+          {Teoría mínima\\necesaria};
+        \node[label] at ([xshift=-0.25cm]codigo.west)
+          {Google Colab\\en vivo};
+        \node[label] at ([xshift=-0.25cm]solucion.west)
+          {Resultado medible\\y auditable};
+        \node[label] at ([xshift=-0.25cm]reflexion.west)
+          {Siguiente\\iteración};
+      \end{tikzpicture}
+    \end{column}
+
+    \begin{column}{0.45\textwidth}
+      {\small\color{arcaDark}\bfseries Cada sesión de 2h sigue este ciclo:}
+
+      \vspace{6pt}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{3pt}
+        \item[\textbf{\color{arcaRed}1.}] Se presenta un \textbf{problema operativo real} de Arca Continental.
+
+        \item[\textbf{\color{arcaRed}2.}] Se introducen los \textbf{conceptos} necesarios para resolverlo.
+
+        \item[\textbf{\color{arcaRed}3.}] Se escribe \textbf{código en vivo} en Google Colab, juntos.
+
+        \item[\textbf{\color{arcaRed}4.}] Se llega a una \textbf{solución funcional}: un reporte, una métrica.
+
+        \item[\textbf{\color{arcaRed}5.}] Se \textbf{reflexiona}: ¿qué más se podría hacer? Eso motiva la siguiente clase.
+      \end{enumerate}
+      }
+
+     
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 4: ¿POR QUÉ APRENDER A PROGRAMAR HOY?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{¿Por Qué Aprender a Programar Hoy?}
+  \vspace{-4pt}
+  {\footnotesize
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\small\color{arcaDark}\bfseries La IA ya genera código y reportes.}
+
+      \vspace{6pt}
+      \begin{itemize}\setlength{\itemsep}{6pt}
+        \item[{\color{arcaRed}\scriptsize\faRobot}]
+          ChatGPT, Copilot y Claude \textbf{escriben Python}, generan análisis
+          y producen reportes completos en segundos.
+
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          Pero \textbf{cometen errores}: calculan mal un margen,
+          confunden métricas, inventan datos que no existen.
+
+        \item[{\color{arcaRed}\scriptsize\faUserShield}]
+          Quien \textbf{sabe leer código} detecta el error antes de
+          que llegue a una decisión de negocio.
+          Quien no, lo publica como verdad.
+      \end{itemize}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\small\color{arcaDark}\bfseries Programar no es competir con la IA.\\
+      Es saber dirigirla.}
+
+      \vspace{6pt}
+      \begin{itemize}\setlength{\itemsep}{6pt}
+        \item[{\color{arcaRed}\scriptsize\faSearch}]
+          \textbf{Auditar}: leer el código que la IA genera y
+          verificar que la lógica sea correcta.
+
+        \item[{\color{arcaRed}\scriptsize\faSlidersH}]
+          \textbf{Ajustar}: modificar parámetros, corregir fórmulas,
+          adaptar la solución al contexto real.
+
+        \item[{\color{arcaRed}\scriptsize\faProjectDiagram}]
+          \textbf{Orquestar}: conectar múltiples herramientas
+          de IA en un flujo de trabajo confiable.
+      \end{itemize}
+
+      \vspace{6pt}
+      {\scriptsize\color{textMuted}\itshape
+        Este diplomado nos prepara para ese rol:
+        el profesional que entiende, valida y decide.}
+    \end{column}
+  \end{columns}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 5: HUMAN-IN-THE-LOOP
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Human-in-the-Loop}
+  \vspace{-2pt}
+  \centering
+  \begin{tikzpicture}[
+    box/.style={
+      rectangle, rounded corners=5pt,
+      minimum width=3.4cm, minimum height=1cm,
+      font=\small\bfseries, align=center,
+      text=white
+    },
+    arrow/.style={
+      -{Stealth[length=6pt]}, line width=1.4pt, arcaRed
+    },
+    lbl/.style={
+      font=\scriptsize\color{textMuted}, fill=white, inner sep=2pt
+    },
+    node distance=1.6cm and 3.8cm
+  ]
+    % ── Fila superior ──
+    \node[box, fill=arcaDark]
+      (instruccion) {\faKeyboard\hspace{4pt}Instrucción};
+    \node[box, fill=arcaRed, right=of instruccion]
+      (agente) {\faRobot\hspace{4pt}Agente IA};
+
+    % ── Fila inferior ──
+    \node[box, fill=udlaCrimson, below=of agente]
+      (output) {\faFile\hspace{4pt}Output};
+    \node[box, fill=arcaDark!85, below=of instruccion]
+      (valida) {\faUserCheck\hspace{4pt}Validación Humana};
+
+    % ── Ciclo clockwise ──
+    \draw[arrow] (instruccion) -- (agente)
+      node[lbl, midway, above] {envía prompt};
+    \draw[arrow] (agente) -- (output)
+      node[lbl, midway, right] {genera código};
+    \draw[arrow] (output) -- (valida)
+      node[lbl, midway, below] {revisa resultado};
+    \draw[arrow, arcaDark!70] (valida) -- (instruccion)
+      node[lbl, midway, left] {ajusta};
+
+    % ── Decisión: aprueba ──
+    \node[box, fill=codeGreen, minimum width=2.8cm, minimum height=0.8cm,
+          below=1.2cm of valida]
+      (aprueba) {\faCheck\hspace{3pt}A Producción};
+
+    \draw[-{Stealth[length=5pt]}, line width=1.2pt, codeGreen!80!black]
+      (valida) -- (aprueba)
+      node[lbl, midway, right] {correcto};
+
+  \end{tikzpicture}
+
+  \vspace{8pt}
+
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 6: ¿POR QUÉ PYTHON?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{¿Por Qué Python?}
+  \vspace{-2pt}
+  \centering
+
+  {\small\color{arcaDark}\bfseries
+    \#1 en TIOBE, Stack Overflow y GitHub desde 2021.}
+
+  \vspace{10pt}
+  \begin{columns}[T]
+    \begin{column}{0.22\textwidth}
+      \centering
+      {\Huge\color{arcaRed}\faChartLine}\\[6pt]
+      {\small\bfseries\color{arcaDark} Legible}\\[3pt]
+      {\scriptsize\color{textMuted} Sintaxis clara: se lee\\
+      casi como inglés técnico.\\
+      Menos código, menos errores.}
+    \end{column}
+
+    \begin{column}{0.22\textwidth}
+      \centering
+      {\Huge\color{arcaRed}\faCubes}\\[6pt]
+      {\small\bfseries\color{arcaDark} Ecosistema}\\[3pt]
+      {\scriptsize\color{textMuted} \texttt{pandas}, \texttt{numpy},\\
+      \texttt{scikit-learn}, \texttt{matplotlib}.\\
+      Todo resuelto y documentado.}
+    \end{column}
+
+    \begin{column}{0.22\textwidth}
+      \centering
+      {\Huge\color{arcaRed}\faIndustry}\\[6pt]
+      {\small\bfseries\color{arcaDark} Industrial}\\[3pt]
+      {\scriptsize\color{textMuted} Coca-Cola, AB InBev,\\
+      Netflix, JP Morgan, NASA.\\
+      Forecasting, rutas, reportes.}
+    \end{column}
+
+    \begin{column}{0.22\textwidth}
+      \centering
+      {\Huge\color{arcaRed}\faGraduationCap}\\[6pt]
+      {\small\bfseries\color{arcaDark} Académico}\\[3pt]
+      {\scriptsize\color{textMuted} Lenguaje de referencia en\\
+      MIT, Stanford y Harvard\\
+      para cursos introductorios.}
+    \end{column}
+  \end{columns}
+
+  \vspace{12pt}
+  {\footnotesize\color{arcaDark}\itshape
+    Python no es un lenguaje académico. Es infraestructura de negocio.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 7: PYTHON EN LA OPERACIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Python en la Operación Diaria}
+  \vspace{-2pt}
+  {\small\color{arcaDark}\bfseries
+    Con este diplomado vamos a automatizar tareas como estas:}
+
+  \vspace{10pt}
+  \begin{columns}[T]
+    \begin{column}{0.30\textwidth}
+      \centering
+      {\Huge\color{arcaRed}\faFileExcel}\\[8pt]
+      {\small\bfseries\color{arcaDark} Reportes}\\[4pt]
+      {\scriptsize\color{textMuted}
+        Leer 50 archivos Excel,\\
+        consolidar en un dataset\\
+        y exportar KPIs limpios.\\[4pt]
+        \textbf{4 horas manual} $\rightarrow$ \textbf{30 seg}}
+    \end{column}
+
+    \begin{column}{0.30\textwidth}
+      \centering
+      {\Huge\color{arcaRed}\faChartBar}\\[8pt]
+      {\small\bfseries\color{arcaDark} Análisis}\\[4pt]
+      {\scriptsize\color{textMuted}
+        Cruzar ventas con inventario\\
+        por región, detectar quiebres\\
+        de stock y generar alertas.\\[4pt]
+        \textbf{Sin depender de TI}}
+    \end{column}
+
+    \begin{column}{0.30\textwidth}
+      \centering
+      {\Huge\color{arcaRed}\faRobot}\\[8pt]
+      {\small\bfseries\color{arcaDark} IA Aplicada}\\[4pt]
+      {\scriptsize\color{textMuted}
+        Predecir demanda por SKU,\\
+        clasificar clientes y\\
+        optimizar distribución.\\[4pt]
+        \textbf{Objetivo del diplomado}}
+    \end{column}
+  \end{columns}
+
+  \vspace{14pt}
+  \centering
+  {\footnotesize\color{arcaDark}
+    \textbf{No necesitamos ser programadores.}
+    Necesitamos saber lo suficiente para dirigir, auditar y decidir.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 8: ROMPEHIELOS (placeholder)
+% ─────────────────────────────────────────────────────────────────────────────
+% TODO: Encuesta interactiva para conocer a la audiencia.
+% Implementar con ipywidgets + GitHub Pages si hay tiempo.
+
+\sectionframe{Rompehielos}{Encuesta interactiva --- conociéndonos}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  SECTION DIVIDER: ENTORNO DE TRABAJO
+% ─────────────────────────────────────────────────────────────────────────────
+\sectionframe{Entorno de Trabajo}{Google Colab y repositorio del curso}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 9: ¿QUÉ ES GOOGLE COLAB?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{¿Qué es Google Colab?}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\small\color{arcaDark}\bfseries
+        Entorno de programación en la nube. Gratuito. Cero instalaciones.}
+
+      \vspace{6pt}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faCloud}]
+          Solo necesitamos una cuenta de Google y un navegador.
+
+        \item[{\color{arcaRed}\scriptsize\faPuzzlePiece}]
+          Organizado en \textbf{celdas}: código $\rightarrow$ ejecución $\rightarrow$ resultado.
+
+        \item[{\color{arcaRed}\scriptsize\faUsers}]
+          Se comparte como un Google Doc. Trabajo colaborativo.
+
+        \item[{\color{arcaRed}\scriptsize\faServer}]
+          Google provee CPU, RAM y GPU sin costo.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.43\textwidth}
+      \centering
+      \vspace{2pt}
+      \begin{tikzpicture}[
+        box/.style={rectangle, rounded corners=3pt, draw=arcaLightGray,
+          fill=arcaGray, minimum width=3.8cm, minimum height=0.55cm,
+          font=\scriptsize, align=left, text=textDark},
+        node distance=0.2cm
+      ]
+        \node[box] (c1) {\texttt{\color{codeBlue}{x} = \color{codeOrange}{42}}};
+        \node[box, below=of c1] (c2) {\texttt{\color{codeBlue}{nombre} = \color{codeGreen}{"Arca"}}};
+        \node[box, below=of c2, fill=white, draw=arcaLightGray]
+          (o1) {\texttt{> 42}};
+        \node[box, below=of o1] (c3) {\texttt{\color{codeBlue}{print}(nombre)}};
+        \node[box, below=of c3, fill=white, draw=arcaLightGray]
+          (o2) {\texttt{> Arca}};
+
+        \node[font=\tiny\color{textMuted}, left=0.1cm of c1] {[\,1\,]};
+        \node[font=\tiny\color{textMuted}, left=0.1cm of c2] {[\,2\,]};
+        \node[font=\tiny\color{textMuted}, left=0.1cm of c3] {[\,3\,]};
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 10: REPOSITORIO DEL CURSO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Repositorio del Curso}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\small\color{arcaDark}\bfseries
+        Todo el material centralizado. Un link, todo el curso.}
+
+      \vspace{6pt}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faFolderOpen}]
+          \textbf{Presentaciones}: slides de cada clase en PDF.
+
+        \item[{\color{arcaRed}\scriptsize\faLaptopCode}]
+          \textbf{Notebooks}: cuadernos Colab con ejercicios y micro-proyectos.
+
+        \item[{\color{arcaRed}\scriptsize\faDatabase}]
+          \textbf{Datos}: datasets para las prácticas.
+
+        \item[{\color{arcaRed}\scriptsize\faCodeBranch}]
+          \textbf{Versionado}: cada clase se publica como nueva versión.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.43\textwidth}
+      \centering
+      \vspace{2pt}
+      \begin{tikzpicture}[
+        folder/.style={rectangle, rounded corners=3pt,
+          minimum width=3.8cm, minimum height=0.5cm,
+          font=\scriptsize\ttfamily, align=left, text=textDark,
+          fill=arcaGray, draw=arcaLightGray},
+        node distance=0.2cm
+      ]
+        \node[folder, fill=arcaDark, text=white, font=\scriptsize\ttfamily\bfseries]
+          (root) {diplomado-ds-python/};
+        \node[folder, below=of root]  (c01) {~~clase-01/};
+        \node[folder, below=of c01]   (c02) {~~clase-02/};
+        \node[folder, below=of c02]   (dots) {~~...};
+        \node[folder, below=of dots]  (data) {~~datos/};
+        \node[folder, below=of data]  (readme) {~~README.md};
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 11: CÓMO ABRIR GOOGLE COLAB
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Abrir Google Colab}
+  \vspace{-6pt}
+  \centering
+  \begin{tikzpicture}[
+    sbox/.style={rectangle, rounded corners=5pt, fill=arcaGray,
+      draw=arcaLightGray, minimum width=2.8cm, minimum height=1.7cm,
+      font=\scriptsize, align=center, text=textDark},
+    snum/.style={circle, fill=arcaRed, text=white, font=\small\bfseries,
+      minimum size=0.55cm, inner sep=0pt},
+    sarrow/.style={-{Stealth[length=5pt]}, line width=1.2pt, arcaRed},
+    node distance=0.8cm
+  ]
+    \node[sbox] (s1) {{\Large\color{arcaRed}\faGoogle}\\[4pt]Ir a\\[1pt]\texttt{\bfseries colab.google.com}};
+    \node[sbox, right=of s1] (s2) {{\Large\color{arcaRed}\faKey}\\[4pt]Iniciar sesión con\\[1pt]su \textbf{cuenta Google}};
+    \node[sbox, right=of s2] (s3) {{\Large\color{arcaRed}\faPlus}\\[4pt]Click en\\[1pt]\textbf{Nuevo cuaderno}};
+    \node[sbox, right=of s3] (s4) {{\Large\color{arcaRed}\faPlay}\\[4pt]Escribir código\\[1pt]y presionar \textbf{Play}};
+
+    \node[snum, above=0.15cm of s1] {1};
+    \node[snum, above=0.15cm of s2] {2};
+    \node[snum, above=0.15cm of s3] {3};
+    \node[snum, above=0.15cm of s4] {4};
+
+    \draw[sarrow] (s1) -- (s2);
+    \draw[sarrow] (s2) -- (s3);
+    \draw[sarrow] (s3) -- (s4);
+  \end{tikzpicture}
+
+  \vspace{10pt}
+  {\footnotesize\color{arcaDark}
+    \textbf{Hagámoslo ahora.} Abramos \texttt{colab.google.com} y creemos un cuaderno nuevo.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  SECTION DIVIDER: FUNDAMENTOS
+% ─────────────────────────────────────────────────────────────────────────────
+\sectionframe{Fundamentos de Python}{Antes de escribir código}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 12: ¿QUÉ ES PROGRAMAR?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{¿Qué es Programar?}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Descomponer un problema en pasos que una máquina pueda ejecutar.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.38\textwidth}
+      \begin{tcolorbox}[
+        colback=arcaDark, colframe=arcaDark, boxrule=0pt,
+        arc=4pt, left=6pt, right=6pt, top=5pt, bottom=5pt
+      ]
+        {\scriptsize\color{white}\bfseries\faIndustry\hspace{4pt}Problema de negocio}\\[3pt]
+        {\scriptsize\color{white!85}\itshape
+        ``¿Cuál es el margen de\\
+        ganancia de Coca-Cola 600ml?''}
+      \end{tcolorbox}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+        Una computadora no interpreta esta frase.
+        No sabe qué es ``margen'', ni dónde están los datos.
+        \textbf{Necesitamos descomponerlo en pasos.}}
+    \end{column}
+
+    \begin{column}{0.06\textwidth}
+      \centering
+      \vspace{20pt}
+      {\Large\color{arcaRed}$\Rightarrow$}
+    \end{column}
+
+    \begin{column}{0.50\textwidth}
+      \begin{tcolorbox}[
+        colback=arcaGray, colframe=arcaRed, boxrule=0pt, leftrule=3pt,
+        arc=3pt, left=5pt, right=5pt, top=4pt, bottom=4pt
+      ]
+        {\scriptsize\color{arcaRed}\bfseries Paso 1:} {\scriptsize Definir el precio de venta}\\
+        {\scriptsize\ttfamily\color{textDark} precio = 1.50}\\[3pt]
+        {\scriptsize\color{arcaRed}\bfseries Paso 2:} {\scriptsize Definir el costo}\\
+        {\scriptsize\ttfamily\color{textDark} costo = 0.85}\\[3pt]
+        {\scriptsize\color{arcaRed}\bfseries Paso 3:} {\scriptsize Calcular la diferencia}\\
+        {\scriptsize\ttfamily\color{textDark} margen = precio - costo}\\[3pt]
+        {\scriptsize\color{arcaRed}\bfseries Paso 4:} {\scriptsize Mostrar el resultado}\\
+        {\scriptsize\ttfamily\color{textDark} print(margen)}
+      \end{tcolorbox}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+    \textbf{Programar = pensar con precisión.}
+    El mismo proceso que ya hacemos en una hoja de cálculo, pero sin ambigüedad.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 13: PYTHON, EL TRADUCTOR
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Python: Nuestro Traductor}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    La computadora solo entiende 0s y 1s.
+    Python traduce nuestras instrucciones a código máquina.}
+
+  \vspace{10pt}
+  \centering
+  \begin{tikzpicture}[
+    lvl/.style={rectangle, rounded corners=6pt,
+      minimum width=3cm, minimum height=1.4cm,
+      font=\scriptsize, align=center, text=white},
+    sarrow/.style={-{Stealth[length=6pt]}, line width=1.6pt},
+    node distance=1.2cm
+  ]
+    \node[lvl, fill=arcaDark] (nos)
+      {{\Large\faUser}\\[2pt]\textbf{Nosotros}\\{\tiny escribimos en Python}};
+    \node[lvl, fill=arcaRed, right=of nos] (py)
+      {{\Large\faPython}\\[2pt]\textbf{Python}\\{\tiny traduce automáticamente}};
+    \node[lvl, fill=textDark, right=of py] (maq)
+      {{\Large\faMicrochip}\\[2pt]\textbf{Máquina}\\{\tiny 01001101 10110010...}};
+
+    \draw[sarrow, arcaRed] (nos) -- (py);
+    \draw[sarrow, textDark] (py) -- (maq);
+  \end{tikzpicture}
+
+  \vspace{12pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    La misma instrucción en tres lenguajes --- ¿cuál se lee mejor?}
+
+  \vspace{6pt}
+  \begin{columns}[c]
+    \begin{column}{0.30\textwidth}
+      \centering
+      {\small\bfseries\color{arcaRed} Python}\\[4pt]
+      {\footnotesize\ttfamily print("Margen:", m)}
+    \end{column}
+    \begin{column}{0.30\textwidth}
+      \centering
+      {\small\bfseries\color{textMuted} Java}\\[4pt]
+      {\footnotesize\ttfamily System.out.println(m);}
+    \end{column}
+    \begin{column}{0.30\textwidth}
+      \centering
+      {\small\bfseries\color{textMuted} C}\\[4pt]
+      {\footnotesize\ttfamily printf("\%f", m);}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 14: SINTAXIS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Sintaxis: La Gramática de Python}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\small\color{arcaDark}\bfseries
+        Así como el español tiene reglas,
+        Python tiene \textbf{sintaxis}.}
+
+      \vspace{4pt}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faFont}]
+          \textbf{Mayúsculas importan}: \texttt{print} no es \texttt{Print}.
+
+        \item[{\color{arcaRed}\scriptsize\faCode}]
+          \textbf{Paréntesis obligatorios}: toda función
+          lleva \texttt{()}.
+
+        \item[{\color{arcaRed}\scriptsize\faQuoteRight}]
+          \textbf{Comillas para texto}: \texttt{"hola"} es texto,
+          \texttt{hola} sin comillas es una variable.
+
+        \item[{\color{arcaRed}\scriptsize\faIndent}]
+          \textbf{Indentación}: los espacios al inicio
+          definen la estructura del código.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\small\color{codeGreen}\bfseries\faCheck\hspace{4pt}Correcto}
+      \begin{tcolorbox}[
+        colback=arcaGray, colframe=codeGreen, boxrule=0pt, leftrule=3pt,
+        arc=2pt, left=5pt, right=5pt, top=3pt, bottom=3pt
+      ]
+        {\scriptsize\ttfamily\color{textDark}
+        precio = 1.50\\
+        print(precio)}
+      \end{tcolorbox}
+
+      \vspace{3pt}
+      {\small\color{arcaRed}\bfseries\faTimes\hspace{4pt}Errores comunes}
+      \begin{tcolorbox}[
+        colback=arcaGray, colframe=arcaRed, boxrule=0pt, leftrule=3pt,
+        arc=2pt, left=5pt, right=5pt, top=2pt, bottom=2pt
+      ]
+        {\scriptsize\ttfamily\color{textDark}
+        Print(precio)~~~~}{\tiny\color{arcaRed} P mayúscula}\\
+        {\scriptsize\ttfamily\color{textDark}
+        print(precio~~~~~}{\tiny\color{arcaRed} falta )}\\
+        {\scriptsize\ttfamily\color{textDark}
+        print precio~~~~~}{\tiny\color{arcaRed} faltan ()}
+      \end{tcolorbox}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}\itshape
+        Un solo carácter mal y Python nos avisa con un error.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 15: CONVENCIÓN — INSTRUCCIONES CON PARÉNTESIS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Instrucciones con Paréntesis}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Vamos a usar palabras seguidas de paréntesis. ¿Qué significa eso?}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={draw=arcaRed, fill=arcaRed!6, rounded corners=4pt,
+                minimum height=0.7cm, font=\ttfamily\bfseries\footnotesize,
+                inner xsep=8pt},
+    lbl/.style={font=\scriptsize\color{textMuted}, align=center}
+  ]
+    \node[box] (name) {\color{arcaRed}print};
+    \node[right=-1pt of name, font=\footnotesize\ttfamily] (p1) {(};
+    \node[box, right=-1pt of p1, draw=arcaDark, fill=arcaDark!6]
+      (arg) {\color{arcaDark}"Hola"};
+    \node[right=-1pt of arg, font=\footnotesize\ttfamily] (p2) {)};
+
+    \node[lbl, below=6pt of name] {qué hacer};
+    \node[lbl, below=6pt of arg] {con qué};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{2pt}
+  {\footnotesize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Son \textbf{instrucciones predefinidas} que Python ya conoce.
+      El nombre dice \textbf{qué hacer}, lo que va dentro de los
+      paréntesis dice \textbf{con qué}.
+
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Hoy usaremos varias:
+      \texttt{print()}, \texttt{type()}, \texttt{input()},
+      \texttt{int()}, \texttt{float()}, \texttt{str()}.
+
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Más adelante en el curso aprenderemos a
+      \textbf{crear las nuestras}.
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 16: print() — NUESTRA PRIMERA INSTRUCCIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{\texttt{print()} --- Nuestra Primera Instrucción}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Desde 1972, todo programador empieza igual: hacer que la máquina hable.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}[title={\scriptsize\faPlay\hspace{4pt}Escribamos esto en Colab}]
+print("Hola Arca Continental")
+print("Clase 1: Fundamentos")
+print("Bienvenidos al diplomado")
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Hola Arca Continental
+Clase 1: Fundamentos
+Bienvenidos al diplomado
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faComment}]
+          \texttt{print()} muestra texto en la
+          \textbf{consola}: la pantalla donde
+          el programa nos habla.
+
+        \item[{\color{arcaRed}\scriptsize\faQuoteRight}]
+          El texto va entre \textbf{comillas}.
+          Sin comillas, Python busca una variable.
+
+        \item[{\color{arcaRed}\scriptsize\faRedo}]
+          Cada \texttt{print()} produce
+          \textbf{una línea} de salida.
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      {\scriptsize\color{arcaRed}\bfseries
+        Shift + Enter para ejecutar cada celda.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 16: OPERACIONES — PYTHON COMO CALCULADORA
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Operaciones: Python Como Calculadora}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Antes de guardar datos, veamos que Python sabe hacer cuentas.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+print(1.50 + 0.85)
+print(1.50 * 1000)
+print(1500 / 1000)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+2.35
+1500.0
+1.5
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\footnotesize
+      \renewcommand{\arraystretch}{1.3}
+      \begin{tabular}{@{}c l@{}}
+        \toprule
+        {\bfseries\color{arcaRed} Op.} & {\bfseries\color{arcaDark} Significado} \\
+        \midrule
+        \texttt{+} & Suma \\
+        \texttt{-} & Resta \\
+        \texttt{*} & Multiplicación \\
+        \texttt{/} & División \\
+        \texttt{**} & Potencia \\
+        \texttt{\%} & Residuo \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+        Python respeta el orden matemático:
+        primero \texttt{*} y \texttt{/},
+        después \texttt{+} y \texttt{-}.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 17: PRÁCTICA 1 — INSTRUCTOR RESUELVE
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Práctica Guiada \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}5 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Una tienda vende 1\,200 unidades de Coca-Cola 600\,ml a \$\,1.50 cada una.}
+
+  \vspace{6pt}
+  {\footnotesize\color{textMuted}
+  Usando solo \texttt{print()} y operaciones, calculemos en Colab:}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      El \textbf{ingreso total} de la venta.
+    \item[{\color{arcaRed}\bfseries 2.}]
+      Si el costo por unidad es \$\,0.85, ¿cuál es la \textbf{ganancia total}?
+    \item[{\color{arcaRed}\bfseries 3.}]
+      ¿Cuál es el \textbf{margen de ganancia} en porcentaje?
+  \end{enumerate}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{textMuted}
+    \faLightbulb[regular]\hspace{4pt}\textbf{Pista:}
+    Margen = (precio $-$ costo) / precio $\times$ 100}
+
+  \vspace{6pt}
+  \begin{pyblock}[title={\scriptsize\faPlay\hspace{4pt}Tres print, tres respuestas}]
+print( ___ )
+print( ___ )
+print( ___ )
+  \end{pyblock}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 18: PRÁCTICA 2 — ESTUDIANTES RESUELVEN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Su Turno \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}5 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Una bodega recibe 500 cajas de Coca-Cola. Cada caja trae 24 unidades.}
+
+  \vspace{4pt}
+  {\footnotesize\color{textMuted}
+  Usando solo \texttt{print()} y operaciones:}
+
+  \vspace{3pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      ¿Cuántas \textbf{unidades} llegaron en total?
+    \item[{\color{arcaRed}\bfseries 2.}]
+      Si se distribuyen entre \textbf{3} rutas,
+      ¿cuántas cajas completas van por ruta? (\texttt{//})
+    \item[{\color{arcaRed}\bfseries 3.}]
+      ¿Cuántas cajas \textbf{sobran}? (\texttt{\%})
+    \item[{\color{arcaRed}\bfseries 4.}]
+      Si las ventas crecen 12\% cada mes,
+      ¿cuántas unidades necesitamos en 6 meses? (\texttt{**})
+  \end{enumerate}
+  }
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb[regular]\hspace{4pt}\textbf{Pista:}
+    Crecimiento compuesto = cantidad $\times$ (1 + tasa) \texttt{**} meses}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 19: SOLUCIÓN — PRÁCTICA 2
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Solución}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+print(500 * 24)
+print(500 // 3)
+print(500 % 3)
+print(500 * 24 * (1 + 0.12) ** 6)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+12000
+166
+2
+23700.60
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{500 * 24} = 12\,000 unidades.
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{//} descarta decimales:
+          166 cajas por ruta.
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{\%} da el sobrante:
+          2 cajas sin asignar.
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{**} aplica el exponente:
+          crecimiento compuesto.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 18: EL PROBLEMA — CÓDIGO REPETIDO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{¿Notaron Algo en el Ejercicio?}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Escribimos los mismos números una y otra vez.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}%
+        Así lo hicimos}
+      \vspace{2pt}
+      \begin{pyblock}
+print(1200 * 1.50)
+print(1200 * 1.50 - 1200 * 0.85)
+      \end{pyblock}
+
+      \vspace{3pt}
+      {\scriptsize\color{textMuted}
+        \texttt{1200} aparece \textbf{3 veces},
+        \texttt{1.50} aparece \textbf{3 veces}.\\[1pt]
+        Si cambia el precio, corregimos todo
+        a mano.}
+    \end{column}
+
+    \begin{column}{0.50\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}%
+        Con variables}
+      \vspace{2pt}
+      \begin{pyblock}
+unidades = 1200
+precio = 1.50
+costo = 0.85
+ingreso = unidades * precio
+ganancia = ingreso - unidades * costo
+print(ingreso)
+print(ganancia)
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{3pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    Si el precio sube a \$\,1.65, cambiamos
+    \textbf{una sola línea} y todo se recalcula.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 19: VARIABLES — ASIGNAR Y REUTILIZAR
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Variables: Asignar y Reutilizar}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Una variable es un nombre que apunta a un valor en memoria.}
+
+  \vspace{3pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+precio = 1.50
+      \end{pyblock}
+
+      \vspace{1pt}
+      {\footnotesize
+      \begin{tikzpicture}[
+        lbl/.style={font=\footnotesize\ttfamily\bfseries, arcaDark},
+        val/.style={draw=arcaRed, fill=arcaRed!8, rounded corners=3pt,
+                    minimum width=2cm, minimum height=0.55cm,
+                    font=\footnotesize\ttfamily},
+        arr/.style={-{Stealth[length=5pt]}, thick, arcaRed}
+      ]
+        \node[lbl] (name) {precio};
+        \node[val, right=1.2cm of name] (mem) {1.50};
+        \draw[arr] (name) -- (mem);
+        \node[above=0pt of mem, font=\tiny\color{textMuted}] {memoria};
+      \end{tikzpicture}
+      }
+
+      \vspace{1pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{1pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{=} no es ``igual a''.
+          Significa \textbf{asignar}: valor de la
+          derecha se guarda con nombre de la izquierda.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Podemos \textbf{reasignar}:
+          \texttt{precio = 1.65} actualiza el valor.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \begin{pyblock}
+precio = 1.50
+precio = 1.65
+print(precio)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+1.65
+      \end{outputblock}
+
+      \vspace{1pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{1pt}
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          El valor anterior \textbf{se reemplaza};
+          no se acumula.
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          \texttt{Precio} $\neq$ \texttt{precio}.
+          Python distingue mayúsculas.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 20: NOMBRAR BIEN — CONVENCIONES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Nombrar Bien Importa}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Un buen nombre hace que el código se explique solo.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \renewcommand{\arraystretch}{1.4}
+      \begin{tabular}{@{}l l@{}}
+        \toprule
+        {\color{codeGreen}\bfseries\faCheck\hspace{3pt}Correcto}
+        & {\color{arcaRed}\bfseries\faTimes\hspace{3pt}Evitar} \\
+        \midrule
+        \texttt{precio\_unitario} & \texttt{p} \\
+        \texttt{costo\_por\_unidad} & \texttt{c1} \\
+        \texttt{margen\_pct} & \texttt{dato} \\
+        \texttt{total\_unidades} & \texttt{x} \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{6pt}
+      {\scriptsize\color{textMuted}
+        Convención en Python: \texttt{snake\_case}\\
+        palabras en minúscula separadas por \texttt{\_}}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Reglas del lenguaje:}
+
+      \vspace{4pt}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Empieza con letra o \texttt{\_}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Puede contener letras, números, \texttt{\_}
+        \item[{\color{arcaRed}\scriptsize\faTimes}]
+          No puede empezar con número
+        \item[{\color{arcaRed}\scriptsize\faTimes}]
+          No puede tener espacios ni \texttt{-}
+        \item[{\color{arcaRed}\scriptsize\faTimes}]
+          No usar palabras reservadas:\\
+          \texttt{print}, \texttt{if}, \texttt{for}, \texttt{True}\ldots
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 21: PRÁCTICA 2 — AHORA CON VARIABLES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Práctica: Ahora Con Variables \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}7 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Un centro de distribución despacha 3 productos:}
+
+  \vspace{4pt}
+  \begin{center}
+  {\footnotesize
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{l r r}
+    \toprule
+    {\bfseries\color{arcaDark} Producto}
+    & {\bfseries\color{arcaDark} Precio}
+    & {\bfseries\color{arcaDark} Unidades} \\
+    \midrule
+    Coca-Cola 600\,ml & \$\,1.50 & 1\,200 \\
+    Sprite 500\,ml    & \$\,1.25 &   800 \\
+    Dasani 1\,L       & \$\,0.90 & 2\,000 \\
+    \bottomrule
+  \end{tabular}
+  }
+  \end{center}
+
+  \vspace{6pt}
+  {\footnotesize\color{textMuted}
+    Usando \textbf{variables}, calculen e impriman:}
+
+  \vspace{2pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      El \textbf{ingreso} de cada producto.
+    \item[{\color{arcaRed}\bfseries 2.}]
+      El \textbf{ingreso total} del despacho (suma de los tres).
+    \item[{\color{arcaRed}\bfseries 3.}]
+      El \textbf{porcentaje} que representa Coca-Cola del total.
+  \end{enumerate}
+  }
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb[regular]\hspace{4pt}\textbf{Pista:}
+    Porcentaje = ingreso\_coca / ingreso\_total $\times$ 100}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 26: SOLUCIÓN — PRÁCTICA CON VARIABLES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Solución --- Despacho de 3 Productos}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.56\textwidth}
+      \begin{pyblock}
+ingreso_coca = 1.50 * 1200
+ingreso_sprite = 1.25 * 800
+ingreso_dasani = 0.90 * 2000
+ingreso_total = ingreso_coca + ingreso_sprite + ingreso_dasani
+pct_coca = ingreso_coca / ingreso_total * 100
+print(ingreso_coca)
+print(ingreso_total)
+print(pct_coca)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.40\textwidth}
+      \begin{outputblock}
+1800.0
+4600.0
+39.13
+      \end{outputblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Cada precio se define \textbf{una vez}.
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Cambiar un precio actualiza
+          todo automáticamente.
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Coca-Cola = 39\% del total.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\sectionframe{Tipos de Datos}{No todo dato es igual}
+% ═════════════════════════════════════════════════════════════════════════════
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 28: TIPOS DE DATOS — ¿POR QUÉ IMPORTAN?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Tipos de Datos}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Python clasifica cada valor. El tipo determina qué operaciones son válidas.}
+
+  \vspace{3pt}
+  \begin{center}
+  {\footnotesize
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{c l l l}
+    \toprule
+    & {\bfseries\color{arcaDark} Tipo}
+    & {\bfseries\color{arcaDark} Ejemplo}
+    & {\bfseries\color{arcaDark} Uso en negocio} \\
+    \midrule
+    {\color{arcaRed}\faHashtag}
+    & \texttt{int} --- entero
+    & \texttt{1200}
+    & Unidades, cajas \\
+    {\color{arcaRed}\faPercent}
+    & \texttt{float} --- decimal
+    & \texttt{1.50}
+    & Precios, porcentajes \\
+    {\color{arcaRed}\faFont}
+    & \texttt{str} --- texto
+    & \texttt{"Coca-Cola"}
+    & Nombres, SKU \\
+    {\color{arcaRed}\faToggleOn}
+    & \texttt{bool} --- lógico
+    & \texttt{True / False}
+    & ¿Hay stock? \\
+    \bottomrule
+  \end{tabular}
+  }
+  \end{center}
+
+  \vspace{2pt}
+  \begin{pyblock}
+print(type(1200))
+print(type(1.50))
+print(type("Coca-Cola"))
+  \end{pyblock}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 29: TIPOS EN ACCIÓN — CUIDADO CON MEZCLAR
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Cuidado al Mezclar Tipos}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    El tipo define qué operaciones son válidas.}
+
+  \vspace{3pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimes\hspace{4pt}Esto falla}
+      \vspace{2pt}
+      \begin{pyblock}
+print("Unidades: " + 1200)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+TypeError: can only concatenate
+str to str (not "int")
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheck\hspace{4pt}Soluciones}
+      \vspace{2pt}
+      \begin{pyblock}
+print("Unidades: " + str(1200))
+print("Unidades:", 1200)
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \texttt{str()}, \texttt{int()}, \texttt{float()} convierten entre tipos.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 30: input() — RECIBIR DATOS DEL USUARIO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{\texttt{input()} --- Recibir Datos del Usuario}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+nombre = input("Producto: ")
+precio = float(input("Precio: "))
+unidades = int(input("Unidades: "))
+print(nombre, precio * unidades)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Producto: Coca-Cola
+Precio: 1.50
+Unidades: 1200
+Coca-Cola 1800.0
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{input("texto")} muestra el
+          mensaje y espera que el
+          usuario escriba.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Siempre devuelve \texttt{str},
+          aunque escribamos un número.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{float()} e \texttt{int()}
+          convierten para poder operar.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\sectionframe{Aplicaciones}{Código para el negocio}
+% ═════════════════════════════════════════════════════════════════════════════
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 32: APP 1 — COTIZADOR DE RUTA (INSTRUCTOR)
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{App 1: Cotizador de Ruta \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}10 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}
+    Un vendedor de ruta está con un cliente en Ambato.
+    El cliente quiere \textbf{800 unidades de Sprite 500\,ml a \$\,1.25}.
+    La entrega es a \textbf{45\,km} del centro de distribución
+    y el flete cuesta \textbf{\$\,0.12 por km}.
+    El IVA en Ecuador es \textbf{15\%}.}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries
+    Construyamos una herramienta donde cualquier vendedor
+    ingrese los datos de su pedido y obtenga la cotización al instante.}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb[regular]\hspace{4pt}%
+    Necesitamos: \texttt{input()}, conversiones de tipo,
+    variables con nombres claros, y \texttt{print()} para el resumen.
+    Lo resolvemos juntos.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 33: SOLUCIÓN — COTIZADOR DE RUTA
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=10]{Solución --- Cotizador de Ruta}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.56\textwidth}
+      \begin{pyblock}
+producto = input("Producto: ")
+precio = float(input("Precio: "))
+cantidad = int(input("Qty: "))
+km = float(input("Km: "))
+subtotal = precio * cantidad
+flete = km * 0.12
+iva = (subtotal + flete) * 0.15
+total = subtotal + flete + iva
+print(producto)
+print("Subtotal:", subtotal)
+print("Flete:", flete)
+print("IVA:", iva)
+print("TOTAL:", total)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.40\textwidth}
+      \begin{outputblock}
+Sprite 500ml
+Subtotal: 1000.0
+Flete: 5.4
+IVA: 150.81
+TOTAL: 1156.21
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 34: APP 2 — ¿CONVIENE EL 3x2?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{App 2: ¿Conviene el 3x2? \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}7 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}
+    El equipo de marketing quiere lanzar una promoción
+    \textbf{``Lleva 3, paga 2''} en Coca-Cola 600\,ml.
+    El producto se vende a \textbf{\$\,1.50} y producirlo
+    cuesta \textbf{\$\,0.85}.}
+
+  \vspace{4pt}
+  {\small\color{arcaDark}
+    El gerente de finanzas pregunta:
+    \textbf{¿cuánto margen sacrificamos con esta promoción?}}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries
+    Creen un programa que pida el precio y el costo de cualquier
+    producto, y compare la ganancia con y sin la promoción 3x2.}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb[regular]\hspace{4pt}%
+    Sin promo el cliente paga 3 unidades; con promo paga 2.
+    En ambos casos producimos 3.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 35: APP 3 — RECEPCIÓN DE CAMIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{App 3: Recepción de Camión \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}8 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}
+    Son las 6\,AM y llega un camión con \textbf{1\,340 cajas} de producto.
+    En la bodega, cada pallet aguanta \textbf{48 cajas} y
+    ocupa \textbf{1.2\,m\textsuperscript{2}}.
+    La bodega disponible tiene \textbf{500\,m\textsuperscript{2}}.}
+
+  \vspace{4pt}
+  {\small\color{arcaDark}
+    El jefe de bodega necesita saber \textbf{antes de descargar}:
+    ¿cuántos pallets armar? ¿Sobran cajas sueltas?
+    ¿Qué porcentaje de la bodega se va a ocupar?}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries
+    Creen un programa que reciba las cajas, la capacidad del
+    pallet y el área, y responda todas esas preguntas.}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb[regular]\hspace{4pt}%
+    Pallets completos: \texttt{//} \quad
+    Cajas sobrantes: \texttt{\%} \quad
+    Pallets reales = completos + \texttt{min(sobrantes, 1)}}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 36: APP 4 — PROYECCIÓN PARA EL DIRECTORIO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{App 4: Proyección para Directorio \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}10 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}
+    El directorio de Arca Continental pide una proyección:
+    si la región Quito vende hoy \textbf{50\,000 unidades/mes}
+    y el crecimiento histórico es \textbf{8\% mensual},
+    ¿cuántas unidades venderemos en \textbf{12 meses}?
+    ¿Cuánto ingreso representará si el precio promedio es
+    \textbf{\$\,1.35}?}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries
+    Construyan un programa que reciba ventas actuales, tasa
+    de crecimiento, meses y precio, y entregue la proyección
+    completa: unidades, ingreso y crecimiento porcentual.}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb[regular]\hspace{4pt}%
+    Crecimiento compuesto: actuales $\times$ (1 + tasa/100)
+    \texttt{**} meses}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 37: SOLUCIÓN — ¿CONVIENE EL 3x2?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=5]{Solución --- ¿Conviene el 3x2?}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.56\textwidth}
+      \begin{pyblock}
+precio = float(input("Precio: "))
+costo = float(input("Costo: "))
+g_normal = precio * 3 - costo * 3
+g_promo = precio * 2 - costo * 3
+sacrificio = (g_normal - g_promo) / g_normal * 100
+print("Ganancia normal:", g_normal)
+print("Ganancia promo:", g_promo)
+print("Sacrificio %:", sacrificio)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.40\textwidth}
+      \begin{outputblock}
+Ganancia normal: 1.95
+Ganancia promo: 0.45
+Sacrificio %: 76.92
+      \end{outputblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{arcaRed}\bfseries
+        Se sacrifica el 77\% de la ganancia.
+        ¿Vale la pena por volumen?}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 38: SOLUCIÓN — RECEPCIÓN DE CAMIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=15]{Solución --- Recepción de Camión}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+cajas = int(input("Cajas: "))
+x_pallet = int(input("Cajas/pallet: "))
+m2 = float(input("m2/pallet: "))
+completos = cajas // x_pallet
+sobrantes = cajas % x_pallet
+reales = completos + min(sobrantes, 1)
+area = reales * m2
+print("Completos:", completos)
+print("Sueltas:", sobrantes)
+print("Pallets:", reales)
+print("Area m2:", area)
+print("Ocup %:", area / 500 * 100)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \begin{outputblock}
+Completos: 27
+Sueltas: 44
+Pallets: 28
+Area m2: 33.6
+Ocup %: 6.72
+      \end{outputblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+        \texttt{//} da pallets enteros,
+        \texttt{\%} da las cajas que sobran,
+        \texttt{min(sobrantes, 1)} suma 1
+        solo si hay sobrantes.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 39: SOLUCIÓN — PROYECCIÓN PARA DIRECTORIO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=20]{Solución --- Proyección para Directorio}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+uds = int(input("Ventas/mes: "))
+tasa = float(input("Crecimiento %: "))
+meses = int(input("Meses: "))
+precio = float(input("Precio: "))
+futuro = uds * (1 + tasa/100) ** meses
+crec = (futuro - uds) / uds * 100
+print("Hoy:", uds, "uds")
+print("En", meses, "meses:", int(futuro))
+print("Ingreso hoy:", uds * precio)
+print("Ingreso futuro:", int(futuro * precio))
+print("Crecimiento:", int(crec), "%")
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \begin{outputblock}
+Hoy: 50000 uds
+En 12 meses: 125938
+Ingreso hoy: 67500.0
+Ingreso futuro: 170017
+Crecimiento: 151 %
+      \end{outputblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{arcaRed}\bfseries
+        Con 8\% mensual, en un año
+        las ventas se multiplican
+        por 2.5.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\sectionframe{Caso Integrador}{Reporte ejecutivo}
+% ═════════════════════════════════════════════════════════════════════════════
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 41: CASO INTEGRADOR — ENUNCIADO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile]{Caso Integrador: Rentabilidad de Ruta \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}20 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}
+    Antes del comité de las 7\,PM, la gerencia regional necesita
+    un \textbf{reporte ejecutivo} de una ruta crítica en Guayaquil.
+    Durante la jornada se despacharon \textbf{dos productos}
+    a clientes distintos.}
+
+  \vspace{4pt}
+  {\small\color{arcaDark}
+    La pregunta que debemos responder es:
+    \textbf{¿cuánto dinero dejó realmente esa ruta?}
+    Para cada producto se conoce nombre, precio de venta,
+    costo, unidades y km recorridos. El flete cuesta
+    \textbf{\$\,0.12/km} y el IVA es \textbf{15\%}.}
+
+  \vspace{4pt}
+  {\small\color{arcaDark}\bfseries
+    El reporte debe entregar:}
+
+  \vspace{2pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{1pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      \textbf{Ingreso}, costo, utilidad bruta y utilidad neta
+      de cada producto
+    \item[{\color{arcaRed}\bfseries 2.}]
+      \textbf{Participación} de cada producto en el ingreso total
+    \item[{\color{arcaRed}\bfseries 3.}]
+      Totales del día:
+      \textbf{ingreso, flete, utilidad neta y margen consolidado}
+    \item[{\color{arcaRed}\bfseries 4.}]
+      \textbf{Proyección mensual} de utilidad neta (22 días hábiles)
+  \end{enumerate}
+  }
+
+  \vspace{3pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb[regular]\hspace{4pt}%
+    El objetivo no es solo calcular:
+    es producir un resumen que un jefe pueda leer en 30 segundos.}
+\end{frame}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\sectionframe{Cierre}{Recapitulación}
+% ═════════════════════════════════════════════════════════════════════════════
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 44: RECAPITULACIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Lo Que Aprendimos Hoy}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Conceptos}
+
+      \vspace{4pt}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Qué es programar y por qué importa hoy
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Python como traductor humano-máquina
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Google Colab como entorno de trabajo
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Variables, tipos de datos y conversiones
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{print()}, \texttt{input()}, \texttt{type()}
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Habilidades}
+
+      \vspace{4pt}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Escribir y ejecutar código en Colab
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Crear programas interactivos con \texttt{input()}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Calcular métricas de negocio con Python
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Nombrar variables de forma profesional
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Resolver un problema real de cierre de día
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 45: PREVIEW CLASE 2
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{Próxima Clase}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    En la Clase 2 nuestros programas van a tomar decisiones.}
+
+  \vspace{8pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Comparaciones y booleanos} ---
+      ¿Es mayor? ¿Está en stock? ¿Supera el mínimo?
+
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Condicionales} (\texttt{if / elif / else}) ---
+      El programa decide qué hacer según los datos.
+
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Listas y ciclos} (\texttt{for}) ---
+      Procesar múltiples productos sin repetir código.
+
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Micro-Proyecto:} Clasificador automático de pedidos
+      por prioridad y rentabilidad.
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FRAME 46: CIERRE — CONTACTO
+% ─────────────────────────────────────────────────────────────────────────────
+\begingroup
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{navigation symbols}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Huge\bfseries]
+      at ([yshift=1.5cm]current page.center) {¡Gracias!};
+    \node[anchor=center, text=white!80, font=\large, text width=10cm, align=center]
+      at ([yshift=0.2cm]current page.center)
+      {Carlos Enrique Mosquera Trujillo};
+    \node[anchor=center, text=white!60, font=\normalsize, text width=10cm, align=center]
+      at ([yshift=-0.6cm]current page.center)
+      {\faEnvelope\hspace{6pt}cmosquerat@unal.edu.co};
+    \node[anchor=center, text=white!60, font=\normalsize, text width=10cm, align=center]
+      at ([yshift=-1.3cm]current page.center)
+      {Diplomado en Data Science Aplicada con Python};
+    \node[anchor=center, text=white!40, font=\small]
+      at ([yshift=-2.0cm]current page.center)
+      {Arca Continental Ecuador \quad$\cdot$\quad UDLA \quad$\cdot$\quad 2026};
+  \end{tikzpicture}
+\end{frame}
+\endgroup
+
+\end{document}

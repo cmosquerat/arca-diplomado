@@ -1,0 +1,33 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.listing
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+**/presentacion.pdf
+**/_minted-*
+
+# Preview images (generated during development)
+**/preview_*.png
+**/preview-*.png
+**/frame*.png
+
+# Firebase credentials (keep config.example.js, ignore config.js with real keys)
+# Uncomment the line below when you put real credentials in config.js:
+# icebreaker/js/config.js
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*~
+clase-01/figures/human_in_loop.html
+clase-01/figures/human_in_loop.png

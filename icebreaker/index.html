@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encuesta — Diplomado en Data Science</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { overflow-x: hidden; }
+  </style>
+</head>
+<body class="survey-page">
+  <header class="app-header">
+    <div class="header-logos">
+      <img src="img/udla_white.png" alt="UDLA" class="header-logo">
+      <img src="img/arca_white.png" alt="Arca Continental" class="header-logo">
+    </div>
+    <span class="header-title">Diplomado en Data Science Aplicada con Python</span>
+  </header>
+
+  <main class="survey-container">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress"></div>
+    </div>
+    <div class="survey-wrapper" id="surveyWrapper"></div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/survey.js"></script>
+</body>
+</html>

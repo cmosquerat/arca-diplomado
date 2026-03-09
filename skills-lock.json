@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "tikz": {
+      "source": "igbuend/grimbard",
+      "sourceType": "github",
+      "computedHash": "33077342a024b25fcfe3c38586b822ab676c4c78189c62dd5e67ea6d27937e6c"
+    }
+  }
+}

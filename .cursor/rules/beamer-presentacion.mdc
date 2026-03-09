@@ -1,0 +1,44 @@
+---
+description: Constraints for Beamer slides in the Arca Continental presentation
+globs: "**/clase-*/presentacion.tex"
+alwaysApply: false
+---
+
+# Beamer Slide Constraints
+
+## Usable Space
+
+The template has a fixed header (0.7cm dark bar with logos) and a fixed footer (line + "Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador" + page number). Together they consume ~1.5cm. Combined with the frametitle + red accent line (~1.2cm), the **usable content area is approximately 5.5cm tall**.
+
+- Always use `\vspace{-6pt}` after `\begin{frame}{Title}` to recover space.
+- Never exceed 4 bullet points per column.
+- Keep bullet text to 2 lines max per item at `\footnotesize`.
+- Test with `pdflatex` and check for `Overfull \vbox` warnings.
+- For code-heavy slides (solutions, demos), use `[fragile,shrink=N]` where N=5-25 depending on overflow. This auto-scales content to fit.
+- Section divider subtitles (`\sectionframe`) must be under 30 characters — shorter is better. These overflow easily because `\large` font + text width interact poorly.
+
+## Section Dividers (`\sectionframe`)
+
+- Format: `\sectionframe{Title}{Subtitle}`
+- Title: short (1-4 words), uses `\Huge\bfseries` white text.
+- Subtitle: **max 30 characters** including spaces, uses `\large` white text. If longer, it will overflow or wrap badly.
+- These frames are `[plain, noframenumbering]` — no header/footer, full red background.
+- Do NOT put long sentences as subtitles. Use 3-5 word phrases.
+
+## Tone
+
+- Use first person plural: "nosotros", "nuestro", "vamos a", "calculamos".
+- Never use "ustedes" or "usted". The instructor is part of the group.
+- Academic and corporate. No childish analogies.
+
+## TikZ
+
+- Never use `step` as a style name (conflicts with TikZ internal key).
+- Use `positioning` library with `right=of`, `below=of` — never absolute coordinates for node layouts.
+- Define styles with descriptive names: `sbox`, `snum`, `sarrow`, etc.
+
+## Code Blocks
+
+- Use `pyblock` / `pyblocknum` / `outputblock` environments for Python code.
+- Inside TikZ nodes, use `\texttt{}` for inline code, not minted.
+- All code examples should use Arca Continental business context (products, prices, regions, SKUs).

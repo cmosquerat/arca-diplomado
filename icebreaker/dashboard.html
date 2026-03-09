@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Diplomado en Data Science</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dashboard-page">
+
+  <header class="app-header">
+    <div class="header-logos">
+      <img src="img/udla_white.png" alt="UDLA" class="header-logo">
+      <img src="img/arca_white.png" alt="Arca Continental" class="header-logo">
+    </div>
+    <span class="header-title">Diplomado en Data Science Aplicada con Python</span>
+    <div class="header-counter">
+      <span id="counter">0</span>
+      <small>participantes</small>
+    </div>
+  </header>
+
+  <div class="session-bar">
+    <label for="sessionInput">Sesión:</label>
+    <input type="text" id="sessionInput" placeholder="YYYYMMDD">
+    <button class="btn btn-primary" onclick="startSession()">Iniciar</button>
+  </div>
+
+  <section class="qr-section" id="qrSection">
+    <div class="qr-container">
+      <div id="qrCode"></div>
+      <p>Escanea el código QR o ingresa a:</p>
+      <code id="surveyUrl">—</code>
+    </div>
+  </section>
+
+  <section class="metric-hero" id="metricHero" style="display:none;">
+    <div class="metric-number" id="hoursNumber">0</div>
+    <div class="metric-label">horas por semana</div>
+    <div class="metric-sublabel">que el equipo invierte en tareas manuales con datos</div>
+  </section>
+
+  <main class="dashboard-grid" id="dashboardGrid" style="display:none;">
+    <div class="chart-card">
+      <h3>Responsabilidad en la cadena de valor</h3>
+      <canvas id="chartRoles"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Transformaciones tecnológicas vividas</h3>
+      <canvas id="chartTransformations"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Horas semanales en tareas repetitivas</h3>
+      <canvas id="chartHours"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Herramienta principal de datos</h3>
+      <canvas id="chartTools"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Acceso a datos para decisiones urgentes</h3>
+      <canvas id="chartUrgent"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Expectativas del diplomado</h3>
+      <canvas id="chartExpectations"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Relación con herramientas de IA</h3>
+      <canvas id="chartAI"></canvas>
+    </div>
+    <div class="chart-card full-width">
+      <h3>Si pudiera automatizar una tarea…</h3>
+      <canvas id="wordcloudCanvas" class="wordcloud-canvas"></canvas>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
