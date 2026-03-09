@@ -21,4 +21,6 @@ const FIREBASE_CONFIG = {
 
 const DEMO_MODE = true;
 
-const SURVEY_BASE_URL = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
+const SURVEY_BASE_URL = window.location.hostname === 'localhost'
+  ? window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/')
+  : 'https://cmosquerat.github.io/arca-diplomado/icebreaker/';
