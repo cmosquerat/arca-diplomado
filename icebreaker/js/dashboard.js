@@ -28,15 +28,15 @@ const Q_META = {
   ],
   q3_hours: [
     'Menos de 1 hora', '1–3 horas', '3–5 horas',
-    'Más de 5 horas', 'Prefiero no pensarlo'
+    'Más de 5 horas'
   ],
   q4_tool: [
     'Excel', 'Google Sheets', 'SAP / ERP',
     'Power BI / Tableau', 'Correo y WhatsApp', 'Otra'
   ],
   q5_urgent: [
-    'Lo tengo al alcance en minutos', 'Debo pedirlo y esperar horas o días',
-    'Lo calculo manualmente con lo que tengo', 'Decido con intuición y experiencia'
+    'En minutos, lo tengo disponible', 'En horas, debo consolidarlo',
+    'Depende del tipo de dato', 'Generalmente uso mi criterio y experiencia'
   ],
   q6_expectations: [
     'Automatizar un reporte que hoy toma horas',

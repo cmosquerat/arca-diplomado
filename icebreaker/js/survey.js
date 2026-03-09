@@ -36,8 +36,7 @@ const QUESTIONS = [
       'Menos de 1 hora',
       '1–3 horas',
       '3–5 horas',
-      'Más de 5 horas',
-      'Prefiero no pensarlo'
+      'Más de 5 horas'
     ]
   },
   {
@@ -57,13 +56,13 @@ const QUESTIONS = [
   {
     id: 'q5_urgent',
     number: 5,
-    title: 'Cuando necesitas un dato para una decisión urgente, ¿qué pasa?',
+    title: '¿Qué tan rápido accedes al dato que necesitas para decidir?',
     type: 'single',
     options: [
-      'Lo tengo al alcance en minutos',
-      'Debo pedirlo y esperar horas o días',
-      'Lo calculo manualmente con lo que tengo',
-      'Decido con intuición y experiencia'
+      'En minutos, lo tengo disponible',
+      'En horas, debo consolidarlo',
+      'Depende del tipo de dato',
+      'Generalmente uso mi criterio y experiencia'
     ]
   },
   {
