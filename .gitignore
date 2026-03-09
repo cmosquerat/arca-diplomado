@@ -18,9 +18,8 @@
 **/preview-*.png
 **/frame*.png
 
-# Firebase credentials (keep config.example.js, ignore config.js with real keys)
-# Uncomment the line below when you put real credentials in config.js:
-# icebreaker/js/config.js
+# Firebase credentials template (config.js must be in repo for GitHub Pages)
+# Security is enforced via API key restrictions + Firebase Security Rules
 
 # OS
 .DS_Store
