@@ -1,4 +1,4 @@
-# LaTeX build artifacts
+# ── LaTeX build artifacts ──
 *.aux
 *.log
 *.nav
@@ -10,23 +10,30 @@
 *.synctex.gz
 *.fls
 *.fdb_latexmk
-**/presentacion.pdf
 **/_minted-*
+**/presentacion.pdf
 
-# Preview images (generated during development)
+# ── Generated figures / previews ──
 **/preview_*.png
 **/preview-*.png
 **/frame*.png
+clase-01/figures/human_in_loop.html
+clase-01/figures/human_in_loop.png
 
-# Firebase credentials template (config.js must be in repo for GitHub Pages)
-# Security is enforced via API key restrictions + Firebase Security Rules
+# ── Cursor / IDE internals ──
+.cursor/
+.agents/
+skills-lock.json
 
-# OS
+# ── OS ──
 .DS_Store
 Thumbs.db
 
-# Editor
+# ── Editor ──
 *.swp
 *~
-clase-01/figures/human_in_loop.html
-clase-01/figures/human_in_loop.png
+
+# ── Python ──
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
