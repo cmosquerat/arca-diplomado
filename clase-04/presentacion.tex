@@ -1,0 +1,1795 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 4: Diccionarios y Funciones
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% ── Codificación y lenguaje ──────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+% ── Fuentes ──────────────────────────────────────────────────────────────────
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Gráficos y diagramas ────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc, calc, fit, decorations.pathreplacing}
+\usepackage{fontawesome5}
+
+% ── Código fuente ────────────────────────────────────────────────────────────
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+
+% ── Tablas y utilidades ──────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+
+% =============================================================================
+%  PALETA DE COLORES CORPORATIVA
+% =============================================================================
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+
+% =============================================================================
+%  CONFIGURACIÓN DEL TEMA BEAMER
+% =============================================================================
+\usetheme{default}
+\usecolortheme{default}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+% =============================================================================
+%  HEADER
+% =============================================================================
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+% =============================================================================
+%  FOOTER
+% =============================================================================
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \draw[arcaLightGray, line width=0.4pt]
+      ([yshift=0.35cm, xshift=0.6cm]current page.south west) --
+      ([yshift=0.35cm, xshift=-0.6cm]current page.south east);
+    \node[anchor=south, font=\tiny\color{textMuted}] at
+      ([yshift=0.08cm]current page.south)
+      {Diplomado en Data Science Aplicada con Python \(\cdot\) Arca Continental Ecuador};
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.6cm, yshift=0.08cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.65cm}%
+}
+
+% =============================================================================
+%  FRAMETITLE
+% =============================================================================
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+% =============================================================================
+%  BLOQUES DE CÓDIGO
+% =============================================================================
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{pyblocknum}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=true, numbersep=8pt, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=8pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+% =============================================================================
+%  SECTION DIVIDERS
+% =============================================================================
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+% =============================================================================
+%  METADATOS
+% =============================================================================
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 4: Diccionarios y Funciones}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{16 de Marzo, 2026}
+
+\begin{document}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PORTADA
+% ─────────────────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[white] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed]
+      (current page.north west) rectangle
+      ([yshift=-0.35cm]current page.north east);
+    \fill[arcaDark]
+      (current page.south west) rectangle
+      ([yshift=0.35cm]current page.south east);
+    \fill[arcaRed]
+      ([xshift=1.1cm, yshift=-0.35cm]current page.north west) rectangle
+      ([xshift=1.15cm, yshift=0.35cm]current page.south west);
+    \node[anchor=north west, inner sep=0pt] at
+      ([xshift=1.8cm, yshift=-1.2cm]current page.north west)
+      {\includegraphics[height=1.6cm]{../logo_udla.png}};
+    \node[anchor=north east, inner sep=0pt] at
+      ([xshift=-1.5cm, yshift=-1.2cm]current page.north east)
+      {\includegraphics[height=1.6cm]{../ArcaContinental.png}};
+    \node[anchor=center, text=arcaDark, text width=13cm, align=center] at
+      ([yshift=0.5cm]current page.center) {
+        {\huge\bfseries Diplomado en Data Science Aplicada}\\[6pt]
+        {\huge\bfseries con Python para la Toma de Decisiones}
+      };
+    \fill[arcaRed]
+      ([yshift=-0.7cm, xshift=-3cm]current page.center) rectangle
+      ([yshift=-0.63cm, xshift=3cm]current page.center);
+    \node[anchor=center, text=arcaDark, text width=13cm, align=center] at
+      ([yshift=-1.5cm]current page.center) {
+        {\Large\bfseries Clase 4: Diccionarios y Funciones}
+      };
+    \node[anchor=center, text=textMuted] at
+      ([yshift=-2.5cm]current page.center) {
+        {\normalsize Carlos Enrique Mosquera Trujillo}
+      };
+    \node[anchor=center, text=textMuted] at
+      ([yshift=-3.1cm]current page.center) {
+        {\small 16 de Marzo, 2026}
+      };
+  \end{tikzpicture}
+\end{frame}
+}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  APERTURA: BASE 10 VS BASE 2
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[shrink=30]{Un número puede ser exacto en una base y no en otra}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    La idea clave es esta: \textbf{que un número se vea simple en base 10
+    no significa que sea simple en base 2}.}
+
+  \vspace{8pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries En base 10:}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item \textbf{1/2 = 0.5} termina.
+        \item \textbf{1/4 = 0.25} termina.
+        \item \textbf{1/3 = 0.3333...} no termina nunca.
+      \end{itemize}
+      }
+
+      \vspace{6pt}
+      {\footnotesize\color{arcaDark}
+        En decimal eso nos parece normal:
+        algunas fracciones terminan y otras no.}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries En base 2 (binario):}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item \textbf{1/2 = 0.1 en base 2} sí termina.
+        \item \textbf{1/4 = 0.01 en base 2} sí termina.
+        \item \textbf{0.1 en base 10 = 0.0001100110011... en base 2} no termina.
+      \end{itemize}
+      }
+
+      \vspace{6pt}
+      {\footnotesize\color{arcaDark}
+        O sea: \texttt{0.1} y \texttt{0.3} son números cortos en decimal,
+        pero en binario se vuelven secuencias infinitas.
+        Por ejemplo, \texttt{0.3 en base 10 = 0.0100110011... en base 2}.}
+    \end{column}
+  \end{columns}
+
+  \vspace{8pt}
+  {\footnotesize\color{textMuted}
+    Igual que \texttt{1/3} obliga a escribir \texttt{0.3333...} en decimal,
+    \texttt{0.1} obliga a escribir una secuencia infinita en binario.
+    Como la máquina no puede guardar infinitos bits, guarda una
+    \textbf{aproximación}.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  APERTURA: DEMO Y PRÁCTICA
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{¿Por qué \texttt{0.1 + 0.2} no da exactamente \texttt{0.3}?}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{pyblock}
+print(0.1 + 0.2)
+print(0.1 + 0.2 == 0.3)
+
+# Ver la representacion interna
+print(format(0.1, ".50f"))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+0.30000000000000004
+False
+0.1000000000000000055511151231257827...
+      \end{outputblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      Ni \texttt{0.1} ni \texttt{0.2} se guardan exactos.
+      Al sumar, los pequeños errores se acumulan.}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \vspace{2pt}
+      {\footnotesize\color{arcaDark}\bfseries En la práctica:}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item Para \textbf{mostrar}: \texttt{round(0.1+0.2, 2)} $\rightarrow$ \texttt{0.3}.
+        \item Para \textbf{comparar}: no usar \texttt{==}; usar
+          \texttt{abs(a - b) < 1e-9}.
+        \item Para \textbf{dinero}: módulo \texttt{decimal} o
+          enteros (centavos).
+      \end{itemize}
+      }
+
+      \vspace{6pt}
+      {\footnotesize\color{arcaDark}\bfseries Conclusión:}
+      {\scriptsize\color{textMuted}
+      Es el comportamiento normal del punto flotante en cualquier lenguaje.
+      Saber que ``0.1 en decimal no es entero en binario'' evita sorpresas.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  RECAP
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{¿Dónde Quedamos?}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    En la Clase 3 aprendimos a recorrer, acumular y filtrar datos.
+    Hoy aprendemos a \textbf{organizar} datos y \textbf{crear instrucciones propias}.}
+
+  \vspace{8pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Ya dominamos:}
+      \vspace{4pt}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Ciclos \texttt{for} y \texttt{range()}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Patrón acumulador y contadores
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{for + if} para filtrar
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Operador \texttt{in} para pertenencia
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Listas: slicing, métodos, índices
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Hoy agregamos:}
+      \vspace{4pt}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Diccionarios: datos con clave-valor
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Listas de diccionarios (datos tabulares)
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Funciones: \texttt{def}, parámetros, \texttt{return}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Funciones que procesan colecciones
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Proyecto integrador modular
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 1: DICCIONARIOS
+% =============================================================================
+\sectionframe{Diccionarios}{Datos organizados con clave y valor}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  MOTIVACIÓN: LISTAS PARALELAS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{El Problema de las Listas Paralelas}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    En la Clase 3 usamos 3 listas para un solo conjunto de datos.
+    Si alguien reordena una lista, todo se rompe.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Listas paralelas --- frágiles}
+      \begin{pyblock}
+clientes = ["Tienda Sol", "Mini ABC"]
+pedidos  = [30, 15]
+productos = ["Coca-Cola", "Sprite"]
+# El dato de cada cliente está repartido
+# en 3 listas distintas
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Diccionario --- todo junto}
+      \begin{pyblock}
+cliente = {
+    "nombre": "Tienda Sol",
+    "pedido": 30,
+    "producto": "Coca-Cola"
+}
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    Un \textbf{diccionario} agrupa toda la información
+    de una entidad bajo un solo objeto,
+    usando \textbf{claves} para identificar cada dato.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ANATOMÍA DE UN DICCIONARIO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Anatomía de un Diccionario}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.42\textwidth}
+      \vspace{-2pt}
+      \begin{center}
+      \begin{tikzpicture}[
+        node distance=0.4cm,
+        key/.style={draw=arcaRed, fill=arcaRed!10, rounded corners=2pt,
+                    font=\scriptsize\ttfamily\bfseries, minimum width=2cm,
+                    minimum height=0.5cm, align=center},
+        val/.style={draw=arcaDark, fill=arcaDark!8, rounded corners=2pt,
+                    font=\scriptsize\ttfamily, minimum width=2.4cm,
+                    minimum height=0.5cm, align=center},
+        arr/.style={-{Stealth[length=2.5pt]}, arcaRed, line width=0.5pt},
+        lbl/.style={font=\tiny\bfseries\color{textMuted}}
+      ]
+        \node[lbl] (hdr1) at (0, 0.4) {Clave};
+        \node[lbl] (hdr2) at (2.8, 0.4) {Valor};
+
+        \node[key] (k1) at (0,0) {\texttt{nombre}};
+        \node[val] (v1) at (2.8,0) {\texttt{Tienda Sol}};
+        \draw[arr] (k1) -- (v1);
+
+        \node[key] (k2) at (0,-0.7) {\texttt{pedido}};
+        \node[val] (v2) at (2.8,-0.7) {30};
+        \draw[arr] (k2) -- (v2);
+
+        \node[key] (k3) at (0,-1.4) {\texttt{producto}};
+        \node[val] (v3) at (2.8,-1.4) {\texttt{Coca-Cola}};
+        \draw[arr] (k3) -- (v3);
+
+        \node[key] (k4) at (0,-2.1) {\texttt{zona}};
+        \node[val] (v4) at (2.8,-2.1) {\texttt{Norte}};
+        \draw[arr] (k4) -- (v4);
+      \end{tikzpicture}
+      \end{center}
+
+      \vspace{4pt}
+      {\tiny\color{textMuted}
+        Las claves son únicas e inmutables (strings o números).
+        Los valores pueden ser de cualquier tipo.}
+    \end{column}
+
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+cliente = {
+    "nombre": "Tienda Sol",
+    "pedido": 30,
+    "producto": "Coca-Cola",
+    "zona": "Norte"
+}
+print("Nombre:", cliente["nombre"])
+print("Pedido:", cliente["pedido"])
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Nombre: Tienda Sol
+Pedido: 30
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Se crean con \texttt{\{\,clave: valor\,\}}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Se acceden con \mintinline{python}{dict["clave"]}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          No tienen índices numéricos.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ACCESO SEGURO CON .get()
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Acceso Seguro con \texttt{.get()}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    \mintinline{python}{dict["clave"]} da error si la clave no existe.
+    \texttt{.get()} lo evita.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+producto = {
+    "nombre": "Coca-Cola 600ml",
+    "precio": 1.50,
+    "stock": 200
+}
+
+print(producto["nombre"])
+print(producto.get("precio"))
+print(producto.get("color", "N/A"))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Coca-Cola 600ml
+1.5
+N/A
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \mintinline{python}{dict["clave"]} accede directamente.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \mintinline{python}{.get("clave")} hace lo mismo
+          pero no da error si no existe.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \mintinline{python}{.get("clave", "N/A")} devuelve
+          \mintinline{python}{"N/A"} como valor por defecto.
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          \mintinline{python}{producto["color"]} daría
+          \mintinline{python}{KeyError} porque \mintinline{python}{"color"}
+          no existe.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  MODIFICAR, AGREGAR Y ELIMINAR
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Modificar, Agregar y Eliminar}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+producto = {
+    "nombre": "Coca-Cola 600ml",
+    "precio": 1.50,
+    "stock": 200
+}
+
+producto["precio"] = 1.65
+print("Precio nuevo:", producto["precio"])
+
+producto["categoria"] = "Bebidas"
+print("Agregado:", producto["categoria"])
+
+del producto["stock"]
+print("Claves:", list(producto.keys()))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Precio nuevo: 1.65
+Agregado: Bebidas
+Claves: ['nombre', 'precio', 'categoria']
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \mintinline{python}{dict["clave"] = valor}
+          \textbf{modifica} si la clave ya existe.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \mintinline{python}{dict["nueva"] = valor}
+          \textbf{agrega} si la clave no existe.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \mintinline{python}{del dict["clave"]} \textbf{elimina}
+          la clave y su valor.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Es la misma sintaxis para modificar
+          y agregar. Python decide según si
+          la clave ya está o no.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO 1: CREAR Y ACCEDER (FÁCIL)
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Práctica: Mi Primer Diccionario \hfill
+    {\normalsize\color{arcaRed}\faClock\ 4 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Creen un diccionario desde cero y lean sus valores.}
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries Ejemplo resuelto:}
+  \vspace{2pt}
+  \begin{pyblock}
+ruta = {"origen": "Guayaquil", "destino": "Manta", "km": 180}
+print(ruta["origen"], "->", ruta["destino"])
+print("Distancia:", ruta["km"], "km")
+  \end{pyblock}
+  \vspace{-2pt}
+  \begin{outputblock}
+Guayaquil -> Manta
+Distancia: 180 km
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries Ahora ustedes:}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{3pt}
+    \item Creen un diccionario \texttt{empleado} con claves
+          \mintinline{python}{"nombre"}, \mintinline{python}{"cargo"}, \mintinline{python}{"salario"}.
+    \item Impriman: \mintinline{python}{"Ana trabaja como Analista"} usando los valores.
+    \item Usen \mintinline{python}{.get("telefono", "Sin registro")} e impriman el resultado.
+  \end{enumerate}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  MÉTODOS ESENCIALES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Métodos Esenciales de Diccionarios}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Tres métodos para explorar un diccionario:}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+producto = {
+    "nombre": "Sprite 500ml",
+    "precio": 1.25,
+    "stock": 150
+}
+print("Claves:", list(producto.keys()))
+print("Valores:", list(producto.values()))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Claves: ['nombre', 'precio', 'stock']
+Valores: ['Sprite 500ml', 1.25, 150]
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      \vspace{2pt}
+      {\footnotesize
+      \renewcommand{\arraystretch}{1.3}
+      \begin{tabular}{@{}l p{3.4cm}@{}}
+        \toprule
+        {\bfseries\color{arcaDark} Método} &
+        {\bfseries\color{arcaDark} Devuelve} \\
+        \midrule
+        \texttt{.keys()}   & Todas las claves \\
+        \texttt{.values()} & Todos los valores \\
+        \texttt{.items()}  & Pares (clave, valor) \\
+        \texttt{.get(k,d)} & Valor o default \\
+        \texttt{.pop(k)}   & Elimina y devuelve \\
+        \bottomrule
+      \end{tabular}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ITERAR CON FOR
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Iterar sobre un Diccionario con \texttt{for}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    \texttt{.items()} entrega clave y valor en cada vuelta del ciclo.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+producto = {
+    "nombre": "Sprite 500ml",
+    "precio": 1.25,
+    "stock": 150
+}
+
+for clave, valor in producto.items():
+    print(f"{clave}: {valor}")
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+nombre: Sprite 500ml
+precio: 1.25
+stock: 150
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{for clave, valor in dict.items():}
+          desempaca cada par automáticamente.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Solo \texttt{for k in dict:} itera
+          las \textbf{claves} (sin valores).
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          \texttt{.items()} es el patrón más usado.
+          Funciona igual que el \texttt{for}
+          sobre listas que ya conocen.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO 2: MODIFICAR E ITERAR (MEDIO)
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Práctica: Ficha de Producto \hfill
+    {\normalsize\color{arcaRed}\faClock\ 5 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Practiquen modificar un diccionario e iterar sobre él.}
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries Partan de este diccionario:}
+  \vspace{2pt}
+  \begin{pyblock}
+producto = {"nombre": "Dasani 1L", "precio": 0.90, "stock": 200}
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{4pt}
+    \item Actualicen el precio a \texttt{0.95}.
+    \item Agreguen la clave \mintinline{python}{"proveedor"} con valor \mintinline{python}{"Arca"}.
+    \item Eliminen la clave \mintinline{python}{"stock"} con \mintinline{python}{del}.
+    \item Iteren con \texttt{.items()} e impriman cada par.
+  \end{enumerate}
+  }
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries Resultado esperado:}
+  \vspace{2pt}
+  \begin{outputblock}
+nombre: Dasani 1L
+precio: 0.95
+proveedor: Arca
+  \end{outputblock}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  LISTA DE DICCIONARIOS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Lista de Diccionarios --- Datos Tabulares}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Una lista de diccionarios es como una tabla:
+    cada dict es una fila, cada clave es una columna.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+clientes = [
+  {"nombre":"Tienda Sol", "pedido":30,
+   "zona":"Norte"},
+  {"nombre":"Mini ABC",   "pedido":15,
+   "zona":"Sur"},
+  {"nombre":"Super 10",   "pedido":50,
+   "zona":"Norte"},
+]
+
+for c in clientes:
+    print(c["nombre"], "->",
+          c["pedido"], "cajas")
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Tienda Sol -> 30 cajas
+Mini ABC -> 15 cajas
+Super 10 -> 50 cajas
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{clientes} es una \textbf{lista} de dicts.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{for c in clientes} itera cada dict.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \mintinline{python}{c["nombre"]} accede a la clave
+          de ese dict en particular.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Esto es la base de cómo funcionan
+          las tablas en Pandas (próximas clases).
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%  EJERCICIO 3: ACUMULAR CON LISTA DE DICTS (MEDIO-ALTO)
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Práctica: Total de Pedidos por Zona \hfill
+    {\normalsize\color{arcaRed}\faClock\ 6 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Recorran la lista, sumen los pedidos y cuenten por zona.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+clientes = [
+  {"nombre":"Tienda Sol", "pedido":30, "zona":"Norte"},
+  {"nombre":"Mini ABC",   "pedido":15, "zona":"Sur"},
+  {"nombre":"Super 10",   "pedido":50, "zona":"Norte"},
+  {"nombre":"Market 7",   "pedido":40, "zona":"Sur"},
+]
+  \end{pyblock}
+
+  \vspace{3pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{3pt}
+    \item Acumulen el \textbf{total general} de cajas pedidas.
+    \item Cuenten cuántos clientes son de zona \mintinline{python}{"Norte"}.
+    \item Impriman cada cliente con su pedido.
+    \item Impriman el total y la cantidad de clientes del Norte.
+  \end{enumerate}
+  }
+
+  \vspace{3pt}
+  {\scriptsize\color{textMuted}
+    Resultado esperado: Total = 135 cajas, Clientes Norte = 2.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO 4: FILTRAR Y CALCULAR (AVANZADO)
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Práctica: Reporte de Clientes Activos \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Filtren solo los clientes activos, calculen ingreso y reporten.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+clientes = [
+  {"nombre":"Tienda Sol","pedido":30,"zona":"Norte","activo":True},
+  {"nombre":"Mini ABC",  "pedido":15,"zona":"Sur",  "activo":False},
+  {"nombre":"Super 10",  "pedido":50,"zona":"Norte","activo":True},
+  {"nombre":"Bodega LP", "pedido":20,"zona":"Centro","activo":True},
+  {"nombre":"Market 7",  "pedido":40,"zona":"Sur",  "activo":True},
+]
+precio_caja = 12.50
+  \end{pyblock}
+
+  \vspace{3pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{3pt}
+    \item Recorran la lista y solo procesen clientes donde
+          \mintinline{python}{c["activo"]} sea \mintinline{python}{True}.
+    \item Para cada activo: \mintinline{python}{ingreso = c["pedido"] * precio_caja}.
+    \item Acumulen el ingreso total y cuenten los activos.
+    \item Impriman cada cliente procesado y el resumen final.
+  \end{enumerate}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO 5: MÉTRICAS CON DATOS TABULARES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Práctica: Métricas con Datos Tabulares \hfill
+    {\normalsize\color{arcaRed}\faClock\ 10 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Cierren la sección de diccionarios con un análisis más ejecutivo:
+    promedios, extremos y comparación por zona.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+registros = [
+  {"zona":"Norte",  "ventas":15200, "merma":1.8},
+  {"zona":"Sur",    "ventas": 8900, "merma":2.4},
+  {"zona":"Norte",  "ventas":12400, "merma":1.5},
+  {"zona":"Centro", "ventas": 6100, "merma":3.1},
+  {"zona":"Sur",    "ventas":18300, "merma":1.2},
+  {"zona":"Centro", "ventas": 7400, "merma":2.8},
+]
+  \end{pyblock}
+
+  \vspace{3pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{3pt}
+    \item Construyan una lista \mintinline{python}{ventas}
+          con todos los valores de la clave \mintinline{python}{"ventas"}.
+    \item Calculen el promedio general de ventas.
+    \item Encuentren la venta máxima y la mínima.
+    \item Calculen la merma promedio por zona.
+    \item Identifiquen:
+          la zona con peor merma promedio y
+          la zona con mayores ventas promedio.
+    \item Impriman un resumen ejecutivo final.
+  \end{enumerate}
+  }
+
+  \vspace{3pt}
+  {\scriptsize\color{textMuted}
+    Resultado de control:
+    promedio de ventas = 11383.33,
+    venta máxima = 18300,
+    venta mínima = 6100.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 2: FUNCIONES
+% =============================================================================
+\sectionframe{Funciones}{Instrucciones propias y reutilizables}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PYTHON Y OBJETOS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Python es Orientado a Objetos --- ¿Qué es un Objeto?}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    En Python, casi todo lo que usamos es un \textbf{objeto}:
+    números, textos, listas, diccionarios y también funciones.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Piensen en un objeto como:}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item Un dato que vive en memoria.
+        \item Algo que tiene un \textbf{valor}.
+        \item Algo que puede tener \textbf{comportamientos}
+          asociados.
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      \begin{pyblock}
+texto = "arca"
+numero = 12.5
+lista = [10, 20, 30]
+dicc = {"zona": "Norte"}
+
+print(type(texto))
+print(type(numero))
+print(type(lista))
+print(type(dicc))
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{outputblock}
+<class 'str'>
+<class 'float'>
+<class 'list'>
+<class 'dict'>
+      \end{outputblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item Un \texttt{str} tiene métodos como
+          \mintinline{python}{upper()}.
+        \item Una \texttt{list} tiene métodos como
+          \mintinline{python}{append()}.
+        \item Un \texttt{dict} tiene métodos como
+          \mintinline{python}{items()} y \mintinline{python}{get()}.
+        \item Una función también es un objeto:
+          se puede guardar en una variable y llamar.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+    Hoy no vamos a profundizar en clases y objetos complejos;
+    solo necesitamos esta idea: en Python trabajamos con
+    objetos y sus comportamientos.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  MOTIVACIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{El Código se Repite --- Las Funciones lo Resuelven}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Sin funciones --- copiar y pegar}
+      \begin{pyblock}
+# Calcular ingreso cliente 1
+ingreso1 = 30 * 12.50
+print("Tienda Sol:", ingreso1)
+
+# Calcular ingreso cliente 2
+ingreso2 = 50 * 12.50
+print("Super 10:", ingreso2)
+
+# Calcular ingreso cliente 3
+ingreso3 = 40 * 12.50
+print("Market 7:", ingreso3)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.50\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Con función --- se escribe una vez}
+      \begin{pyblock}
+def calcular_ingreso(nombre, cajas):
+    ingreso = cajas * 12.50
+    print(f"{nombre}: ${ingreso:.2f}")
+    return ingreso
+
+calcular_ingreso("Tienda Sol", 30)
+calcular_ingreso("Super 10", 50)
+calcular_ingreso("Market 7", 40)
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    Una \textbf{función} empaqueta lógica bajo un nombre.
+    Se define una vez y se llama cuantas veces sea necesario.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ANATOMÍA DE UNA FUNCIÓN - SINTAXIS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=26]{Anatomía de una Función --- La Firma}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.44\textwidth}
+      \vspace{-2pt}
+      \begin{center}
+      \begin{tikzpicture}[
+        node distance=0.5cm,
+        box/.style={rectangle, draw=arcaRed, fill=arcaRed!8,
+                    font=\tiny\ttfamily\bfseries, minimum width=2.8cm,
+                    minimum height=0.45cm, align=center, rounded corners=2pt},
+        lbl/.style={font=\tiny\color{textMuted}, align=center},
+        arr/.style={-{Stealth[length=2.5pt]}, line width=0.5pt}
+      ]
+        \node[box] (def) {\color{arcaRed}def};
+        \node[box, right=3pt of def, draw=arcaDark, fill=arcaDark!8]
+          (name) {\color{arcaDark}calcular\_ingreso};
+        \node[box, right=3pt of name, draw=codeBlue, fill=codeBlue!8]
+          (params) {\color{codeBlue}(cajas, precio)};
+        \node[lbl, below=2pt of def] {palabra\\clave};
+        \node[lbl, below=2pt of name] {nombre de\\la función};
+        \node[lbl, below=2pt of params] {parámetros\\(entradas)};
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def calcular_ingreso(cajas, precio):
+    ingreso = cajas * precio
+    return ingreso
+      \end{pyblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{def} inicia la definición.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{calcular\_ingreso} es el nombre
+          de la función.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{cajas, precio} son las entradas
+          que la función espera recibir.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          A esta primera línea se le suele llamar
+          la \textbf{firma} de la función.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ANATOMÍA DE UNA FUNCIÓN - CUERPO Y LLAMADA
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=26]{Anatomía de una Función --- Cuerpo y Llamada}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.42\textwidth}
+      \vspace{-2pt}
+      \begin{center}
+      \begin{tikzpicture}[
+        node distance=0.34cm,
+        box/.style={rectangle, draw=arcaRed, fill=arcaRed!8,
+                    font=\tiny\ttfamily\bfseries, minimum width=3.5cm,
+                    minimum height=0.48cm, align=center, rounded corners=2pt},
+        lbl/.style={font=\tiny\color{textMuted}, align=center},
+        arr/.style={-{Stealth[length=2.5pt]}, line width=0.5pt, arcaRed}
+      ]
+        \node[box, draw=arcaDark, fill=arcaDark!8, text=arcaDark] (call)
+          {calcular\_ingreso(30, 12.50)};
+        \node[lbl, left=2pt of call] {llamada};
+
+        \node[box, below=of call, draw=codeBlue, fill=codeBlue!8, text=codeBlue]
+          (params) {cajas = 30, precio = 12.50};
+        \node[lbl, left=2pt of params] {entradas};
+
+        \node[box, below=of params, draw=codeGreen, fill=codeGreen!8, text=codeGreen]
+          (body1) {ingreso = cajas * precio};
+        \node[lbl, left=2pt of body1] {cuerpo};
+
+        \node[box, below=of body1, draw=codeOrange, fill=codeOrange!8, text=codeOrange]
+          (ret) {return ingreso};
+        \node[lbl, left=2pt of ret] {salida};
+
+        \node[box, below=of ret, draw=arcaRed, fill=arcaRed!8, text=arcaDark]
+          (save) {resultado = 375.0};
+        \node[lbl, left=2pt of save] {resultado};
+
+        \draw[arr] (call) -- (params);
+        \draw[arr] (params) -- (body1);
+        \draw[arr] (body1) -- (ret);
+        \draw[arr] (ret) -- (save);
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+def calcular_ingreso(cajas, precio):
+    ingreso = cajas * precio
+    return ingreso
+
+resultado = calcular_ingreso(30, 12.50)
+print("Ingreso:", resultado)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Ingreso: 375.0
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{return} devuelve el resultado.
+          Sin él, la función devuelve \texttt{None}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Al llamar la función, \texttt{30} entra en
+          \texttt{cajas} y \texttt{12.50} entra en \texttt{precio}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Lo que vuelve con \texttt{return} se guarda
+          en \texttt{resultado}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  RETURN VS PRINT
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{\texttt{return} vs \texttt{print} --- No Son lo Mismo}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faExclamationTriangle\hspace{4pt}
+        Solo imprime --- no se puede reutilizar}
+      \begin{pyblock}
+def mostrar_total(cajas, precio):
+    print(cajas * precio)
+
+resultado = mostrar_total(30, 12.50)
+print("Guardado:", resultado)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+375.0
+Guardado: None
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Retorna --- el valor se puede usar después}
+      \begin{pyblock}
+def calcular_total(cajas, precio):
+    return cajas * precio
+
+resultado = calcular_total(30, 12.50)
+print("Guardado:", resultado)
+print("Con IVA:", resultado * 1.12)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Guardado: 375.0
+Con IVA: 420.0
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+    \texttt{print()} muestra texto en pantalla.
+    \texttt{return} entrega un valor que el programa puede
+    guardar, operar o pasar a otra función.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  VALORES POR DEFECTO Y SCOPE
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Parámetros con Valor por Defecto}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \vspace{2pt}
+      \begin{pyblock}
+def calcular_ingreso(cajas, precio=12.50):
+    return cajas * precio
+
+print(calcular_ingreso(30))
+print(calcular_ingreso(30, 15.00))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+375.0
+450.0
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{precio=12.50} es un valor por defecto.
+          Si no se pasa, usa 12.50.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Los parámetros con default van \textbf{al final}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Si llamo \texttt{calcular\_ingreso(30)},
+          Python usa 12.50 automáticamente.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Si llamo \texttt{calcular\_ingreso(30, 15.00)},
+          Python reemplaza el valor por defecto.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Los valores por defecto son útiles cuando
+          una opción se repite mucho y solo a veces cambia.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Alcance de Variables (Scope)}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Variable local dentro de la función:}
+      \vspace{2pt}
+      \begin{pyblock}
+def duplicar(x):
+    resultado = x * 2
+    return resultado
+
+print(duplicar(5))
+# print(resultado)  # Error: no existe aqui
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+10
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Las variables creadas \textbf{dentro}
+          de una función son \textbf{locales}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Eso significa que solo existen mientras
+          la función se ejecuta.
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          Intentar acceder a \texttt{resultado}
+          fuera de \texttt{duplicar()} da
+          \texttt{NameError}.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Si quieren usar ese valor afuera,
+          deben sacarlo con \texttt{return}
+          y guardarlo en otra variable.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=30]{¿Una Función Puede Cambiar Algo Fuera de su Scope?}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Sí, pero depende de \textbf{qué recibe} y de \textbf{qué hace} con eso.}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Reasignar una variable local no cambia la de afuera}
+      \begin{pyblock}
+def cambiar_numero(x):
+    x = x + 10
+
+valor = 5
+cambiar_numero(valor)
+print(valor)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+5
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Modificar una lista o diccionario sí se refleja afuera}
+      \begin{pyblock}
+def agregar_alerta(alertas):
+    alertas.append("PM2.5 alto")
+
+estado = []
+agregar_alerta(estado)
+print(estado)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+estado = ['PM2.5 alto']
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{1pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Reasignar una variable dentro de la función
+      no cambia la variable externa.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Si reciben una \textbf{lista} o \textbf{diccionario}
+      y lo modifican, el cambio sí se ve afuera.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Regla práctica: para evitar confusión,
+      prefieran \textbf{\texttt{return}}.
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FUNCIONES QUE PROCESAN LISTAS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Funciones que Procesan Colecciones}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Las funciones pueden recibir listas o diccionarios como parámetros.}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def resumen_ventas(ventas, meta):
+    total = 0
+    sobre_meta = 0
+    for v in ventas:
+        total += v
+        if v >= meta:
+            sobre_meta += 1
+    return total, sobre_meta
+
+datos = [150, 80, 200, 45, 310, 60]
+t, s = resumen_ventas(datos, 100)
+print(f"Total: {t}")
+print(f"Sobre meta: {s}")
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      \begin{outputblock}
+Total: 845
+Sobre meta: 3
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Se pueden retornar \textbf{varios valores}
+          separados por coma.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Al llamar: \texttt{t, s = func(...)}
+          desempacan los 2 valores.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          La lógica de acumuladores y contadores
+          que ya dominan ahora vive
+          dentro de una función reutilizable.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO 3: FUNCIONES DE ANÁLISIS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Práctica: Funciones de Análisis \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Creen funciones reutilizables para análisis de datos.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{4pt}
+        \item Función \texttt{calcular\_promedio(lista)}:
+              recibe una lista de números y retorna
+              el promedio.
+        \item Función \texttt{clasificar(valor, umbral)}:
+              retorna \mintinline{python}{"Alto"} si \mintinline{python}{valor >= umbral},
+              \mintinline{python}{"Bajo"} en otro caso.
+        \item Función \texttt{contar\_por\_clase(lista, umbral)}:
+              retorna cuántos son ``Alto'' y cuántos ``Bajo''.
+              (Usen \texttt{clasificar()} adentro.)
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \begin{pyblock}
+ventas = [150, 80, 200, 45, 310, 60]
+
+# Prueben sus funciones:
+# print(calcular_promedio(ventas))
+# print(clasificar(200, 100))
+# print(contar_por_clase(ventas,100))
+      \end{pyblock}
+
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          El punto 3 \textbf{llama} a la función
+          del punto 2. Una función puede
+          usar otra.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FUNCIONES SOBRE DICCIONARIOS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=31]{Funciones + Diccionarios --- Código Modular}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Las funciones pueden recibir y procesar diccionarios.}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def procesar_pedido(cliente, precio_caja):
+    ingreso = cliente["pedido"] * precio_caja
+    return {
+        "nombre": cliente["nombre"],
+        "ingreso": ingreso,
+        "estado": "OK" if cliente["activo"] else "INACTIVO"
+    }
+
+cliente = {"nombre":"Tienda Sol", "pedido":30, "activo":True}
+r = procesar_pedido(cliente, 12.50)
+print("nombre:", r["nombre"])
+print("ingreso:", r["ingreso"])
+print("estado:", r["estado"])
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      \begin{outputblock}
+  nombre: Tienda Sol
+  ingreso: 375.0
+  estado: OK
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Recibe un dict, calcula y retorna
+          un \textbf{nuevo dict}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Esto es modularidad: cada función
+          tiene una responsabilidad clara.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Así se construyen sistemas reales:
+          funciones pequeñas que se combinan.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO 4: FUNCIONES SOBRE LISTA DE DICTS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Práctica: Pipeline de Procesamiento \hfill
+    {\normalsize\color{arcaRed}\faClock\ 8 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Construyan un mini-pipeline con funciones que procesan
+    una lista de diccionarios.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+empleados = [
+  {"nombre": "Ana",   "ventas": 15200, "zona": "Norte"},
+  {"nombre": "Luis",  "ventas": 8900,  "zona": "Sur"},
+  {"nombre": "Maria", "ventas": 12400, "zona": "Norte"},
+  {"nombre": "Carlos","ventas": 6100,  "zona": "Centro"},
+  {"nombre": "Sofia", "ventas": 18300, "zona": "Sur"},
+]
+  \end{pyblock}
+
+  \vspace{3pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{3pt}
+    \item \texttt{filtrar\_zona(empleados, zona)}: retorna una lista con
+          solo los empleados de esa zona.
+    \item \texttt{total\_ventas(lista)}: retorna la suma de \mintinline{python}{"ventas"}
+          de todos los dicts en la lista.
+    \item Combínenlas: filtren zona \mintinline{python}{"Norte"},
+          calculen su total y compárenlo con el total general.
+  \end{enumerate}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: PROYECTO INTEGRADOR
+% =============================================================================
+\sectionframe{Proyecto Integrador}{Sistema de gestión de rutas}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PROYECTO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Proyecto: Sistema de Gestión de Rutas \hfill
+    {\normalsize\color{arcaRed}\faClock\ 20 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Un camión sale con carga limitada.
+    Construyan funciones modulares para gestionar la ruta.}
+
+  \vspace{3pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Datos:}
+      \vspace{2pt}
+      \begin{pyblock}
+paradas = [
+  {"cliente":"Tienda Sol","cajas":30,
+   "producto":"Coca-Cola","zona":"Norte"},
+  {"cliente":"Mini ABC","cajas":15,
+   "producto":"Sprite","zona":"Sur"},
+  {"cliente":"Super 10","cajas":50,
+   "producto":"Fanta","zona":"Norte"},
+  {"cliente":"Bodega LP","cajas":20,
+   "producto":"Coca-Cola","zona":"Centro"},
+  {"cliente":"Market 7","cajas":40,
+   "producto":"Dasani","zona":"Sur"},
+  {"cliente":"Don Pepe","cajas":10,
+   "producto":"Sprite","zona":"Norte"},
+]
+catalogo = ["Coca-Cola","Sprite","Dasani"]
+carga_inicial = 120
+precio_caja = 12.50
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\footnotesize\color{textMuted}
+        \textbf{Funciones a crear:}
+        \begin{enumerate}\setlength{\itemsep}{3pt}
+          \item \texttt{validar\_producto(prod, catalogo)}:
+            retorna \texttt{True/False}.
+          \item \texttt{procesar\_parada(parada, carga,}
+            \texttt{precio, catalogo)}:
+            retorna un dict con resultado
+            (entregado/rechazado, ingreso,
+            carga restante).
+          \item \texttt{generar\_reporte(resultados)}:
+            imprime resumen (entregas, rechazos,
+            ingreso total, carga final).
+        \end{enumerate}
+
+        \vspace{4pt}
+        \textbf{Lógica:}
+        \begin{itemize}\setlength{\itemsep}{1pt}
+          \item Producto no en catálogo $\rightarrow$
+            ``NO DISPONIBLE''
+          \item Carga insuficiente $\rightarrow$
+            ``SIN STOCK''
+          \item OK $\rightarrow$ entregar, restar carga
+        \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que logramos hoy}
+
+\begin{frame}{Lo que Aprendimos Hoy}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Nuestros programas ahora pueden \textbf{organizar datos}
+    y \textbf{reutilizar lógica}.}
+
+  \vspace{8pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{6pt}
+        \item[{\color{arcaRed}\Large\faDatabase}]
+          \textbf{Diccionarios}:
+          datos con clave-valor, acceso con
+          \mintinline{python}{["clave"]} y \mintinline{python}{.get()}.\\
+          {\scriptsize\color{textMuted}
+            Métodos: \texttt{.keys()}, \texttt{.values()},
+            \texttt{.items()}}
+
+        \item[{\color{arcaRed}\Large\faTable}]
+          \textbf{Listas de diccionarios}:
+          datos tabulares, base de Pandas.\\
+          {\scriptsize\color{textMuted}
+            Iterar con \mintinline{python}{for d in lista:}
+            y luego \mintinline{python}{d["clave"]}}
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{6pt}
+        \item[{\color{arcaRed}\Large\faCogs}]
+          \textbf{Funciones}:
+          \texttt{def}, parámetros, \texttt{return}.\\
+          {\scriptsize\color{textMuted}
+            Valores por defecto, retorno múltiple,
+            scope local}
+
+        \item[{\color{arcaRed}\Large\faPuzzlePiece}]
+          \textbf{Modularidad}:
+          funciones que procesan dicts y listas.\\
+          {\scriptsize\color{textMuted}
+            Cada función = una responsabilidad clara}
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Próxima Clase}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    En la Clase 5 conectamos Python con el mundo exterior:
+    archivos, errores y cadenas de texto.}
+
+  \vspace{8pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Ciclo \texttt{while}} ---
+      Repetir mientras una condición se cumpla.
+
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Manejo de strings} ---
+      Métodos para limpiar, buscar y transformar texto.
+
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{\texttt{try / except}} ---
+      Manejar errores sin que el programa se detenga.
+
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Lectura de archivos CSV} ---
+      Cargar datos reales desde archivos.
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  GRACIAS + QR
+% ─────────────────────────────────────────────────────────────────────────────
+\begingroup
+\setbeamertemplate{headline}{}%
+\setbeamertemplate{footline}{}%
+
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Huge\bfseries] at
+      ([yshift=0.5cm]current page.center) {Gracias};
+    \node[anchor=center, text=white!70, font=\large] at
+      ([yshift=-0.7cm]current page.center)
+      {cmosquerat@unal.edu.co};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[white] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed]
+      (current page.north west) rectangle ([yshift=-0.35cm]current page.north east);
+    \fill[arcaDark]
+      (current page.south west) rectangle ([yshift=0.35cm]current page.south east);
+    \node[anchor=center, text=arcaDark, font=\Large\bfseries] at
+      ([yshift=2.5cm]current page.center)
+      {Evaluación 360° del Programa};
+    \node[anchor=center, text=textMuted, font=\normalsize, text width=10cm,
+          align=center] at
+      ([yshift=1.5cm]current page.center)
+      {Escanea el código QR para completar la encuesta de evaluación.\\
+       Tu retroalimentación es fundamental para mejorar.};
+    \node[anchor=center] at ([yshift=-1.2cm]current page.center)
+      {\includegraphics[height=4.5cm]{qr_encuesta.jpg}};
+  \end{tikzpicture}
+\end{frame}
+
+\endgroup
+
+\end{document}

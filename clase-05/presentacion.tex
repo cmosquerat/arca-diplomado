@@ -1,0 +1,1803 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 5: Funciones — Del Dolor a la Solución
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% ── Codificación y lenguaje ──────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+% ── Fuentes ──────────────────────────────────────────────────────────────────
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Gráficos y diagramas ────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc, calc, fit, decorations.pathreplacing}
+\usepackage{fontawesome5}
+
+% ── Código fuente ────────────────────────────────────────────────────────────
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+
+% ── Tablas y utilidades ──────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+
+% =============================================================================
+%  PALETA DE COLORES CORPORATIVA
+% =============================================================================
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+
+% =============================================================================
+%  CONFIGURACIÓN DEL TEMA BEAMER
+% =============================================================================
+\usetheme{default}
+\usecolortheme{default}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+% =============================================================================
+%  HEADER
+% =============================================================================
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+% =============================================================================
+%  FOOTER
+% =============================================================================
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \draw[arcaLightGray, line width=0.4pt]
+      ([yshift=0.35cm, xshift=0.6cm]current page.south west) --
+      ([yshift=0.35cm, xshift=-0.6cm]current page.south east);
+    \node[anchor=south, font=\tiny\color{textMuted}] at
+      ([yshift=0.08cm]current page.south)
+      {Diplomado en Data Science Aplicada con Python \(\cdot\) Arca Continental Ecuador};
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.6cm, yshift=0.08cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.65cm}%
+}
+
+% =============================================================================
+%  FRAMETITLE
+% =============================================================================
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+% =============================================================================
+%  BLOQUES DE CÓDIGO
+% =============================================================================
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+% =============================================================================
+%  SECTION DIVIDERS
+% =============================================================================
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+% =============================================================================
+%  METADATOS
+% =============================================================================
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 5: Funciones --- Del Dolor a la Solución}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{23 de Marzo, 2026}
+
+\begin{document}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PORTADA
+% ─────────────────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ¿DÓNDE QUEDAMOS?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{¿Dónde Quedamos?}
+  \vspace{-4pt}
+  {\small\color{arcaDark}\bfseries En la clase anterior:}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{codeGreen}\faCheckCircle}]
+      Diccionarios: clave--valor, acceso, \texttt{.get()}, modificar, iterar.
+    \item[{\color{codeGreen}\faCheckCircle}]
+      Lista de diccionarios como tabla de datos.
+    \item[{\color{codeGreen}\faCheckCircle}]
+      Ejercicios con datos reales: reportes, métricas.
+  \end{itemize}
+  }
+
+  \vspace{8pt}
+  {\small\color{arcaRed}\bfseries Hoy agregamos:}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      \textbf{Funciones}: empaquetar lógica para no repetir código.
+    \item[{\color{arcaRed}\faArrowRight}]
+      \texttt{return} vs \texttt{print}, parámetros, scope.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Funciones que procesan listas y diccionarios.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Proyecto: sistema de comisiones para un equipo de ventas.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 1: EL DOLOR
+% =============================================================================
+\sectionframe{El Problema}{¿Qué pasa cuando el código se repite?}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  CÓDIGO REPETIDO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{El Código se Repite}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Tres clientes, el mismo cálculo copiado tres veces:}
+
+  \vspace{2pt}
+  \begin{pyblock}
+cajas_1, precio_1 = 30, 12.50
+ingreso_1 = cajas_1 * precio_1
+print(f"Cliente 1: {ingreso_1}")
+
+cajas_2, precio_2 = 15, 12.50
+ingreso_2 = cajas_2 * precio_2
+print(f"Cliente 2: {ingreso_2}")
+
+cajas_3, precio_3 = 50, 12.50
+ingreso_3 = cajas_3 * precio_3
+print(f"Cliente 3: {ingreso_3}")
+  \end{pyblock}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      Si el jefe dice ``ahora el precio incluye IVA'',
+      hay que cambiar \textbf{3 lugares}.
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      Con 50 clientes serían 50 bloques idénticos.
+    \item[{\color{arcaRed}\scriptsize\faBolt}]
+      \textbf{¿Hay una forma de escribir la fórmula una sola vez?}
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  LA SOLUCIÓN: FUNCIONES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{La Solución: Funciones}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      {\footnotesize\color{arcaRed}\bfseries\faTimes\hspace{4pt} Antes (repetido):}
+      \begin{pyblock}
+cajas_1, precio_1 = 30, 12.50
+ingreso_1 = cajas_1 * precio_1
+
+cajas_2, precio_2 = 15, 12.50
+ingreso_2 = cajas_2 * precio_2
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      {\footnotesize\color{codeGreen}\bfseries\faCheck\hspace{4pt} Después (función):}
+      \begin{pyblock}
+def calcular_ingreso(cajas, precio):
+    return cajas * precio
+
+ingreso_1 = calcular_ingreso(30, 12.50)
+ingreso_2 = calcular_ingreso(15, 12.50)
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      La fórmula se escribe \textbf{una sola vez} dentro de la función.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Si cambia el cálculo, se modifica \textbf{un solo lugar}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Se puede usar con cualquier cliente, las veces que haga falta.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 2: ANATOMÍA
+% =============================================================================
+\sectionframe{Anatomía de una Función}{Las piezas que la componen}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ANATOMÍA — LA FIRMA
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Anatomía de una Función --- La Firma}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+def calcular_ingreso(cajas, precio):
+    ingreso = cajas * precio
+    return ingreso
+      \end{pyblock}
+
+      \vspace{4pt}
+      \begin{center}
+      \begin{tikzpicture}[
+        node distance=0.25cm,
+        lbl/.style={font=\scriptsize\color{arcaRed}\bfseries},
+        desc/.style={font=\scriptsize\color{textMuted}}
+      ]
+        \node[lbl] (d) {\texttt{def}};
+        \node[desc, right=0.15cm of d] (d2) {palabra clave};
+
+        \node[lbl, below=of d] (n) {\texttt{calcular\_ingreso}};
+        \node[desc, right=0.15cm of n] (n2) {nombre de la función};
+
+        \node[lbl, below=of n] (p) {\texttt{(cajas, precio)}};
+        \node[desc, right=0.15cm of p] (p2) {parámetros (entradas)};
+
+        \node[lbl, below=of p] (c) {bloque indentado};
+        \node[desc, right=0.15cm of c] (c2) {cuerpo de la función};
+
+        \node[lbl, below=of c] (r) {\texttt{return}};
+        \node[desc, right=0.15cm of r] (r2) {salida (opcional)};
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{def} inicia la definición.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          El nombre describe \textbf{qué hace}
+          (verbo + sustantivo).
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Los parámetros son las entradas que
+          la función necesita para trabajar.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          El cuerpo contiene la lógica,
+          \textbf{indentado} con 4 espacios.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{return} devuelve el resultado.
+          Sin él, la función devuelve \texttt{None}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ANATOMÍA — CUERPO Y LLAMADA (FLUJO)
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Anatomía de una Función --- Cuerpo y Llamada}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.42\textwidth}
+      \vspace{-2pt}
+      \begin{center}
+      \begin{tikzpicture}[
+        node distance=0.34cm,
+        box/.style={rectangle, draw=arcaRed, fill=arcaRed!8,
+                    font=\tiny\ttfamily\bfseries, minimum width=3.5cm,
+                    minimum height=0.48cm, align=center, rounded corners=2pt},
+        lbl/.style={font=\tiny\color{textMuted}, align=center},
+        arr/.style={-{Stealth[length=2.5pt]}, line width=0.5pt, arcaRed}
+      ]
+        \node[box, draw=arcaDark, fill=arcaDark!8, text=arcaDark] (call)
+          {calcular\_ingreso(30, 12.50)};
+        \node[lbl, left=2pt of call] {llamada};
+
+        \node[box, below=of call, draw=codeBlue, fill=codeBlue!8, text=codeBlue]
+          (params) {cajas = 30, precio = 12.50};
+        \node[lbl, left=2pt of params] {entradas};
+
+        \node[box, below=of params, draw=codeGreen, fill=codeGreen!8, text=codeGreen]
+          (body1) {ingreso = cajas * precio};
+        \node[lbl, left=2pt of body1] {cuerpo};
+
+        \node[box, below=of body1, draw=codeOrange, fill=codeOrange!8, text=codeOrange]
+          (ret) {return ingreso};
+        \node[lbl, left=2pt of ret] {salida};
+
+        \node[box, below=of ret, draw=arcaRed, fill=arcaRed!8, text=arcaDark]
+          (save) {resultado = 375.0};
+        \node[lbl, left=2pt of save] {resultado};
+
+        \draw[arr] (call) -- (params);
+        \draw[arr] (params) -- (body1);
+        \draw[arr] (body1) -- (ret);
+        \draw[arr] (ret) -- (save);
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+def calcular_ingreso(cajas, precio):
+    ingreso = cajas * precio
+    return ingreso
+
+resultado = calcular_ingreso(30, 12.50)
+print("Ingreso:", resultado)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Ingreso: 375.0
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{return} devuelve el resultado.
+          Sin él, la función devuelve \texttt{None}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Al llamar la función, \texttt{30} entra en
+          \texttt{cajas} y \texttt{12.50} entra en \texttt{precio}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Lo que vuelve con \texttt{return} se guarda
+          en \texttt{resultado}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PARÁMETROS: QUÉ SON Y CÓMO FLUYEN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Los Parámetros Son la Pieza Clave}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Sin parámetros, una función siempre haría lo mismo.
+    Con ellos, es reutilizable.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Sin parámetros --- siempre hace lo mismo}
+      \begin{pyblock}
+def ingreso_fijo():
+    return 30 * 12.50
+
+print(ingreso_fijo())
+print(ingreso_fijo())
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+375.0
+375.0
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Con parámetros --- flexible}
+      \begin{pyblock}
+def ingreso(cajas, precio):
+    return cajas * precio
+
+print(ingreso(30, 12.50))
+print(ingreso(15, 9.00))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+375.0
+135.0
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Los parámetros son \textbf{variables temporales}
+      que solo existen dentro de la función.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Cada vez que llaman la función, esas variables
+      reciben valores nuevos.
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PARÁMETROS POSICIONALES VS POR NOMBRE
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{El Orden Importa --- Parámetros Posicionales}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Python asigna los valores en el orden en que los pasan:}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{pyblock}
+def describir(producto, cantidad, precio):
+    total = cantidad * precio
+    return f"{producto}: {cantidad} x {precio} = {total}"
+
+print(describir("Coca-Cola", 30, 12.50))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Coca-Cola: 30 x 12.5 = 375.0
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{codeOrange}\bfseries\faExclamationTriangle\hspace{2pt}
+        Si intercambian el orden:}
+      \begin{pyblock}
+print(describir(30, "Coca-Cola", 12.50))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+ERROR: no se puede multiplicar str x float
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{2pt}
+        Pueden usar el nombre para evitar errores:}
+      \begin{pyblock}
+print(describir(
+    precio=12.50,
+    cantidad=30,
+    producto="Coca-Cola"
+))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Coca-Cola: 30 x 12.5 = 375.0
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Si pasan los argumentos \textbf{por nombre},
+          el orden no importa.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Esto hace el código más legible
+          cuando hay muchos parámetros.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ¿QUÉ PASA SI PASO MÁS O MENOS ARGUMENTOS?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{¿Qué Pasa si Paso Más o Menos Argumentos?}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Python es estricto: la cantidad de argumentos debe coincidir.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Faltan argumentos:}
+      \begin{pyblock}
+def ingreso(cajas, precio):
+    return cajas * precio
+
+print(ingreso(30))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+TypeError: ingreso() missing 1 required
+  positional argument: 'precio'
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Sobran argumentos:}
+      \begin{pyblock}
+def ingreso(cajas, precio):
+    return cajas * precio
+
+print(ingreso(30, 12.50, 0.12))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+TypeError: ingreso() takes 2 positional
+  arguments but 3 were given
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Python les dice \textbf{exactamente} qué falta o sobra.
+      Aprendan a leer estos mensajes.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Si un parámetro a veces no se necesita,
+      denle un \textbf{valor por defecto} (lo veremos enseguida).
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO: MI PRIMERA FUNCIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Práctica: Mi Primera Función \hfill
+    {\normalsize\color{arcaRed}\faClock\ 5 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Conviertan este código repetido en una función:}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeOrange}\bfseries Código original (repetido):}
+      \begin{pyblock}
+cajas_a, precio_a = 30, 12.50
+total_a = cajas_a * precio_a * 1.12
+print(f"A: {total_a}")
+
+cajas_b, precio_b = 15, 12.50
+total_b = cajas_b * precio_b * 1.12
+print(f"B: {total_b}")
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries Escriban una función que:}
+      \vspace{2pt}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{3pt}
+        \item Se llame \texttt{calcular\_total}
+        \item Reciba \texttt{cajas} y \texttt{precio}
+        \item Calcule el total con IVA (12\%)
+        \item Retorne el resultado
+      \end{enumerate}
+      }
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}\bfseries Pruébenla con:}
+      \begin{pyblock}
+print(calcular_total(30, 12.50))
+print(calcular_total(15, 12.50))
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: RETURN VS PRINT
+% =============================================================================
+\sectionframe{\texttt{return} vs \texttt{print}}{No son lo mismo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  RETURN VS PRINT
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{\texttt{return} vs \texttt{print} --- No Son lo Mismo}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faExclamationTriangle\hspace{4pt}
+        Solo imprime --- no se puede reutilizar}
+      \begin{pyblock}
+def mostrar_total(cajas, precio):
+    print(cajas * precio)
+
+resultado = mostrar_total(30, 12.50)
+print("Guardado:", resultado)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+375.0
+Guardado: None
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Retorna --- el valor se puede usar después}
+      \begin{pyblock}
+def calcular_total(cajas, precio):
+    return cajas * precio
+
+resultado = calcular_total(30, 12.50)
+print("Guardado:", resultado)
+print("Con IVA:", resultado * 1.12)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Guardado: 375.0
+Con IVA: 420.0
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{2pt}
+  {\footnotesize\color{arcaDark}
+    \texttt{print()} muestra texto en pantalla.
+    \texttt{return} entrega un valor que el programa puede
+    guardar, operar o pasar a otra función.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO: ¿QUÉ RETORNA?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Predicción: ¿Qué imprime cada bloque? \hfill
+    {\normalsize\color{arcaRed}\faClock\ 5 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Predigan la salida \textbf{antes} de ejecutar:}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries Bloque A:}
+      \begin{pyblock}
+def doble(x):
+    return x * 2
+
+print(doble(5))
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{arcaRed}\bfseries Bloque B:}
+      \begin{pyblock}
+def doble(x):
+    x * 2
+
+print(doble(5))
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries Bloque C:}
+      \begin{pyblock}
+def saludar(nombre):
+    return "Hola " + nombre
+
+saludar("Ana")
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{arcaRed}\bfseries Bloque D:}
+      \begin{pyblock}
+def sumar(a, b):
+    print(a + b)
+
+resultado = sumar(3, 4)
+print("R:", resultado)
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Pista: presten atención a si hay \texttt{return},
+    si hay \texttt{print}, y si alguien guarda el resultado.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 4: PARÁMETROS Y SCOPE
+% =============================================================================
+\sectionframe{Parámetros a Fondo}{Valores por defecto, alcance y errores comunes}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PARÁMETROS POR DEFECTO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Parámetros con Valor por Defecto}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def calcular_ingreso(cajas, precio=12.50):
+    return cajas * precio
+
+print(calcular_ingreso(30))
+print(calcular_ingreso(30, 15.00))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+375.0
+450.0
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{precio=12.50} es un valor por defecto.
+          Si no se pasa, usa 12.50.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Los parámetros con default van \textbf{al final}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Si llamo \texttt{calcular\_ingreso(30)},
+          Python usa 12.50 automáticamente.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Los valores por defecto son útiles cuando
+          una opción se repite mucho y solo a veces cambia.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ALCANCE (SCOPE)
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Alcance de Variables (Scope)}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Variable local dentro de la función:}
+      \vspace{2pt}
+      \begin{pyblock}
+def duplicar(x):
+    resultado = x * 2
+    return resultado
+
+print(duplicar(5))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+10
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Las variables creadas \textbf{dentro}
+          de una función son \textbf{locales}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Eso significa que solo existen mientras
+          la función se ejecuta.
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          Intentar acceder a \texttt{resultado}
+          fuera de \texttt{duplicar()} da
+          \texttt{NameError}.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Si quieren usar ese valor afuera,
+          deben sacarlo con \texttt{return}
+          y guardarlo en otra variable.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ¿PUEDE UNA FUNCIÓN CAMBIAR ALGO FUERA?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{¿Una Función Puede Cambiar Algo Fuera de su Scope?}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Sí, pero depende de \textbf{qué recibe} y de \textbf{qué hace} con eso.}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Reasignar una variable local no cambia la de afuera}
+      \begin{pyblock}
+def cambiar_numero(x):
+    x = x + 10
+
+valor = 5
+cambiar_numero(valor)
+print(valor)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+5
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Modificar una lista sí se refleja afuera}
+      \begin{pyblock}
+def agregar_alerta(alertas):
+    alertas.append("stock bajo")
+
+estado = []
+agregar_alerta(estado)
+print("estado:", estado)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+estado: ['stock bajo']
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{1pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Reasignar una variable dentro de la función
+      no cambia la variable externa.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Si reciben una \textbf{lista} o \textbf{diccionario}
+      y lo modifican, el cambio sí se ve afuera.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Regla práctica: para evitar confusión,
+      prefieran \textbf{\texttt{return}}.
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PREDICCIÓN NIVEL 2 (después de enseñar defaults, scope, mutabilidad)
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Predicción Nivel 2: Más Trampas \hfill
+    {\normalsize\color{arcaRed}\faClock\ 5 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Apliquen lo que acaban de aprender.
+    Predigan la salida \textbf{antes} de ejecutar:}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries Bloque E:}
+      \begin{pyblock}
+def ingreso(cajas, precio=10):
+    return cajas * precio
+
+print(ingreso(5))
+print(ingreso(5, 20))
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{arcaRed}\bfseries Bloque F:}
+      \begin{pyblock}
+def agregar(lista, valor):
+    lista.append(valor)
+
+datos = [1, 2]
+agregar(datos, 3)
+print(datos)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries Bloque G:}
+      \begin{pyblock}
+x = 100
+def cambiar(x):
+    x = x + 50
+    return x
+
+cambiar(x)
+print(x)
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{arcaRed}\bfseries Bloque H:}
+      \begin{pyblock}
+def doble(n):
+    return n * 2
+def sumar_dobles(a, b):
+    return doble(a) + doble(b)
+
+print(sumar_dobles(3, 4))
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Pista: piensen en defaults, en listas mutables,
+    en scope y en composición.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO: PARÁMETROS EN ACCIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Práctica: Parámetros en Acción \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Creen una función \texttt{ficha\_cliente} que reciba datos
+    y retorne un resumen formateado.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{3pt}
+        \item Parámetros: \texttt{nombre}, \texttt{cajas},
+              \texttt{precio=12.50}, \texttt{iva=0.12}
+        \item Calcular: subtotal, impuesto, total
+        \item Retornar un string con el formato:
+      \end{enumerate}
+      }
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}\bfseries Resultado esperado:}
+      \begin{outputblock}
+Tienda Sol | 30 cajas
+  Subtotal: 375.0
+  IVA:      45.0
+  Total:    420.0
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\scriptsize\color{textMuted}\bfseries Pruébenla con:}
+      \begin{pyblock}
+print(ficha_cliente("Tienda Sol", 30))
+print(ficha_cliente("Mini ABC", 15,
+      precio=9.00))
+print(ficha_cliente("Super 10", 50,
+      precio=12.50, iva=0.15))
+      \end{pyblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Usen los defaults para que la primera
+          llamada funcione solo con nombre y cajas.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Las últimas llamadas pasan argumentos
+          \textbf{por nombre}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 5: EJERCICIO PROGRESIVO
+% =============================================================================
+\sectionframe{Ejercicio Progresivo}{Tres funciones que se encadenan}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO PROGRESIVO — PASO 1
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Paso 1: \texttt{calcular\_promedio} \hfill
+    {\normalsize\color{arcaRed}\faClock\ 3 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Creen una función que reciba una lista y retorne el promedio.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def calcular_promedio(lista):
+    # completar: sumar y dividir
+    pass
+
+ventas = [150, 80, 200, 45, 310]
+print(calcular_promedio(ventas))
+      \end{pyblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}\bfseries Resultado esperado:}
+      \begin{outputblock}
+157.0
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Usen \texttt{sum(lista)} para la suma.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Usen \texttt{len(lista)} para el conteo.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          \texttt{return} el resultado de dividir.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO PROGRESIVO — PASO 2
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Paso 2: \texttt{clasificar} \hfill
+    {\normalsize\color{arcaRed}\faClock\ 3 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Creen una función que clasifique un valor según un umbral.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def clasificar(valor, umbral):
+    # retornar "Alto" si valor >= umbral
+    # retornar "Bajo" en otro caso
+    pass
+
+print(clasificar(200, 100))
+print(clasificar(45, 100))
+      \end{pyblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}\bfseries Resultado esperado:}
+      \begin{outputblock}
+Alto
+Bajo
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Un \texttt{if/else} simple.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Cada rama lleva su \texttt{return}.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Cuando Python llega a un \texttt{return},
+          sale de la función inmediatamente.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO PROGRESIVO — PASO 3
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Paso 3: \texttt{contar\_por\_clase} --- Usar una función dentro de otra \hfill
+    {\normalsize\color{arcaRed}\faClock\ 5 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Creen una función que recorra la lista
+    y use \texttt{clasificar()} adentro.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def contar_por_clase(lista, umbral):
+    altos = 0
+    bajos = 0
+    for v in lista:
+        c = clasificar(v, umbral)
+        if c == "Alto":
+            altos += 1
+        else:
+            bajos += 1
+    return altos, bajos
+
+ventas = [150, 80, 200, 45, 310]
+a, b = contar_por_clase(ventas, 100)
+print(f"Altos: {a}, Bajos: {b}")
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}\bfseries Resultado esperado:}
+      \begin{outputblock}
+Altos: 3, Bajos: 2
+      \end{outputblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{contar\_por\_clase} \textbf{llama}
+          a \texttt{clasificar}. Una función puede
+          usar otra.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Retornar \textbf{dos valores}:
+          \texttt{return altos, bajos}.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Al llamar: \texttt{a, b = func(...)}
+          desempaca ambos valores.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 6: FUNCIONES + COLECCIONES
+% =============================================================================
+\sectionframe{Funciones + Colecciones}{Procesando listas y diccionarios}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FUNCIONES QUE PROCESAN COLECCIONES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Funciones que Procesan Colecciones}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Las funciones pueden recibir listas o diccionarios como parámetros.}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def resumen_ventas(ventas, meta):
+    total = 0
+    sobre_meta = 0
+    for v in ventas:
+        total += v
+        if v >= meta:
+            sobre_meta += 1
+    return total, sobre_meta
+
+datos = [150, 80, 200, 45, 310, 60]
+t, s = resumen_ventas(datos, 100)
+print(f"Total: {t}")
+print(f"Sobre meta: {s}")
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      \begin{outputblock}
+Total: 845
+Sobre meta: 3
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Se pueden retornar \textbf{varios valores}
+          separados por coma.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Al llamar: \texttt{t, s = func(...)}
+          desempacan los 2 valores.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          La lógica de acumuladores y contadores
+          que ya dominan ahora vive
+          dentro de una función reutilizable.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  FUNCIONES + DICCIONARIOS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=31]{Funciones + Diccionarios --- Código Modular}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Las funciones pueden recibir y procesar diccionarios.}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def procesar_pedido(cliente, precio_caja):
+    ingreso = cliente["pedido"] * precio_caja
+    return {
+        "nombre": cliente["nombre"],
+        "ingreso": ingreso,
+        "estado": "OK" if cliente["activo"] else "INACTIVO"
+    }
+
+c = {"nombre":"Tienda Sol", "pedido":30, "activo":True}
+r = procesar_pedido(c, 12.50)
+print("nombre:", r["nombre"])
+print("ingreso:", r["ingreso"])
+print("estado:", r["estado"])
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      \begin{outputblock}
+nombre: Tienda Sol
+ingreso: 375.0
+estado: OK
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Recibe un dict, calcula y retorna
+          un \textbf{nuevo dict}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Esto es modularidad: cada función
+          tiene una responsabilidad clara.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Así se construyen sistemas reales:
+          funciones pequeñas que se combinan.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO: PIPELINE
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Práctica: Pipeline de Distribución \hfill
+    {\normalsize\color{arcaRed}\faClock\ 12 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Creen tres funciones para analizar el rendimiento de vendedores.}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{3pt}
+        \item \texttt{calcular\_bono(vendedor, tasa=0.10)}:
+              Si \texttt{ventas >= meta}, bono = ventas $\times$ tasa.
+              Si no, bono = 0.
+              Retorna el dict con clave \mintinline{python}{"bono"} agregada.
+        \item \texttt{clasificar\_vendedor(vendedor)}:
+              Retorna \mintinline{python}{"Estrella"} si ventas $\geq$ 200,
+              \mintinline{python}{"Cumple"} si $\geq$ meta,
+              \mintinline{python}{"Bajo"} si no.
+        \item \texttt{reporte\_equipo(lista, tasa=0.10)}:
+              Recorre la lista, aplica ambas funciones,
+              imprime una línea por vendedor y al final
+              el total de bonos.
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \begin{pyblock}
+vendedores = [
+  {"nombre":"Ana", "ventas":250,
+   "meta":150},
+  {"nombre":"Luis","ventas":90,
+   "meta":150},
+  {"nombre":"Sol", "ventas":180,
+   "meta":150},
+  {"nombre":"Paco","ventas":310,
+   "meta":200}
+]
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}\bfseries Salida esperada:}
+      \begin{outputblock}
+Ana: Estrella, bono=25.0
+Luis: Bajo, bono=0
+Sol: Cumple, bono=18.0
+Paco: Estrella, bono=31.0
+Total bonos: 74.0
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 7: PROYECTO INTEGRADOR
+% =============================================================================
+\sectionframe{Proyecto Integrador}{Sistema de comisiones para un equipo de ventas}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PROYECTO — CONTEXTO Y DATOS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Proyecto: Sistema de Comisiones \hfill
+    {\normalsize\color{arcaRed}\faClock\ 20 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Un gerente regional necesita calcular comisiones, clasificar vendedores
+    y generar un reporte automático para su equipo.}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+equipo = [
+  {"nombre":"Ana",  "ventas":18500,
+   "meta":15000, "zona":"Norte"},
+  {"nombre":"Luis", "ventas":9200,
+   "meta":15000, "zona":"Sur"},
+  {"nombre":"Sol",  "ventas":22000,
+   "meta":15000, "zona":"Norte"},
+  {"nombre":"Paco", "ventas":15000,
+   "meta":15000, "zona":"Sur"},
+  {"nombre":"Mia",  "ventas":31000,
+   "meta":20000, "zona":"Norte"}
+]
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Reglas de comisión:}
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          ventas $<$ meta $\to$ comisión = 0
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          ventas $\geq$ meta $\to$ 5\% sobre ventas
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          ventas $\geq$ 2 $\times$ meta $\to$ 10\%
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      {\footnotesize\color{arcaDark}\bfseries Creen 4 funciones:}
+      {\scriptsize
+      \begin{enumerate}\setlength{\itemsep}{2pt}
+        \item \texttt{calcular\_comision(v)}
+        \item \texttt{clasificar(v)}
+              \\ {\color{textMuted}(Estrella / Cumple / Bajo)}
+        \item \texttt{resumen\_zona(equipo, zona)}
+        \item \texttt{reporte(equipo)}
+      \end{enumerate}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PROYECTO — FUNCIONES Y SALIDA ESPERADA
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Proyecto: Funciones y Salida Esperada \hfill
+    {\normalsize\color{arcaRed}\faClock\ cont.}}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Detalle de cada función:}
+      {\scriptsize
+      \begin{enumerate}\setlength{\itemsep}{3pt}
+        \item \texttt{calcular\_comision(vendedor)}:
+              validar que ventas $> 0$. Retorna el dict
+              con clave \mintinline{python}{"comision"} agregada.
+        \item \texttt{clasificar(vendedor)}:
+              ventas $\geq$ 2$\times$meta $\to$
+              \mintinline{python}{"Estrella"},
+              $\geq$ meta $\to$ \mintinline{python}{"Cumple"},
+              otro $\to$ \mintinline{python}{"Bajo"}.
+              Retorna el dict con clave
+              \mintinline{python}{"clase"}.
+        \item \texttt{resumen\_zona(equipo, zona)}:
+              filtra los vendedores de esa zona,
+              suma sus ventas y comisiones,
+              retorna un dict resumen.
+        \item \texttt{reporte(equipo)}:
+              aplica 1 y 2 a cada vendedor,
+              imprime una línea por persona,
+              luego llama a 3 por cada zona
+              y muestra los totales.
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\scriptsize\color{textMuted}\bfseries Salida esperada:}
+      \begin{outputblock}
+Ana   | Norte | Cumple   | $925.0
+Luis  | Sur   | Bajo     | $0
+Sol   | Norte | Cumple   | $1100.0
+Paco  | Sur   | Cumple   | $750.0
+Mia   | Norte | Estrella | $3100.0
+---
+Zona Norte: ventas=71500, com=5125.0
+Zona Sur:   ventas=24200, com=750.0
+Total comisiones: $5875.0
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Cada función hace \textbf{una sola cosa}.
+          Pruébenlas por separado.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          \texttt{reporte()} solo orquesta:
+          llama a las demás.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 8: VALIDACIÓN DE PARÁMETROS
+% =============================================================================
+\sectionframe{Validación de Parámetros}{Funciones que se protegen}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ¿POR QUÉ VALIDAR?
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{¿Qué Pasa Cuando los Datos Son Incorrectos?}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Sin validación, la función puede dar resultados absurdos o explotar.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Sin protección --- resultados absurdos}
+      \begin{pyblock}
+def ingreso(cajas, precio):
+    return cajas * precio
+
+print(ingreso(-5, 12.50))
+print(ingreso(30, 0))
+print(ingreso(30, -10))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+-62.5
+0
+-300
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Con validación --- se detecta el problema}
+      \begin{pyblock}
+def ingreso(cajas, precio):
+    if cajas < 0:
+        print("Error: cajas negativas")
+        return None
+    if precio <= 0:
+        print("Error: precio invalido")
+        return None
+    return cajas * precio
+
+print(ingreso(-5, 12.50))
+print(ingreso(30, 12.50))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Error: cajas negativas
+None
+375.0
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PATRÓN: GUARDIA
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Patrón Guardia --- Validar Antes de Calcular}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Las validaciones van \textbf{al inicio}:
+    si algo está mal, la función se detiene temprano.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def procesar_entrega(cliente, pedido,
+                     carga, precio):
+    if pedido <= 0:
+        return {"error": "pedido invalido"}
+    if pedido > carga:
+        return {"error": "sin stock"}
+    if precio <= 0:
+        return {"error": "precio invalido"}
+
+    ingreso = pedido * precio
+    return {
+        "cliente": cliente,
+        "ingreso": ingreso,
+        "restante": carga - pedido
+    }
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \begin{pyblock}
+r1 = procesar_entrega("Sol", 30, 100, 12.5)
+print(r1)
+r2 = procesar_entrega("Sol", -5, 100, 12.5)
+print(r2)
+r3 = procesar_entrega("Sol", 30, 10, 12.5)
+print(r3)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+resultado: {'cliente':'Sol','ingreso':375.0,
+  'restante':70}
+resultado: {'error':'pedido invalido'}
+resultado: {'error':'sin stock'}
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Cada \texttt{return} temprano
+          actúa como un \textbf{guardia}.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          El cálculo solo se ejecuta
+          si todos los guardias pasaron.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO: AGREGAR VALIDACIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Práctica: Blindar una Función \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Agreguen validaciones a esta función para que nunca
+    dé resultados absurdos:}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+def ficha_venta(producto, cantidad, precio):
+    subtotal = cantidad * precio
+    iva = subtotal * 0.12
+    total = subtotal + iva
+    return {
+        "producto": producto,
+        "total": total
+    }
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\footnotesize\color{arcaDark}\bfseries Validaciones requeridas:}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{2pt}
+        \item \texttt{cantidad} debe ser $> 0$
+        \item \texttt{precio} debe ser $> 0$
+        \item \texttt{producto} no puede estar vacío
+              (\texttt{""})
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\scriptsize\color{textMuted}\bfseries Pruébenla con:}
+      \begin{pyblock}
+print(ficha_venta("Coca", 30, 12.50))
+print(ficha_venta("", 30, 12.50))
+print(ficha_venta("Coca", -1, 12.50))
+print(ficha_venta("Coca", 30, 0))
+      \end{pyblock}
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Si algo está mal, retornar un dict
+          con clave \mintinline{python}{"error"}
+          y un mensaje descriptivo.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Primero las validaciones,
+          después el cálculo.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que logramos hoy}
+
+\begin{frame}[shrink=15]{Lo que Aprendimos Hoy}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Por qué existen las funciones.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{def}, parámetros, \texttt{return}.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Posicionales, por nombre, por defecto.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{return} vs \texttt{print}.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Scope y variables locales.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Funciones + listas y diccionarios.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Composición de funciones.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Validación (patrón guardia).
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Refactorización modular.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries Próxima clase:}
+  \vspace{2pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      Lectura y escritura de archivos (CSV).
+    \item[{\color{arcaRed}\faArrowRight}]
+      Manejo de errores con \texttt{try/except}.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Primer contacto con datos reales.
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  QR ENCUESTA
+% ─────────────────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1cm}
+  \begin{center}
+    {\Huge\bfseries\color{white} ¿Cómo estuvo la clase?\par}
+    \vspace{0.6cm}
+    \includegraphics[width=4cm]{qr_encuesta.jpg}
+    \vspace{0.4cm}
+    {\large\color{white!80} Escaneen el QR para la encuesta rápida\par}
+  \end{center}
+\end{frame}
+}
+
+\end{document}

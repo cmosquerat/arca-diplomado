@@ -1,0 +1,1775 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 3: Iteración y Lógica Aplicada
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% ── Codificación y lenguaje ──────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+% ── Fuentes ──────────────────────────────────────────────────────────────────
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Gráficos y diagramas ────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc, calc, fit, decorations.pathreplacing}
+\usepackage{fontawesome5}
+
+% ── Código fuente ────────────────────────────────────────────────────────────
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+
+% ── Tablas y utilidades ──────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+
+% =============================================================================
+%  PALETA DE COLORES CORPORATIVA
+% =============================================================================
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+
+% =============================================================================
+%  CONFIGURACIÓN DEL TEMA BEAMER
+% =============================================================================
+\usetheme{default}
+\usecolortheme{default}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+% =============================================================================
+%  HEADER
+% =============================================================================
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+% =============================================================================
+%  FOOTER
+% =============================================================================
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \draw[arcaLightGray, line width=0.4pt]
+      ([yshift=0.35cm, xshift=0.6cm]current page.south west) --
+      ([yshift=0.35cm, xshift=-0.6cm]current page.south east);
+    \node[anchor=south, font=\tiny\color{textMuted}] at
+      ([yshift=0.08cm]current page.south)
+      {Diplomado en Data Science Aplicada con Python \(\cdot\) Arca Continental Ecuador};
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.6cm, yshift=0.08cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.65cm}%
+}
+
+% =============================================================================
+%  FRAMETITLE
+% =============================================================================
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+% =============================================================================
+%  BLOQUES DE CÓDIGO
+% =============================================================================
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{pyblocknum}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=true, numbersep=8pt, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=8pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+% =============================================================================
+%  SECTION DIVIDERS
+% =============================================================================
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+% =============================================================================
+%  METADATOS
+% =============================================================================
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 3: Iteración y Lógica Aplicada}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{23 de Marzo, 2026}
+
+\begin{document}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PORTADA
+% ─────────────────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[white] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed]
+      (current page.north west) rectangle
+      ([yshift=-0.35cm]current page.north east);
+    \fill[arcaDark]
+      (current page.south west) rectangle
+      ([yshift=0.35cm]current page.south east);
+    \fill[arcaRed]
+      ([xshift=1.1cm, yshift=-0.35cm]current page.north west) rectangle
+      ([xshift=1.15cm, yshift=0.35cm]current page.south west);
+    \node[anchor=north west, inner sep=0pt] at
+      ([xshift=1.8cm, yshift=-1.2cm]current page.north west)
+      {\includegraphics[height=1.6cm]{../logo_udla.png}};
+    \node[anchor=north east, inner sep=0pt] at
+      ([xshift=-1.5cm, yshift=-1.2cm]current page.north east)
+      {\includegraphics[height=1.6cm]{../ArcaContinental.png}};
+    \node[anchor=center, text=arcaDark, text width=13cm, align=center] at
+      ([yshift=0.5cm]current page.center) {
+        {\huge\bfseries Diplomado en Data Science Aplicada}\\[6pt]
+        {\huge\bfseries con Python para la Toma de Decisiones}
+      };
+    \fill[arcaRed]
+      ([yshift=-0.7cm, xshift=-3cm]current page.center) rectangle
+      ([yshift=-0.63cm, xshift=3cm]current page.center);
+    \node[anchor=center, text=arcaDark, text width=13cm, align=center] at
+      ([yshift=-1.5cm]current page.center) {
+        {\Large\bfseries Clase 3: Iteración y Lógica Aplicada}
+      };
+    \node[anchor=center, text=textMuted] at
+      ([yshift=-2.5cm]current page.center) {
+        {\normalsize Carlos Enrique Mosquera Trujillo}
+      };
+    \node[anchor=center, text=textMuted] at
+      ([yshift=-3.1cm]current page.center) {
+        {\small 23 de Marzo, 2026}
+      };
+  \end{tikzpicture}
+\end{frame}
+}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  RECAP
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}{¿Dónde Quedamos?}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    En la Clase 2 aprendimos a comparar, decidir y agrupar datos.
+    Hoy consolidamos esas bases y aprendemos a \textbf{automatizar}.}
+
+  \vspace{8pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Ya vimos (necesitamos afianzar):}
+      \vspace{4pt}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeOrange}\scriptsize\faWrench}]
+          Operadores lógicos: \texttt{and}, \texttt{or}, \texttt{not}
+        \item[{\color{codeOrange}\scriptsize\faWrench}]
+          Listas: crear, acceder, modificar
+      \end{itemize}
+      }
+      \vspace{6pt}
+      {\footnotesize\color{arcaDark}\bfseries Ya dominamos:}
+      \vspace{4pt}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Comparaciones: \texttt{==}, \texttt{>}, \texttt{<}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          Condicionales: \texttt{if / elif / else}
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Hoy agregamos:}
+      \vspace{4pt}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Slicing y métodos de listas
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Ciclos \texttt{for} y \texttt{range()}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Contadores y acumuladores
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          El operador \texttt{in}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Proyecto integrador completo
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Empezamos repasando lo que vimos: operadores lógicos
+    y listas. Después, avanzamos con ciclos.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 1: REPASO — LÓGICA BOOLEANA
+% =============================================================================
+\sectionframe{Repaso: Lógica Booleana}{Operadores lógicos en contexto operativo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  REPASO: REGLAS DE and / or / not
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Recordatorio: \texttt{and}, \texttt{or}, \texttt{not}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Tres operadores, tres reglas:}
+
+  \vspace{6pt}
+  {\footnotesize
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}l l l@{}}
+    \toprule
+    {\bfseries\color{arcaDark} Operador} &
+    {\bfseries\color{arcaDark} Resultado} &
+    {\bfseries\color{arcaDark} En una frase} \\
+    \midrule
+    \texttt{A and B} & \texttt{True} solo si \textbf{ambos} son \texttt{True}
+      & ``Se necesitan las dos cosas'' \\
+    \texttt{A or B}  & \texttt{True} si \textbf{al menos uno} es \texttt{True}
+      & ``Basta con una de las dos'' \\
+    \texttt{not A}   & Invierte el valor
+      & ``Lo contrario'' \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{pyblock}
+hay_stock = True
+tiene_credito = False
+zona_bloqueada = False
+
+print(hay_stock and tiene_credito)
+print(hay_stock or tiene_credito)
+print(not zona_bloqueada)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \vspace{4pt}
+      \pause
+      \begin{outputblock}
+False
+True
+True
+      \end{outputblock}
+      \vspace{4pt}
+      {\footnotesize\color{textMuted}
+        El stock existe pero el crédito no:
+        \texttt{and} exige ambos,
+        \texttt{or} acepta cualquiera.
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PRÁCTICA: CONSTRUIR CONDICIONES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Práctica: Traducir Reglas a Código \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}5 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Traduzcan cada regla de negocio a una expresión booleana en Python.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+temperatura = 38
+humedad = 72
+en_mantenimiento = False
+stock = 45
+minimo = 50
+es_preferente = True
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\footnotesize\color{textMuted}
+  \begin{enumerate}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      ``Hay riesgo ambiental si la temperatura supera 35°C
+      \textbf{o} la humedad supera 80\%.''
+    \item[{\color{arcaRed}\bfseries 2.}]
+      ``La alarma suena si hay riesgo
+      \textbf{y} el sistema no está en mantenimiento.''
+    \item[{\color{arcaRed}\bfseries 3.}]
+      ``Se despacha si el stock alcanza
+      \textbf{o} el cliente es preferente.''
+    \item[{\color{arcaRed}\bfseries 4.}]
+      ``Se bloquea si el stock no alcanza
+      \textbf{y} no es preferente.''
+  \end{enumerate}
+  }
+
+  \vspace{3pt}
+  {\scriptsize\color{arcaDark}
+    Las reglas 3 y 4 son complementarias.
+    Verifiquen que una dé \texttt{True} y la otra \texttt{False}.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  SOLUCIÓN
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Solución --- Traducir Reglas a Código}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+temperatura = 38
+humedad = 72
+en_mantenimiento = False
+stock = 45
+minimo = 50
+es_preferente = True
+
+riesgo = temperatura > 35 or humedad > 80
+alarma = riesgo and not en_mantenimiento
+despacha = stock >= minimo or es_preferente
+bloquea = stock < minimo and not es_preferente
+
+print("Riesgo:", riesgo)
+print("Alarma:", alarma)
+print("Despacha:", despacha)
+print("Bloquea:", bloquea)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{4pt}
+      \begin{outputblock}
+Riesgo: True
+Alarma: True
+Despacha: True
+Bloquea: False
+      \end{outputblock}
+      \vspace{4pt}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{or} para riesgo: basta
+          que un sensor detecte peligro.
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{and not} para la alarma:
+          el mantenimiento la silencia.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Cambien \texttt{es\_preferente = False}
+          y verifiquen que ahora sí se bloquea.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 2: REPASO DE LISTAS (continuación del repaso)
+% =============================================================================
+\sectionframe{Repaso: Listas}{Índices, slicing y métodos --- profundizamos}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  LISTAS: CONCEPTO E ÍNDICES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Listas --- Cómo Funcionan los Índices}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Una lista guarda varios valores bajo un solo nombre.
+    Cada valor tiene una \textbf{posición} (índice) que empieza en \texttt{0}.}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    cell/.style={draw=arcaRed, fill=arcaGray, minimum width=2.2cm,
+                 minimum height=0.6cm, font=\footnotesize\ttfamily},
+    idx/.style={font=\scriptsize\color{arcaRed}\bfseries}
+  ]
+    \node[cell] (c0) at (0,0) {"GYE Norte"};
+    \node[cell] (c1) at (2.4,0) {"GYE Sur"};
+    \node[cell] (c2) at (4.8,0) {"Manta"};
+    \node[cell] (c3) at (7.2,0) {"Cuenca"};
+    \node[idx, above=1pt of c0] {0};
+    \node[idx, above=1pt of c1] {1};
+    \node[idx, above=1pt of c2] {2};
+    \node[idx, above=1pt of c3] {3};
+    \node[font=\scriptsize\color{textMuted}, below=1pt of c0] {-4};
+    \node[font=\scriptsize\color{textMuted}, below=1pt of c1] {-3};
+    \node[font=\scriptsize\color{textMuted}, below=1pt of c2] {-2};
+    \node[font=\scriptsize\color{textMuted}, below=1pt of c3] {-1};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+rutas = ["GYE Norte","GYE Sur","Manta","Cuenca"]
+print(rutas[0])
+print(rutas[2])
+print(rutas[-1])
+print(len(rutas))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+GYE Norte
+Manta
+Cuenca
+4
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{[0]} es el \textbf{primer} elemento.
+          No el 1.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{[-1]} es el \textbf{último},
+          \texttt{[-2]} el penúltimo.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{len()} devuelve la cantidad
+          de elementos (4), pero el último
+          índice válido es \texttt{3}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{rutas[4]} daría error:
+          \texttt{IndexError}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  LISTAS: SLICING
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Listas --- Slicing (Rebanadas)}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Con \texttt{lista[inicio:fin]} extraemos un subconjunto.
+    El índice \texttt{fin} \textbf{no se incluye}.}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    cell/.style={draw=arcaRed, fill=arcaGray, minimum width=1.6cm,
+                 minimum height=0.55cm, font=\scriptsize\ttfamily},
+    idx/.style={font=\tiny\color{arcaRed}\bfseries}
+  ]
+    \node[cell] (c0) at (0,0) {1.50};
+    \node[cell] (c1) at (1.8,0) {1.25};
+    \node[cell] (c2) at (3.6,0) {0.90};
+    \node[cell] (c3) at (5.4,0) {1.10};
+    \node[cell] (c4) at (7.2,0) {0.80};
+    \node[idx, above=1pt of c0] {0};
+    \node[idx, above=1pt of c1] {1};
+    \node[idx, above=1pt of c2] {2};
+    \node[idx, above=1pt of c3] {3};
+    \node[idx, above=1pt of c4] {4};
+    \draw[arcaRed, thick, decorate, decoration={brace, amplitude=4pt, mirror}]
+      ([yshift=-3pt]c1.south west) -- ([yshift=-3pt]c2.south east)
+      node[midway, below=4pt, font=\tiny\color{arcaRed}] {\texttt{[1:3]}};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+precios = [1.50, 1.25, 0.90, 1.10, 0.80]
+print("precios[1:3] =", precios[1:3])
+print("precios[:2]  =", precios[:2])
+print("precios[3:]  =", precios[3:])
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+precios[1:3] = [1.25, 0.9]
+precios[:2]  = [1.5, 1.25]
+precios[3:]  = [1.1, 0.8]
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{[1:3]} $\rightarrow$ índices 1 y 2.
+          El 3 \textbf{queda fuera}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{[:2]} = desde el inicio hasta
+          el índice 2 (sin incluirlo).
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{[3:]} = desde el índice 3
+          hasta el final.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          La lista original \textbf{no se modifica}.
+          Slicing crea una copia.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  LISTAS: MÉTODOS ESENCIALES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Listas --- Métodos Esenciales}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+rutas = ["GYE Norte", "Manta"]
+rutas.append("Cuenca")
+print("Append:", rutas)
+rutas[0] = "Guayaquil N."
+print("Reasig:", rutas)
+rutas.sort()
+print("Sort:  ", rutas)
+rutas.pop(1)
+print("Pop(1):", rutas)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Append: ['GYE Norte', 'Manta', 'Cuenca']
+Reasig: ['Guayaquil N.', 'Manta', 'Cuenca']
+Sort:   ['Cuenca', 'Guayaquil N.', 'Manta']
+Pop(1): ['Cuenca', 'Manta']
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      \vspace{2pt}
+      {\footnotesize
+      \renewcommand{\arraystretch}{1.3}
+      \begin{tabular}{@{}l p{4cm}@{}}
+        \toprule
+        {\bfseries\color{arcaDark} Método} &
+        {\bfseries\color{arcaDark} Qué hace} \\
+        \midrule
+        \texttt{.append(x)}  & Agrega \texttt{x} al final \\
+        \texttt{.remove(x)}  & Elimina la primera aparición de \texttt{x} \\
+        \texttt{.sort()}     & Ordena de menor a mayor \\
+        \texttt{.pop(i)}     & Elimina y devuelve el elemento en posición \texttt{i} \\
+        \texttt{lista[i]=v}  & Reemplaza el valor en posición \texttt{i} \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{6pt}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          Estos métodos \textbf{modifican}
+          la lista original (in-place).
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          \texttt{.pop()} sin argumento
+          elimina el último elemento.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO 1: SLICING
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Práctica: Selección de Turnos \hfill
+    {\normalsize\color{arcaRed}\faClock\ 5 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Una planta registra la producción por turno en la semana.
+    Usen slicing para responder cada pregunta.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+produccion = [820, 915, 780, 860, 950, 700, 610]
+# Lunes=0  Mar=1  Mié=2  Jue=3  Vie=4  Sáb=5  Dom=6
+  \end{pyblock}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{6pt}
+        \item Extraigan la producción de martes a jueves
+              (índices 1, 2, 3).
+        \item Extraigan los primeros 3 días de la semana.
+        \item Extraigan el fin de semana (sábado y domingo).
+        \item ¿Qué devuelve \texttt{produccion[-3:]}?
+              Expliquen por qué.
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Recuerden: \texttt{[a:b]} incluye \texttt{a}
+          pero \textbf{no} incluye \texttt{b}.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          \texttt{[:n]} = primeros \texttt{n}.
+          \texttt{[-n:]} = últimos \texttt{n}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EJERCICIO 2: MÉTODOS DE LISTAS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Práctica: Gestión de Inventario \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Tienen una lista de productos en bodega.
+    Apliquen los métodos para actualizar el inventario paso a paso.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+bodega = ["Agua 500ml", "Cola 2L", "Jugo 1L", "Agua 1L"]
+  \end{pyblock}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{5pt}
+        \item Agreguen \texttt{"Te 500ml"} al final
+              con \texttt{.append()}.
+        \item El producto en posición 1 cambió de nombre
+              a \texttt{"Cola 2.5L"}. Reasignen.
+        \item Eliminen \texttt{"Jugo 1L"} con
+              \texttt{.remove()}.
+        \item Ordenen la bodega alfabéticamente
+              con \texttt{.sort()}.
+        \item Retiren el último producto con
+              \texttt{.pop()} e impriman cuál era.
+        \item Impriman la bodega final y
+              su cantidad con \texttt{len()}.
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Ejecuten \texttt{print(bodega)}
+          después de cada paso para ver
+          cómo cambia.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          \texttt{.pop()} devuelve el elemento
+          eliminado; guárdenlo en una variable.
+        \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+          ¿Qué pasa si intentan
+          \texttt{.remove("Coca 3L")}
+          (un producto que no existe)?
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: CONTENIDO NUEVO — CICLOS FOR
+% =============================================================================
+\sectionframe{Ciclos \texttt{for}}{No repitas código, repite instrucciones}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EL PROBLEMA — PUENTE DESDE LISTAS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Ya Sabemos Acceder --- Pero Uno por Uno}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Acabamos de practicar \texttt{lista[i]} para leer elementos.
+    ¿Qué pasa cuando la lista tiene muchos valores?}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Acceso manual --- no escala}
+      \begin{pyblock}
+precios = [1.50, 1.25, 0.90, 1.10, 0.80]
+print("Producto 1:", precios[0])
+print("Producto 2:", precios[1])
+print("Producto 3:", precios[2])
+print("Producto 4:", precios[3])
+print("Producto 5:", precios[4])
+# Y si fueran 500 productos...?
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.50\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Con ciclo \texttt{for} --- funciona para 5 o 5\,000}
+      \begin{pyblock}
+precios = [1.50, 1.25, 0.90, 1.10, 0.80]
+for precio in precios:
+    print("Producto:", precio)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Producto: 1.5
+Producto: 1.25
+Producto: 0.9
+Producto: 1.1
+Producto: 0.8
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+    \textbf{El ciclo \texttt{for}} toma cada elemento de la lista,
+    lo asigna a una variable temporal (\texttt{precio}),
+    y ejecuta el bloque indentado con ese valor.
+    La misma lógica para 5 elementos o 5\,000.}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ANATOMÍA DEL for — DIAGRAMA DE FLUJO
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Anatomía del Ciclo \texttt{for}}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.38\textwidth}
+      \vspace{-2pt}
+      \begin{center}
+      \begin{tikzpicture}[
+        node distance=0.55cm,
+        startstop/.style={rounded rectangle, draw=arcaDark, fill=arcaDark!10,
+                  font=\tiny\bfseries, minimum width=2.4cm,
+                  minimum height=0.4cm, align=center},
+        process/.style={rectangle, draw=arcaRed, fill=arcaRed!8,
+                  font=\tiny\ttfamily, minimum width=2.4cm,
+                  minimum height=0.4cm, align=center},
+        decision/.style={diamond, draw=codeOrange, fill=codeOrange!10,
+                  font=\tiny\bfseries, aspect=2.2, inner sep=1pt,
+                  align=center},
+        arr/.style={-{Stealth[length=2.5pt]}, line width=0.5pt}
+      ]
+        \node[startstop] (start) {Inicio del \texttt{for}};
+        \node[decision, below=of start] (check) {¿Quedan\\elementos?};
+        \node[process, below=of check] (assign) {producto = siguiente};
+        \node[process, below=of assign] (body) {ejecutar bloque};
+        \node[startstop, right=1.2cm of check] (end) {Fin del\\ciclo};
+
+        \draw[arr] (start) -- (check);
+        \draw[arr] (check) -- node[left, font=\tiny\color{codeGreen}] {Sí} (assign);
+        \draw[arr] (check) -- node[above, font=\tiny\color{arcaRed}] {No} (end);
+        \draw[arr] (assign) -- (body);
+        \draw[arr] (body.west) -- ++(-0.5,0) |- (check.west);
+      \end{tikzpicture}
+      \end{center}
+
+      \vspace{4pt}
+      {\tiny\color{textMuted}
+        El ciclo repite el bloque una vez por cada
+        elemento. Cuando no quedan más, continúa
+        con el código que sigue después.}
+    \end{column}
+
+    \begin{column}{0.58\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries La sintaxis:}
+      \vspace{2pt}
+      \begin{center}
+      \begin{tikzpicture}[
+        lbl/.style={font=\tiny\color{textMuted}, align=center},
+        box/.style={draw=arcaRed, fill=arcaRed!8, rounded corners=3pt,
+                    font=\scriptsize\ttfamily\bfseries, inner xsep=4pt,
+                    minimum height=0.4cm},
+      ]
+        \node[font=\scriptsize\ttfamily\color{arcaRed}\bfseries] (for) {for};
+        \node[box, right=2pt of for] (var) {\color{arcaDark}producto};
+        \node[font=\scriptsize\ttfamily, right=2pt of var] (in) {in};
+        \node[box, right=2pt of in, draw=arcaDark, fill=arcaDark!8]
+          (lst) {\color{arcaDark}productos};
+        \node[font=\scriptsize\ttfamily, right=1pt of lst] (col) {:};
+        \node[lbl, below=2pt of var] {variable\\temporal};
+        \node[lbl, below=2pt of lst] {secuencia\\a recorrer};
+      \end{tikzpicture}
+      \end{center}
+
+      \vspace{4pt}
+      \begin{pyblock}
+productos = ["Coca-Cola", "Sprite", "Dasani"]
+for producto in productos:
+    print("Procesando:", producto)
+print("Listo")
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Procesando: Coca-Cola
+Procesando: Sprite
+Procesando: Dasani
+Listo
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{producto} toma un valor distinto en cada vuelta.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Solo el código \textbf{indentado} se repite.
+          \texttt{print("Listo")} se ejecuta una sola vez al final.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          El nombre de la variable es libre.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  for con range()
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Ciclo \texttt{for} con \texttt{range()}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Cuando necesitamos contar o acceder por índice,
+    usamos \texttt{range()}.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \begin{pyblock}
+rutas    = ["GYE Norte", "Manta", "Cuenca"]
+ingresos = [15200, 12400, 6300]
+
+for i in range(len(rutas)):
+    print(rutas[i], "->", ingresos[i])
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+GYE Norte -> 15200
+Manta -> 12400
+Cuenca -> 6300
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.46\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{range(3)} genera \texttt{0, 1, 2}.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{range(len(rutas))} adapta
+          el conteo al tamaño de la lista.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Con \texttt{i} accedemos a la misma
+          posición en \textbf{varias listas}
+          simultáneamente.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  ARGUMENTOS DE range()
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Entendiendo \texttt{range(inicio, fin, paso)}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    \texttt{range()} puede recibir 1, 2 o 3 argumentos.}
+
+  \vspace{4pt}
+  {\footnotesize
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}l l l@{}}
+    \toprule
+    {\bfseries\color{arcaDark} Forma} &
+    {\bfseries\color{arcaDark} Genera} &
+    {\bfseries\color{arcaDark} Nota} \\
+    \midrule
+    \texttt{range(5)}        & \texttt{0, 1, 2, 3, 4}  & Empieza en 0 \\
+    \texttt{range(2, 6)}     & \texttt{2, 3, 4, 5}     & El 6 no se incluye \\
+    \texttt{range(0, 10, 3)} & \texttt{0, 3, 6, 9}     & Salta de 3 en 3 \\
+    \texttt{range(5, 0, -1)} & \texttt{5, 4, 3, 2, 1}  & Cuenta hacia atrás \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{pyblock}
+print("range(5):", list(range(5)))
+print("range(2,6):", list(range(2, 6)))
+print("range(0,10,3):", list(range(0, 10, 3)))
+  \end{pyblock}
+  \vspace{-2pt}
+  \begin{outputblock}
+range(5): [0, 1, 2, 3, 4]
+range(2,6): [2, 3, 4, 5]
+range(0,10,3): [0, 3, 6, 9]
+  \end{outputblock}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PATRÓN ACUMULADOR
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{El Patrón Acumulador}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Para sumar sobre una lista:
+    iniciar en cero, sumar en cada vuelta.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+pedidos = [120, 45, 200, 30, 180, 95, 60, 75]
+total = 0
+for cantidad in pedidos:
+    total += cantidad
+print("Total de cajas:", total)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Total de cajas: 805
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Antes:} \texttt{total = 0}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Dentro:} \texttt{total += cantidad}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Después:} \texttt{total} tiene
+          la suma de todos.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          \texttt{+=} es abreviación de
+          \texttt{total = total + cantidad}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PRÁCTICA: ACUMULADOR
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Práctica: Costo Total de Envío \hfill
+    {\normalsize\color{arcaRed}\faClock\ 5 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Tres camiones salen de bodega. Cada uno tiene un costo de
+    combustible distinto. Calculen el costo total.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+costos_combustible = [85.50, 120.00, 67.30, 95.80, 110.25]
+  \end{pyblock}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{5pt}
+        \item Creen una variable \texttt{total} inicializada en \texttt{0}.
+        \item Recorran la lista con \texttt{for} y acumulen cada costo.
+        \item Impriman el costo total al terminar.
+        \item Calculen también el \textbf{promedio}
+              (total dividido entre la cantidad de camiones).
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Para el promedio: \texttt{len(lista)}
+          les da la cantidad de elementos.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          El resultado esperado es
+          \texttt{478.85} de total y
+          \texttt{95.77} de promedio.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  CONTADORES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Contadores --- Contar Eventos en un Ciclo}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Un \textbf{contador} suma \texttt{1} cada vez que algo ocurre.
+    Un \textbf{acumulador} suma \textbf{valores}.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+ventas = [150, 80, 200, 45, 310, 60, 95]
+meta = 100
+
+cumplieron = 0
+no_cumplieron = 0
+
+for venta in ventas:
+    if venta >= meta:
+        cumplieron += 1
+    else:
+        no_cumplieron += 1
+
+print("Cumplieron:", cumplieron)
+print("No cumplieron:", no_cumplieron)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Cumplieron: 3
+No cumplieron: 4
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Acumulador:} suma valores
+          (\texttt{total += venta}).
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Contador:} suma 1
+          (\texttt{cont += 1}).
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Se pueden usar \textbf{varios}
+          contadores en un mismo ciclo.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Siempre inicializar en \texttt{0}
+          \textbf{antes} del \texttt{for}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PRÁCTICA: CONTADORES
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=25]{Práctica: Clasificación de Temperaturas \hfill
+    {\normalsize\color{arcaRed}\faClock\ 6 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Una línea de producción registró temperaturas cada hora.
+    Clasifiquen y cuenten.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+temperaturas = [72, 85, 91, 68, 88, 95, 74, 90, 82, 78]
+limite = 85
+  \end{pyblock}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{5pt}
+        \item Cuenten cuántas mediciones están
+              \textbf{por encima} del límite y
+              cuántas \textbf{dentro del rango}.
+        \item Calculen la temperatura \textbf{promedio}
+              (necesitan un acumulador y \texttt{len()}).
+        \item Impriman un resumen:
+              \texttt{"Normal: X | Alerta: Y | Prom: Z"}.
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Necesitan \textbf{dos contadores}
+          y \textbf{un acumulador} --- los tres
+          inicializados en \texttt{0}.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Resultado esperado:
+          Normal: 6, Alerta: 4,
+          Promedio: 82.3.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  for + if
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{\texttt{for} + \texttt{if} --- La Combinación Poderosa}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    El \texttt{for} recorre; el \texttt{if} filtra.
+    Juntos procesan \textbf{y} deciden.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+pedidos = [120, 45, 200, 30, 180, 95, 60, 75]
+minimo_despacho = 100
+
+for cantidad in pedidos:
+    if cantidad >= minimo_despacho:
+        estado = "DESPACHAR"
+    else:
+        estado = "REVISAR"
+    print(cantidad, "->", estado)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+120 -> DESPACHAR
+45 -> REVISAR
+200 -> DESPACHAR
+30 -> REVISAR
+...
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{for} recorre los 8 pedidos.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{if} decide por cada uno.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          El \texttt{print} se ejecuta
+          \textbf{siempre}, está fuera del
+          \texttt{if}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PRÁCTICA: REPORTE DE INGRESOS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Práctica: Reporte de Ingresos \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}7 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    4 productos despachados hoy. Calculen ingreso por producto
+    y acumulen el total.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+productos = ["Coca-Cola 600ml","Sprite 500ml","Dasani 1L","Fanta 400ml"]
+unidades  = [1200, 800, 2000, 500]
+precios   = [1.50, 1.25, 0.90, 1.10]
+  \end{pyblock}
+
+  \vspace{3pt}
+  {\footnotesize\color{textMuted}
+    \textbf{Tarea:}
+    \begin{enumerate}\setlength{\itemsep}{2pt}
+      \item Calculen el ingreso de cada producto:
+        \texttt{ingreso = unidades[i] * precios[i]}
+      \item Acumulen el ingreso total del día.
+      \item Marquen con \texttt{``SOBRE 1000''} los que superen \$\,1\,000.
+    \end{enumerate}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  SOLUCIÓN REPORTE
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Solución --- Reporte de Ingresos}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+productos = ["Coca-Cola 600ml","Sprite 500ml",
+             "Dasani 1L","Fanta 400ml"]
+unidades  = [1200, 800, 2000, 500]
+precios   = [1.50, 1.25, 0.90, 1.10]
+
+total = 0
+for i in range(len(productos)):
+    ingreso = unidades[i] * precios[i]
+    total += ingreso
+    etiqueta = ""
+    if ingreso >= 1000:
+        etiqueta = "SOBRE 1000"
+    print(productos[i], "->", ingreso, etiqueta)
+
+print("Total del dia:", total)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \vspace{4pt}
+      \begin{outputblock}
+Coca-Cola 600ml -> 1800.0 SOBRE 1000
+Sprite 500ml -> 1000.0 SOBRE 1000
+Dasani 1L -> 1800.0 SOBRE 1000
+Fanta 400ml -> 550.0
+Total del dia: 5150.0
+      \end{outputblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: OPERADOR in
+% =============================================================================
+\sectionframe{El Operador \texttt{in}}{¿Está este valor en la lista?}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  EXPLICACIÓN in
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=35]{El Operador \texttt{in} --- Buscar dentro de una lista}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    \texttt{in} responde ``¿este valor está en la lista?''
+    con \texttt{True} o \texttt{False}.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \begin{pyblock}
+frutas = ["manzana", "pera", "uva"]
+print("pera" in frutas)
+print("kiwi" in frutas)
+print("kiwi" not in frutas)
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+True
+False
+True
+      \end{outputblock}
+
+      \vspace{3pt}
+      {\footnotesize\color{arcaDark}\bfseries Uso práctico con \texttt{if}:}
+      \vspace{2pt}
+      \begin{pyblock}
+zonas = ["Norte", "Sur", "Centro"]
+pedido = "Oriente"
+if pedido in zonas:
+    print("Zona valida")
+else:
+    print("Zona NO habilitada")
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}
+Zona NO habilitada
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \vspace{2pt}
+      {\footnotesize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{x in lista} $\rightarrow$
+          \texttt{True} si \texttt{x} aparece.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{x not in lista} $\rightarrow$
+          \texttt{True} si \textbf{no} está.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Ideal dentro de un \texttt{if}
+          para validar pertenencia a
+          un grupo.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Funciona con strings:
+          \texttt{"py" in "python"} es
+          \texttt{True}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  PRÁCTICA in
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Práctica: Validador de Pedidos \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}5 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Un restaurante solo prepara ciertos platos.
+    Verifiquen cuáles pedidos se pueden atender.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+menu = ["hamburguesa", "pizza", "ensalada", "tacos"]
+pedidos = ["pizza", "sushi", "tacos", "pasta", "ensalada"]
+  \end{pyblock}
+
+  \vspace{3pt}
+  {\footnotesize\color{textMuted}
+    \textbf{Tarea:}
+    \begin{enumerate}\setlength{\itemsep}{2pt}
+      \item Recorrer \texttt{pedidos} con un \texttt{for}.
+      \item Usar \texttt{in} para verificar si el pedido está en el \texttt{menu}.
+      \item Si está: \texttt{"Preparando: ..."}. Si no: \texttt{"No disponible: ..."}.
+      \item Contar cuántos se rechazaron.
+    \end{enumerate}
+  }
+
+  \vspace{3pt}
+  {\footnotesize\color{arcaDark}\bfseries Salida esperada:}
+  \begin{outputblock}
+Preparando: pizza
+No disponible: sushi
+Preparando: tacos
+No disponible: pasta
+Preparando: ensalada
+Rechazados: 2
+  \end{outputblock}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  SOLUCIÓN in
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Solución --- Validador de Pedidos}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \begin{pyblock}
+menu = ["hamburguesa", "pizza",
+        "ensalada", "tacos"]
+pedidos = ["pizza", "sushi", "tacos",
+           "pasta", "ensalada"]
+rechazados = 0
+
+for plato in pedidos:
+    if plato in menu:
+        print("Preparando:", plato)
+    else:
+        print("No disponible:", plato)
+        rechazados += 1
+
+print("Rechazados:", rechazados)
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.42\textwidth}
+      \vspace{4pt}
+      \begin{outputblock}
+Preparando: pizza
+No disponible: sushi
+Preparando: tacos
+No disponible: pasta
+Preparando: ensalada
+Rechazados: 2
+      \end{outputblock}
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{for plato in pedidos} recorre
+          directamente los valores.
+        \item[{\color{codeGreen}\scriptsize\faCheck}]
+          \texttt{plato in menu} verifica
+          pertenencia sin índices.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 4: RETOS PRÁCTICOS
+% =============================================================================
+\sectionframe{Retos Prácticos}{Todo junto en contexto real}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  RETO 1: EVALUACIÓN DE NOTAS
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Reto 1: Evaluación de Notas \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}6 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Un profesor tiene las notas de 6 estudiantes y necesita clasificarlas.}
+
+  \vspace{5pt}
+  {\footnotesize\color{textMuted}
+    \textbf{Reglas:}
+    Nota $\geq$ 90 $\rightarrow$ ``Sobresaliente'' \quad
+    Nota $\geq$ 70 $\rightarrow$ ``Aprobado'' \quad
+    Nota $<$ 70 $\rightarrow$ ``Reprobado''
+  }
+
+  \vspace{4pt}
+  \begin{pyblock}
+nombres = ["Ana","Luis","Maria","Carlos","Sofia","Diego"]
+notas   = [92, 67, 85, 55, 78, 43]
+  \end{pyblock}
+
+  \vspace{3pt}
+  {\footnotesize\color{textMuted}
+    \textbf{Tarea:} Recorrer las listas, clasificar cada nota,
+    imprimir nombre + nota + clasificación.
+    Al final, contar cuántos reprobaron.
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  RETO 2: MONITOR PM2.5
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=30]{Reto 2: Monitor de Calidad de Aire \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}7 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Un sensor mide PM2.5 (partículas finas en el aire, en $\mu$g/m³).
+    Clasifiquen cada lectura.}
+
+  \vspace{4pt}
+  {\footnotesize\color{textMuted}
+    \textbf{Escala:}
+    Valor $\leq$ 50 $\rightarrow$ ``Normal'' \quad
+    51--100 $\rightarrow$ ``Precaución'' \quad
+    $>$ 100 $\rightarrow$ ``Alerta''
+  }
+
+  \vspace{4pt}
+  \begin{pyblock}
+horas = ["08:00","09:00","10:00","11:00","12:00","13:00"]
+pm25  = [42, 58, 67, 105, 88, 120]
+  \end{pyblock}
+
+  \vspace{3pt}
+  {\footnotesize\color{textMuted}
+    \textbf{Tarea:} Imprimir cada hora con su valor y estado.
+    Contar cuántas horas quedaron en ``Alerta''.
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  RETO 3: PLAN DE CARGA
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{frame}[fragile,shrink=28]{Reto 3: Plan de Carga para Viaje Eléctrico \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}10 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Estimen autonomía por tramo y decidan cuándo recargar.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+tramos_km = [42, 55, 38, 64, 29]
+consumo_kwh_por_100km = [14, 16, 13, 18, 12]
+bateria_inicial_kwh = 32
+umbral_recarga = 8
+  \end{pyblock}
+
+  \vspace{2pt}
+  {\footnotesize\color{textMuted}
+    \textbf{Tarea:}
+    \begin{enumerate}\setlength{\itemsep}{2pt}
+      \item Calcular consumo por tramo:
+        \texttt{consumo = km * consumo\_100 / 100}
+      \item Restar de la batería disponible.
+      \item Si la batería cae por debajo del umbral,
+        marcar \texttt{"RECARGAR"} y simular recarga completa.
+      \item Contar cuántas recargas se recomendaron.
+    \end{enumerate}
+  }
+\end{frame}
+
+% =============================================================================
+%  PROYECTO INTEGRADOR
+% =============================================================================
+\sectionframe{Proyecto Integrador}{Simulador de ruta de distribución}
+
+\begin{frame}[fragile,shrink=30]{Proyecto: Simulador de Ruta de Distribución \hfill {\normalsize\color{arcaRed}\faClock\hspace{4pt}20 min}}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Un camión sale del centro de distribución con carga limitada.
+    Debe visitar 6 clientes y decidir en cada parada si puede entregar.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Datos de la ruta:}
+      \vspace{2pt}
+      \begin{pyblock}
+clientes  = ["Tienda Sol","Mini ABC",
+  "Super 10","Bodega LP",
+  "Market 7","Don Pepe"]
+pedidos   = [30, 15, 50, 20, 40, 10]
+productos_pedidos = ["Coca-Cola",
+  "Sprite","Fanta","Coca-Cola",
+  "Dasani","Sprite"]
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\footnotesize\color{arcaDark}\bfseries Carga del camión:}
+      \vspace{2pt}
+      \begin{pyblock}
+catalogo = ["Coca-Cola","Sprite","Dasani"]
+carga = 80
+precio_caja = 12.50
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\footnotesize\color{textMuted}
+        \textbf{Reglas por parada:}
+        \begin{enumerate}\setlength{\itemsep}{2pt}
+          \item ¿El producto está en el
+            \texttt{catalogo}? (\texttt{in})
+          \item Si no está $\rightarrow$ ``NO DISPONIBLE''.
+          \item Si está pero la \texttt{carga} no
+            alcanza $\rightarrow$ ``SIN STOCK''.
+          \item Si se puede $\rightarrow$ entregar,
+            restar de \texttt{carga}, sumar ingreso.
+        \end{enumerate}
+
+        \vspace{4pt}
+        \textbf{Reportar:}
+        \begin{itemize}\setlength{\itemsep}{1pt}
+          \item Entregas exitosas (contador)
+          \item Pedidos rechazados (contador)
+          \item Ingreso total (acumulador)
+          \item Cajas restantes en el camión
+        \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que logramos hoy}
+
+\begin{frame}{Lo que Aprendimos Hoy}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    Nuestros programas ahora pueden \textbf{decidir}, \textbf{repetir}
+    y \textbf{contar}.}
+
+  \vspace{8pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{6pt}
+        \item[{\color{arcaRed}\Large\faSync}]
+          \textbf{Ciclo \texttt{for}}:
+          recorre listas sin repetir código.\\
+          {\scriptsize\color{textMuted}
+            \texttt{for x in lista:} o
+            \texttt{for i in range(n):}}
+
+        \item[{\color{arcaRed}\Large\faPlusSquare}]
+          \textbf{Acumuladores y contadores}:\\
+          {\scriptsize\color{textMuted}
+            \texttt{total += valor} y
+            \texttt{cont += 1}}
+
+        \item[{\color{arcaRed}\Large\faSearch}]
+          \textbf{Operador \texttt{in}}:
+          pertenencia a una lista.\\
+          {\scriptsize\color{textMuted}
+            \texttt{x in lista} /
+            \texttt{x not in lista}}
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{6pt}
+        \item[{\color{arcaRed}\Large\faRocket}]
+          \textbf{\texttt{for} + \texttt{if}}:
+          procesar y filtrar al mismo tiempo.\\
+          {\scriptsize\color{textMuted}
+            La combinación más usada en analítica.}
+
+        \item[{\color{arcaRed}\Large\faBrain}]
+          \textbf{Lógica booleana}:
+          reforzamos \texttt{and}, \texttt{or}, \texttt{not}.\\
+          {\scriptsize\color{textMuted}
+            Saber cuándo usar cada uno es clave.}
+
+        \item[{\color{arcaRed}\Large\faTruck}]
+          \textbf{Proyecto integrador}:
+          todo junto en un simulador real.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Próxima Clase}
+  \vspace{-6pt}
+  {\small\color{arcaDark}\bfseries
+    En la Clase 4 vamos a organizar datos complejos y crear nuestras propias instrucciones.}
+
+  \vspace{8pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Diccionarios} ---
+      Datos estructurados con clave-valor:
+      el pedido completo en un solo objeto.
+
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Funciones} (\texttt{def}) ---
+      Empaquetar lógica en bloques reutilizables.
+
+    \item[{\color{arcaRed}\Large\faArrowCircleRight}]
+      \textbf{Proyecto:} Sistema de gestión de rutas
+      con funciones modulares.
+  \end{itemize}
+  }
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  GRACIAS + QR
+% ─────────────────────────────────────────────────────────────────────────────
+\begingroup
+\setbeamertemplate{headline}{}%
+\setbeamertemplate{footline}{}%
+
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark]
+      (current page.south west) rectangle (current page.north east);
+    \node[anchor=north west, inner sep=0pt] at
+      ([xshift=1.5cm, yshift=-1.2cm]current page.north west)
+      {\includegraphics[height=1.2cm]{../logo_udla_white.png}};
+    \node[anchor=north east, inner sep=0pt] at
+      ([xshift=-1.5cm, yshift=-1.2cm]current page.north east)
+      {\includegraphics[height=1.2cm]{../ArcaContinental_white.png}};
+    \node[anchor=center, text=white, text width=12cm, align=center] at
+      ([yshift=0.3cm]current page.center) {
+        {\huge\bfseries Gracias}\\[10pt]
+        {\large\color{white!80}
+          Clase 3: Iteración y Lógica Aplicada}\\[16pt]
+        {\normalsize\color{white!70}
+          \faEnvelope\hspace{6pt}cmosquerat@unal.edu.co
+          \hspace{20pt}
+          \faGithub\hspace{6pt}github.com/cmosquerat/arca-diplomado}
+      };
+    \node[anchor=south, text=white!50, font=\footnotesize] at
+      ([yshift=0.5cm]current page.south)
+      {Diplomado en Data Science Aplicada con Python
+        \(\cdot\) Arca Continental Ecuador \(\cdot\) UDLA};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, text width=12cm, align=center] at
+      ([yshift=3.2cm]current page.center) {
+        {\Large\bfseries Evaluación 360° del Programa}\\[6pt]
+        {\normalsize\color{white!80}
+          Educación Continua UDLA-EDN (Participantes)}\\[4pt]
+        {\small\color{white!60}
+          Tu opinión nos ayuda a mejorar. Escanea el código:}
+      };
+    \node[anchor=center] at ([yshift=-0.8cm]current page.center)
+      {\includegraphics[height=5.5cm]{qr_encuesta.jpg}};
+    \node[anchor=south, text=white!50, font=\footnotesize] at
+      ([yshift=0.5cm]current page.south)
+      {Diplomado en Data Science Aplicada con Python
+        \(\cdot\) Arca Continental Ecuador \(\cdot\) UDLA};
+  \end{tikzpicture}
+\end{frame}
+
+\endgroup
+
+\end{document}

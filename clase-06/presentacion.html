@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clase 6: Archivos y Manejo de Errores | Diplomado Data Science</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&family=Fira+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- Reveal.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<!-- Highlight.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+
+<style>
+/* ================================================================
+   PALETTE
+   ================================================================ */
+:root {
+  --arca-red: #C82B40;
+  --arca-dark: #6B1525;
+  --arca-gray: #F5F5F5;
+  --arca-light-gray: #EBEBEB;
+  --text-dark: #2D2D2D;
+  --text-muted: #6B7280;
+  --code-green: #16A34A;
+  --code-blue: #2563EB;
+  --code-orange: #EA580C;
+  --terminal-bg: #0d0709;
+  --editor-bg: #212121;
+}
+
+/* ================================================================
+   REVEAL BASE
+   ================================================================ */
+.reveal {
+  font-family: 'Fira Sans', sans-serif;
+  font-size: 22px;
+  color: var(--text-dark);
+}
+.reveal .slides { text-align: left; }
+.reveal .slides section {
+  padding: 44px 50px 18px 50px;
+  box-sizing: border-box;
+  height: 100%;
+}
+.reveal .controls { z-index: 20; }
+.reveal .progress { z-index: 20; }
+
+/* ================================================================
+   HEADER BAR
+   ================================================================ */
+.reveal .slides section:not(.cover-slide):not(.section-divider):not(.qr-slide)::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 38px;
+  background: var(--arca-dark);
+  z-index: 10;
+}
+.slide-logos {
+  position: absolute; top: 0; left: 0; right: 0; height: 38px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 24px; z-index: 11;
+}
+.slide-logos img { height: 22px; filter: brightness(0) invert(1); }
+
+/* ================================================================
+   FOOTER
+   ================================================================ */
+.slide-footer {
+  position: absolute; bottom: 2px; left: 50px; right: 50px;
+  display: flex; justify-content: center; align-items: center;
+  z-index: 5; font-size: 10px; color: var(--text-muted);
+  pointer-events: none;
+}
+.slide-footer .slide-num {
+  position: absolute; right: 0;
+  font-size: 12px; font-weight: 700; color: var(--arca-red);
+}
+
+/* ================================================================
+   TITLE
+   ================================================================ */
+.slide-title {
+  font-size: 26px; font-weight: 700; color: var(--arca-red);
+  margin: 0 0 4px 0; line-height: 1.2;
+}
+.slide-title .timer {
+  float: right; font-size: 16px; font-weight: 400; color: var(--arca-red);
+}
+.title-bar {
+  height: 3px;
+  background: linear-gradient(to right, var(--arca-red) 35%, var(--arca-light-gray) 35%);
+  margin-bottom: 8px; border-radius: 2px;
+}
+
+/* ================================================================
+   COVER
+   ================================================================ */
+.cover-slide {
+  background: var(--arca-dark) !important;
+  display: flex !important; flex-direction: column;
+  justify-content: center; align-items: center;
+  text-align: center !important; padding: 0 !important;
+}
+.cover-slide .cover-stripe {
+  position: absolute; top: 130px; left: 0; right: 0;
+  height: 26px; background: var(--arca-red);
+}
+.cover-slide .cover-logos {
+  position: absolute; top: 36px; left: 0; right: 0;
+  display: flex; justify-content: space-between; padding: 0 60px;
+}
+.cover-slide .cover-logos img { height: 46px; }
+.cover-slide h1 {
+  font-size: 30px; font-weight: 700; color: white;
+  margin: 0 0 14px 0; line-height: 1.3;
+}
+.cover-slide h2 {
+  font-size: 22px; font-weight: 400; color: rgba(255,255,255,0.85);
+  margin: 0 0 24px 0;
+}
+.cover-slide .cover-author { font-size: 17px; color: rgba(255,255,255,0.8); margin: 0; }
+.cover-slide .cover-date { font-size: 14px; color: rgba(255,255,255,0.6); margin: 5px 0 0 0; }
+.cover-slide .cover-qr {
+  margin-top: 20px; background: white; border-radius: 10px; padding: 10px;
+  display: inline-block;
+}
+.cover-slide .cover-qr canvas { display: block; }
+.cover-slide .cover-qr-label {
+  font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 8px;
+}
+
+/* ================================================================
+   SECTION DIVIDER
+   ================================================================ */
+.section-divider {
+  background: var(--arca-red) !important;
+  display: flex !important; flex-direction: column;
+  justify-content: center; align-items: center;
+  text-align: center !important;
+}
+.section-divider h2 { font-size: 40px; font-weight: 800; color: white; margin: 0 0 10px 0; }
+.section-divider p { font-size: 20px; color: rgba(255,255,255,0.8); margin: 0; }
+
+/* ================================================================
+   QR SLIDE
+   ================================================================ */
+.qr-slide {
+  background: var(--arca-dark) !important;
+  display: flex !important; flex-direction: column;
+  justify-content: center; align-items: center;
+  text-align: center !important;
+}
+.qr-slide h2 { font-size: 36px; font-weight: 800; color: white; margin: 0 0 20px 0; }
+.qr-slide img { width: 200px; border-radius: 12px; }
+.qr-slide p { font-size: 18px; color: rgba(255,255,255,0.7); margin: 14px 0 0 0; }
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+.columns { display: flex; gap: 24px; align-items: flex-start; }
+.col { flex: 1; min-width: 0; }
+.col-55 { flex: 0 0 55%; }
+.col-45 { flex: 0 0 43%; }
+.col-50 { flex: 0 0 48%; }
+.col-60 { flex: 0 0 58%; }
+.col-40 { flex: 0 0 40%; }
+
+/* ================================================================
+   CODE BLOCKS (static)
+   ================================================================ */
+.code-block {
+  background: var(--arca-gray); border-left: 3px solid var(--arca-red);
+  border-radius: 4px; padding: 10px 12px; margin: 6px 0; overflow-x: auto;
+}
+.code-block pre { margin: 0; padding: 0; background: transparent; box-shadow: none; }
+.code-block code {
+  font-family: 'Fira Mono', monospace; font-size: 15px;
+  line-height: 1.5; background: transparent; padding: 0;
+}
+.output-block {
+  background: white; border: 1px solid var(--arca-light-gray);
+  border-radius: 4px; padding: 8px 12px; margin: 5px 0;
+}
+.output-block::before {
+  content: '\f120  Output'; font-family: 'Font Awesome 6 Free', 'Fira Mono', monospace;
+  font-weight: 900; font-size: 11px; color: var(--text-muted);
+  display: block; margin-bottom: 4px;
+}
+.output-block pre { margin: 0; padding: 0; background: transparent; box-shadow: none; }
+.output-block code {
+  font-family: 'Fira Mono', monospace; font-size: 14px;
+  line-height: 1.5; color: var(--text-dark); background: transparent; padding: 0;
+}
+
+/* ================================================================
+   PYODIDE EDITOR
+   ================================================================ */
+.py-editor-container { margin: 2px 0; border-radius: 8px; overflow: hidden; position: relative; z-index: 6; }
+.py-editor-container.py-expanded {
+  position: fixed !important; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999 !important; margin: 0; border-radius: 0;
+  display: flex; flex-direction: column;
+}
+.py-expanded .py-editor-code { flex: 1; height: auto !important; }
+.py-expanded .py-editor-output { max-height: 30vh !important; }
+.py-expanded .py-editor-toolbar { border-radius: 0; }
+.py-editor-code { border-radius: 8px 8px 0 0; overflow: hidden; }
+.py-editor-code .CodeMirror {
+  height: 100% !important; font-family: 'Fira Mono', monospace; font-size: 15px; line-height: 1.55;
+}
+.reveal .slides section .py-editor-container { visibility: visible !important; }
+.reveal .slides section .CodeMirror { visibility: visible !important; }
+.py-editor-toolbar {
+  display: flex; gap: 6px; padding: 6px 10px;
+  background: #1a1a2e; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.py-run-btn, .py-reset-btn {
+  font-family: 'Fira Sans', sans-serif; font-size: 13px; font-weight: 600;
+  border: none; border-radius: 5px; padding: 5px 14px; cursor: pointer;
+  transition: all 0.15s;
+}
+.py-run-btn {
+  background: var(--code-green); color: white;
+}
+.py-run-btn:hover { background: #15803d; }
+.py-run-btn:disabled { opacity: 0.5; cursor: wait; }
+.py-reset-btn { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.py-reset-btn:hover { background: rgba(255,255,255,0.15); }
+
+.py-editor-output {
+  background: var(--terminal-bg); color: #a3e635;
+  font-family: 'Fira Mono', monospace; font-size: 14px; line-height: 1.5;
+  padding: 0; max-height: 0; overflow-y: auto;
+  transition: max-height 0.3s, padding 0.3s;
+  white-space: pre-wrap; word-break: break-word;
+  border-radius: 0 0 8px 8px;
+}
+.py-editor-output.has-output, .py-editor-output.has-error {
+  padding: 10px 14px; max-height: 200px;
+}
+.py-editor-output.has-error { color: #f87171; }
+
+.py-editor-status {
+  background: var(--arca-dark); color: white;
+  font-size: 13px; padding: 6px 14px; text-align: center;
+}
+
+/* ================================================================
+   POLL CONTAINER
+   ================================================================ */
+.poll-container {
+  background: var(--arca-gray); border-radius: 12px;
+  padding: 14px 18px; text-align: center; margin: 4px 0;
+}
+.poll-container h4 {
+  font-size: 16px; color: var(--arca-dark); margin: 0 0 8px 0;
+}
+.poll-chart-wrap { height: 220px; position: relative; }
+.poll-qr { margin-top: 12px; }
+.poll-qr canvas { margin: 0 auto; display: block; }
+.poll-qr-label { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.poll-total {
+  font-size: 15px; font-weight: 700; color: var(--arca-red); margin-top: 8px;
+}
+.poll-reset-btn {
+  position: absolute; top: 44px; right: 50px;
+  background: rgba(200,43,64,0.08); border: 1px solid rgba(200,43,64,0.25);
+  color: var(--arca-red); font-family: 'Fira Sans', sans-serif;
+  font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 5px;
+  cursor: pointer; z-index: 15; transition: all 0.2s;
+}
+.poll-reset-btn:hover { background: rgba(200,43,64,0.18); }
+.poll-reset-btn:disabled { opacity: 0.5; cursor: wait; }
+
+/* ================================================================
+   QUIZ
+   ================================================================ */
+.quiz-container { margin: 8px 0; }
+.quiz-question {
+  background: var(--arca-gray); border-radius: 8px;
+  padding: 14px 18px; margin-bottom: 10px;
+}
+.quiz-question h4 { font-size: 16px; color: var(--arca-dark); margin: 0 0 8px 0; }
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-btn {
+  display: block; width: 100%; padding: 10px 16px;
+  background: white; border: 2px solid var(--arca-light-gray);
+  border-radius: 8px; font-family: 'Fira Sans'; font-size: 15px; font-weight: 600;
+  color: var(--text-dark); cursor: pointer; text-align: left;
+  transition: all 0.2s;
+}
+.quiz-btn:hover { border-color: var(--arca-red); background: rgba(200,43,64,0.04); }
+.quiz-btn.correct {
+  border-color: var(--code-green); background: rgba(22,163,74,0.1);
+  animation: quiz-pop 0.3s ease;
+}
+.quiz-btn.wrong {
+  border-color: #ef4444; background: rgba(239,68,68,0.08);
+  animation: quiz-shake 0.4s ease;
+}
+.quiz-btn:disabled { cursor: default; opacity: 0.7; }
+
+@keyframes quiz-pop { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+@keyframes quiz-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* ================================================================
+   TIMER
+   ================================================================ */
+.practice-timer {
+  background: var(--arca-gray); border-radius: 8px;
+  padding: 8px 14px; margin: 8px 0; display: flex; align-items: center; gap: 10px;
+}
+.timer-bar-wrap {
+  flex: 1; height: 8px; background: var(--arca-light-gray); border-radius: 4px; overflow: hidden;
+}
+.timer-bar {
+  height: 100%; background: var(--arca-red); border-radius: 4px;
+  width: 100%; transition: width 1s linear;
+}
+.timer-bar.warning { background: var(--code-orange); }
+.timer-text { font-size: 18px; font-weight: 700; color: var(--arca-red); font-variant-numeric: tabular-nums; min-width: 50px; text-align: right; }
+
+/* ================================================================
+   ERROR CARDS
+   ================================================================ */
+.error-card { border-radius: 6px; padding: 12px 16px; margin: 6px 0; }
+.error-card h4 { font-size: 15px; font-weight: 700; margin: 0 0 3px 0; }
+.error-card p { font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.4; }
+.error-card.syntax { background: #FEF2F2; border-left: 3px solid var(--arca-red); }
+.error-card.syntax h4 { color: var(--arca-red); }
+.error-card.runtime { background: #FFF7ED; border-left: 3px solid var(--code-orange); }
+.error-card.runtime h4 { color: var(--code-orange); }
+.error-card.logic { background: #F0FDF4; border-left: 3px solid var(--code-green); }
+.error-card.logic h4 { color: var(--code-green); }
+
+/* ================================================================
+   FLOW DIAGRAM
+   ================================================================ */
+.flow-vertical { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.flow-box {
+  padding: 8px 18px; border-radius: 6px;
+  font-family: 'Fira Mono', monospace; font-size: 13px; font-weight: 600;
+  text-align: center; min-width: 200px; opacity: 0; transform: translateY(10px);
+  transition: all 0.4s ease;
+}
+.flow-box.visible { opacity: 1; transform: translateY(0); }
+.flow-box.active { box-shadow: 0 0 0 3px currentColor, 0 0 20px rgba(200,43,64,0.2); }
+.flow-box.blue { background: rgba(37,99,235,0.08); border: 1px solid var(--code-blue); color: var(--code-blue); }
+.flow-box.orange { background: rgba(234,88,12,0.08); border: 1px solid var(--code-orange); color: var(--code-orange); }
+.flow-box.green { background: rgba(22,163,74,0.08); border: 1px solid var(--code-green); color: var(--code-green); }
+.flow-box.dark { background: rgba(107,21,37,0.08); border: 1px solid var(--arca-dark); color: var(--arca-dark); }
+.flow-box.red { background: rgba(200,43,64,0.08); border: 1px solid var(--arca-red); color: var(--arca-red); }
+.flow-arrow { font-size: 16px; color: var(--arca-red); line-height: 1; padding: 2px 0; opacity: 0; transition: opacity 0.3s; }
+.flow-arrow.visible { opacity: 1; }
+
+/* ================================================================
+   CONCEPT CARD
+   ================================================================ */
+.concept-card { background: var(--arca-gray); border-radius: 6px; padding: 12px 16px; margin: 8px 0; }
+.concept-card h4 { font-size: 15px; font-weight: 700; color: var(--arca-red); margin: 0 0 4px 0; }
+.concept-card p { font-size: 14px; color: var(--text-muted); margin: 0; line-height: 1.4; }
+
+/* ================================================================
+   TABS
+   ================================================================ */
+.tab-bar { display: flex; gap: 2px; margin-bottom: 0; }
+.tab-btn {
+  padding: 7px 16px; border: none; border-radius: 6px 6px 0 0;
+  font-family: 'Fira Sans'; font-size: 13px; font-weight: 600;
+  cursor: pointer; background: var(--arca-light-gray); color: var(--text-muted);
+  transition: all 0.2s;
+}
+.tab-btn.active { background: var(--editor-bg); color: white; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ================================================================
+   CHECK LIST
+   ================================================================ */
+.check-list { list-style: none; padding: 0; margin: 6px 0; }
+.check-list li {
+  padding-left: 24px; position: relative; margin-bottom: 7px;
+  font-size: 16px; color: var(--text-muted); line-height: 1.45;
+}
+.check-list li::before {
+  content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+  position: absolute; left: 0; top: 3px; font-size: 14px; color: var(--code-green);
+}
+
+.point-list { list-style: none; padding: 0; margin: 6px 0; }
+.point-list li {
+  padding-left: 22px; position: relative; margin-bottom: 7px;
+  font-size: 16px; color: var(--text-muted); line-height: 1.45;
+}
+.point-list li i { position: absolute; left: 0; top: 4px; font-size: 13px; }
+
+/* ================================================================
+   TABLE
+   ================================================================ */
+.reveal table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+.reveal table thead th {
+  background: var(--arca-dark); color: white; padding: 7px 10px;
+  font-weight: 600; text-align: left; font-size: 13px;
+}
+.reveal table tbody td {
+  padding: 6px 10px; border-bottom: 1px solid var(--arca-light-gray);
+  color: var(--text-muted); font-size: 13px;
+}
+.reveal table tbody tr:nth-child(even) { background: var(--arca-gray); }
+
+/* ================================================================
+   INLINE CODE
+   ================================================================ */
+.ic {
+  font-family: 'Fira Mono', monospace; font-size: 0.88em;
+  background: var(--arca-gray); padding: 1px 5px; border-radius: 3px;
+  color: var(--arca-red);
+}
+
+/* ================================================================
+   NUMBERED STEPS
+   ================================================================ */
+.numbered-steps { counter-reset: step; list-style: none; padding: 0; margin: 6px 0; }
+.numbered-steps li {
+  counter-increment: step; position: relative; padding-left: 30px;
+  margin-bottom: 8px; font-size: 15px; line-height: 1.4; color: var(--text-muted);
+}
+.numbered-steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 0;
+  width: 20px; height: 20px; background: var(--arca-red); color: white;
+  font-size: 12px; font-weight: 700; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ================================================================
+   ANIMATION: STAGGER IN
+   ================================================================ */
+.stagger-in > * {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.stagger-in.animate > * { opacity: 1; transform: translateY(0); }
+.stagger-in > *:nth-child(1) { transition-delay: 0.1s; }
+.stagger-in > *:nth-child(2) { transition-delay: 0.25s; }
+.stagger-in > *:nth-child(3) { transition-delay: 0.4s; }
+.stagger-in > *:nth-child(4) { transition-delay: 0.55s; }
+
+/* CSV Animation */
+.csv-animation { text-align: center; }
+.csv-raw {
+  font-family: 'Fira Mono', monospace; font-size: 15px;
+  background: var(--arca-gray); padding: 14px 18px; border-radius: 8px;
+  display: inline-block; text-align: left;
+  transition: all 0.8s ease;
+}
+.csv-raw.morphed { opacity: 0; transform: scale(0.9); position: absolute; }
+.csv-table { opacity: 0; transform: translateY(20px); transition: all 0.6s ease 0.4s; }
+.csv-table.visible { opacity: 1; transform: translateY(0); }
+
+/* Helpers */
+.text-sm { font-size: 14px; }
+.text-xs { font-size: 12px; }
+.font-bold { font-weight: 700; }
+.text-red { color: var(--arca-red); }
+.text-green { color: var(--code-green); }
+.text-dark { color: var(--arca-dark); }
+.text-muted { color: var(--text-muted); }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mb-4 { margin-bottom: 4px; }
+.mb-8 { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- =============================================================
+     SLIDE 0: COVER
+     ============================================================= -->
+<section class="cover-slide" data-state="cover">
+  <div class="cover-logos">
+    <img src="../logo_udla_white.png" alt="UDLA">
+    <img src="../ArcaContinental_white.png" alt="Arca Continental">
+  </div>
+  <div class="cover-stripe"></div>
+  <div class="cover-content" style="margin-top:50px">
+    <h1>Diplomado en Data Science Aplicada<br>con Python para la Toma de Decisiones</h1>
+    <h2>Clase 6: Archivos y Manejo de Errores — Datos del Mundo Real</h2>
+    <p class="cover-author">Carlos Enrique Mosquera Trujillo</p>
+    <p class="cover-date">30 de Marzo, 2026</p>
+    <div class="cover-qr"><div id="coverQR"></div></div>
+    <p class="cover-qr-label">Escaneen para participar en las encuestas de hoy</p>
+  </div>
+</section>
+
+<!-- =============================================================
+     SLIDE 1: RECAP
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">¿Dónde Quedamos?</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col">
+      <span class="text-dark font-bold text-sm"><i class="fas fa-arrow-left text-red"></i> En la clase anterior:</span>
+      <ul class="check-list" style="margin-top:8px">
+        <li>Funciones: <span class="ic">def</span>, parámetros, <span class="ic">return</span>.</li>
+        <li>Posicionales, por nombre, valores por defecto.</li>
+        <li><span class="ic">return</span> vs <span class="ic">print</span> — no son lo mismo.</li>
+        <li>Scope: variables locales vs externas.</li>
+        <li>Validación con patrón guardia.</li>
+        <li>Funciones + listas y diccionarios.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <span class="text-red font-bold text-sm"><i class="fas fa-arrow-right"></i> Hoy agregamos:</span>
+      <ul class="point-list" style="margin-top:8px">
+        <li><i class="fas fa-arrow-right text-red"></i> Primero: resolvemos el <strong>Pipeline</strong> pendiente.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <strong>Los tres tipos de error</strong> y cómo manejarlos.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">try/except</span> — código que no explota.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">import</span> — usar funciones de otros.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <strong>Leer y escribir archivos CSV</strong>.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">1</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: PIPELINE
+     ============================================================= -->
+<section class="section-divider">
+  <h2>Pipeline de Distribución</h2>
+  <p>Resolvamos juntos el ejercicio pendiente de la clase pasada</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 2: PIPELINE ENUNCIADO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Pipeline de Distribución — El Reto</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <span class="text-dark font-bold text-sm">Creen tres funciones:</span>
+      <ol class="numbered-steps" style="margin-top:6px">
+        <li><span class="ic">calcular_bono(vendedor, tasa=0.10)</span>: Si ventas ≥ meta → bono = ventas × tasa. Si no → 0. Retorna dict con clave <span class="ic">"bono"</span>.</li>
+        <li><span class="ic">clasificar_vendedor(vendedor)</span>: Retorna <span class="ic">"Estrella"</span> si ventas ≥ 200, <span class="ic">"Cumple"</span> si ≥ meta, <span class="ic">"Bajo"</span> si no.</li>
+        <li><span class="ic">reporte_equipo(lista, tasa=0.10)</span>: Recorre la lista, aplica ambas funciones, imprime una línea por vendedor y el total de bonos.</li>
+      </ol>
+    </div>
+    <div class="col-45">
+      <div class="code-block"><pre><code class="language-python">vendedores = [
+  {"nombre":"Ana", "ventas":250, "meta":150},
+  {"nombre":"Luis","ventas":90,  "meta":150},
+  {"nombre":"Sol", "ventas":180, "meta":150},
+  {"nombre":"Paco","ventas":310, "meta":200}
+]</code></pre></div>
+      <span class="text-muted font-bold text-sm mt-8" style="display:block">Salida esperada:</span>
+      <div class="output-block"><pre><code>Ana: Estrella, bono=25.0
+Luis: Bajo, bono=0
+Sol: Cumple, bono=18.0
+Paco: Estrella, bono=31.0
+Total bonos: 74.0</code></pre></div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">2</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 3: PIPELINE — EDITOR EN VIVO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Construyamos la Solución Juntos <span class="timer"><i class="fas fa-code"></i> En vivo</span></h3>
+  <div class="title-bar"></div>
+
+  <div class="py-editor" data-id="pipeline" data-height="540px" data-preload="vendedores">
+def calcular_bono(vendedor, tasa=0.10):
+    # Si ventas >= meta: bono = ventas * tasa
+    # Si no: bono = 0
+    # Retorna el dict con clave "bono" agregada
+    pass
+
+def clasificar_vendedor(vendedor):
+    # "Estrella" si ventas >= 200
+    # "Cumple" si ventas >= meta
+    # "Bajo" si no
+    pass
+
+def reporte_equipo(lista, tasa=0.10):
+    # Recorrer lista, aplicar ambas funciones
+    # Imprimir línea por vendedor + total bonos
+    pass
+
+reporte_equipo(vendedores)
+  </div>
+
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">3</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 4: POLL 1 — EJERCICIO FUNCIONES
+     ============================================================= -->
+<section data-poll="comfort">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Ejercicio Rápido: ¿Qué retorna esta función?</h3>
+  <div class="title-bar"></div>
+  <div class="code-block" style="margin-bottom:10px"><pre><code class="language-python">def clasificar_vendedor(vendedor):
+    if vendedor["ventas"] >= 200:
+        return "Estrella"
+    elif vendedor["ventas"] >= vendedor["meta"]:
+        return "Cumple"
+    else:
+        return "Bajo"
+
+resultado = clasificar_vendedor({"nombre":"Sol", "ventas":180, "meta":150})
+print(resultado)</code></pre></div>
+  <div class="columns">
+    <div class="col-60">
+      <div class="poll-container">
+        <h4>¿Qué imprime?</h4>
+        <div class="poll-chart-wrap"><canvas id="chart_comfort"></canvas></div>
+        <div class="poll-total">0 votos</div>
+      </div>
+    </div>
+    <div class="col-40" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+      <div class="poll-qr"><div id="qr_comfort"></div></div>
+      <p class="poll-qr-label">Escaneen para votar</p>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">4</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: ERRORES
+     ============================================================= -->
+<section class="section-divider">
+  <h2>Los Tres Tipos de Error</h2>
+  <p>¿Por qué mi código no funciona?</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 5: TRES TIPOS DE ERROR
+     ============================================================= -->
+<section data-state="errors-stagger">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Los Tres Tipos de Error</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col stagger-in" id="errorCards">
+      <div class="error-card syntax">
+        <h4><i class="fas fa-spell-check"></i> Error de Sintaxis</h4>
+        <p>Escribiste algo que Python no entiende. El programa <strong>no arranca</strong>.</p>
+      </div>
+      <div class="error-card runtime">
+        <h4><i class="fas fa-bolt"></i> Error de Ejecución (Runtime)</h4>
+        <p>La sintaxis está bien, pero al correr pides algo <strong>imposible</strong>.</p>
+      </div>
+      <div class="error-card logic">
+        <h4><i class="fas fa-brain"></i> Error Lógico</h4>
+        <p>El programa corre sin errores, pero el resultado <strong>está mal</strong>. El más difícil.</p>
+      </div>
+    </div>
+    <div class="col">
+      <span class="text-dark font-bold text-sm">Ejemplo de cada uno:</span>
+      <div class="code-block" style="margin-top:6px"><pre><code class="language-python"># Sintaxis — falta los dos puntos
+def ingreso(cajas, precio)
+    return cajas * precio</code></pre></div>
+      <div class="code-block"><pre><code class="language-python"># Runtime — división por cero
+def promedio(lista):
+    return sum(lista) / len(lista)
+promedio([])  # ZeroDivisionError</code></pre></div>
+      <div class="code-block"><pre><code class="language-python"># Lógico — suma en vez de multiplicar
+def ingreso(cajas, precio):
+    return cajas + precio  # debería ser *
+print(ingreso(30, 12.50))  # 42.5 ¡mal!</code></pre></div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">5</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 6: EDITOR CON TABS — TIPOS DE ERROR
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Probemos Cada Error <span class="timer"><i class="fas fa-flask"></i> Interactivo</span></h3>
+  <div class="title-bar"></div>
+  <p class="text-dark font-bold text-sm mb-4">Hagan click en cada pestaña y ejecuten. Vean cómo Python reporta cada error:</p>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('err',0,this)">Sintaxis</button>
+    <button class="tab-btn" onclick="showTab('err',1,this)">Runtime</button>
+    <button class="tab-btn" onclick="showTab('err',2,this)">Lógico</button>
+  </div>
+  <div class="tab-content active" id="err_0">
+    <div class="py-editor" data-id="err_syntax" data-height="180px">
+# Falta los dos puntos al final
+def ingreso(cajas, precio)
+    return cajas * precio
+
+print(ingreso(30, 12.50))
+    </div>
+  </div>
+  <div class="tab-content" id="err_1">
+    <div class="py-editor" data-id="err_runtime" data-height="180px">
+def promedio(lista):
+    return sum(lista) / len(lista)
+
+# Lista vacía — ¡división por cero!
+print(promedio([]))
+    </div>
+  </div>
+  <div class="tab-content" id="err_2">
+    <div class="py-editor" data-id="err_logic" data-height="180px">
+def ingreso(cajas, precio):
+    return cajas + precio  # Bug: debería ser *
+
+# Da 42.5 en vez de 375.0
+print("Resultado:", ingreso(30, 12.50))
+print("Esperado:  375.0")
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">6</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 7: QUIZ — ¿QUÉ TIPO DE ERROR?
+     ============================================================= -->
+<section data-poll="error_quiz">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Quiz: ¿Qué Tipo de Error Es? <span class="timer"><i class="fas fa-question-circle"></i></span></h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-60">
+      <div class="quiz-container" id="errorQuiz">
+        <div class="quiz-question">
+          <h4>¿Qué tipo de error tiene este código?</h4>
+          <div class="code-block"><pre><code class="language-python">datos = {"nombre": "Ana", "ventas": 250}
+print(datos["meta"])  # ???</code></pre></div>
+        </div>
+        <div class="quiz-options">
+          <button class="quiz-btn" onclick="checkQuiz(this,'Runtime')">Sintaxis</button>
+          <button class="quiz-btn" onclick="checkQuiz(this,'Runtime')" data-correct>Runtime (KeyError)</button>
+          <button class="quiz-btn" onclick="checkQuiz(this,'Runtime')">Lógico</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-40" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+      <div class="poll-container" style="padding:14px">
+        <h4 style="font-size:15px">Resultados en vivo</h4>
+        <div class="poll-chart-wrap" style="height:200px"><canvas id="chart_error_quiz"></canvas></div>
+        <div class="poll-total">0 votos</div>
+      </div>
+      <div class="poll-qr" style="margin-top:8px"><div id="qr_error_quiz"></div></div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">7</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: TRY/EXCEPT
+     ============================================================= -->
+<section class="section-divider">
+  <h2 style="font-family:'Fira Mono',monospace">try / except</h2>
+  <p>Código que no explota</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 8: DIAGRAMA ANIMADO TRY/EXCEPT
+     ============================================================= -->
+<section data-state="flow-anim">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Flujo de <span class="ic">try / except</span></h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col" style="display:flex;justify-content:center">
+      <div class="flow-vertical" id="flowDiagram">
+        <div class="flow-box blue"><i class="fas fa-play"></i> try — intenta ejecutar</div>
+        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+        <div class="flow-box red"><i class="fas fa-question-circle"></i> ¿Hubo error?</div>
+        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+        <div class="flow-box orange"><i class="fas fa-shield-halved"></i> except — si falló</div>
+        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+        <div class="flow-box green"><i class="fas fa-check"></i> else — si NO falló</div>
+        <div class="flow-arrow"><i class="fas fa-arrow-down"></i></div>
+        <div class="flow-box dark"><i class="fas fa-flag-checkered"></i> finally — SIEMPRE</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="concept-card">
+        <h4><i class="fas fa-lightbulb"></i> ¿Cómo funciona?</h4>
+        <p>Python intenta ejecutar el bloque <span class="ic">try</span>. Si algo falla, salta al <span class="ic">except</span> correspondiente. Si todo sale bien, ejecuta <span class="ic">else</span>. <span class="ic">finally</span> se ejecuta siempre, haya error o no.</p>
+      </div>
+      <div class="py-editor" data-id="flow_demo" data-height="200px">
+def leer_precio(texto):
+    try:
+        precio = float(texto)
+    except ValueError:
+        print(f"'{texto}' no es número")
+        return None
+    else:
+        print(f"Precio válido: {precio}")
+        return precio
+    finally:
+        print("--- Proceso terminado ---")
+
+leer_precio("12.50")
+print()
+leer_precio("abc")
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">8</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 9: TRY/EXCEPT DUAL EDITOR
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title"><span class="ic">try/except</span> — La Red de Seguridad</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-50">
+      <span class="text-red font-bold text-sm"><i class="fas fa-circle-xmark"></i> Sin protección — explota</span>
+      <div class="py-editor" data-id="no_try" data-height="160px">
+def promedio(lista):
+    return sum(lista) / len(lista)
+
+print(promedio([]))
+print("Esto nunca se ejecuta")
+      </div>
+    </div>
+    <div class="col-50">
+      <span class="text-green font-bold text-sm"><i class="fas fa-circle-check"></i> Con try/except — controlado</span>
+      <div class="py-editor" data-id="with_try" data-height="160px">
+def promedio(lista):
+    try:
+        return sum(lista) / len(lista)
+    except ZeroDivisionError:
+        return 0
+
+print(promedio([]))
+print("El programa sigue")
+      </div>
+    </div>
+  </div>
+  <ul class="point-list" style="margin-top:6px">
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">try</span>: "intenta ejecutar este código".</li>
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">except ZeroDivisionError</span>: "si falla con ESE error, haz esto".</li>
+    <li><i class="fas fa-lightbulb text-red"></i> El programa <strong>no se detiene</strong>. Sigue ejecutando lo que viene después.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">9</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 10: EXCEPT ESPECÍFICO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Atrapar Errores Específicos</h3>
+  <div class="title-bar"></div>
+  <p class="text-dark font-bold text-sm mb-4">Siempre nombren el error. Un <span class="ic">except</span> genérico esconde bugs:</p>
+  <div class="columns">
+    <div class="col-50">
+      <span class="text-red font-bold text-sm"><i class="fas fa-circle-xmark"></i> Genérico — esconde bugs</span>
+      <div class="py-editor" data-id="except_gen" data-height="140px">
+try:
+    resultado = 100 / 0
+except:
+    print("Algo falló")
+    resultado = 0
+print("Resultado:", resultado)
+      </div>
+    </div>
+    <div class="col-50">
+      <span class="text-green font-bold text-sm"><i class="fas fa-circle-check"></i> Específico — claro y seguro</span>
+      <div class="py-editor" data-id="except_spec" data-height="140px">
+try:
+    resultado = 100 / 0
+except ZeroDivisionError:
+    print("Error: división por cero")
+    resultado = 0
+except KeyError as e:
+    print(f"Clave no encontrada: {e}")
+print("Resultado:", resultado)
+      </div>
+    </div>
+  </div>
+  <div class="concept-card" style="margin-top:6px">
+    <h4><i class="fas fa-lightbulb"></i> Regla de oro</h4>
+    <p>Cada <span class="ic">except</span> debe nombrar el error que espera. Si no saben cuál va a pasar, dejen que explote — así aprenden qué es.</p>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">10</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 11: TRY/EXCEPT + FUNCIONES REALES
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title"><span class="ic">try/except</span> en Funciones Reales</h3>
+  <div class="title-bar"></div>
+  <p class="text-dark font-bold text-sm mb-4">Combinando validación (clase 5) + try/except:</p>
+  <div class="py-editor" data-id="real_try" data-height="310px">
+def procesar_venta(vendedor):
+    try:
+        nombre = vendedor["nombre"]
+        ventas = vendedor["ventas"]
+        meta = vendedor["meta"]
+    except KeyError as e:
+        return {"error": f"Falta el campo {e}"}
+
+    if ventas < 0:
+        return {"error": "Ventas negativas"}
+
+    bono = ventas * 0.10 if ventas >= meta else 0
+    return {"nombre": nombre, "bono": bono, "sobre_meta": ventas >= meta}
+
+# Prueba con datos correctos
+print(procesar_venta({"nombre":"Ana", "ventas":250, "meta":150}))
+
+# Falta una clave
+print(procesar_venta({"nombre":"Luis", "ventas":90}))
+
+# Ventas negativas
+print(procesar_venta({"nombre":"Sol", "ventas":-5, "meta":150}))
+  </div>
+  <ul class="point-list" style="margin-top:4px">
+    <li><i class="fas fa-lightbulb text-red"></i> <span class="ic">try/except</span> para errores de datos, <span class="ic">if</span> para reglas de negocio.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">11</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 12: PRÁCTICA TRY/EXCEPT
+     ============================================================= -->
+<section data-timer="420">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Práctica: Blindar con try/except <span class="timer"><i class="fas fa-clock"></i> 7 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="practice-timer" id="timer_12"><div class="timer-bar-wrap"><div class="timer-bar"></div></div><span class="timer-text">7:00</span></div>
+  <p class="text-dark font-bold text-sm mb-4">Modifiquen esta función para que nunca explote:</p>
+  <div class="columns">
+    <div class="col-60">
+      <div class="py-editor" data-id="prac_try" data-height="240px">
+def calcular_comision(vendedor, tasa=0.10):
+    # TODO: envolver en try/except KeyError
+    nombre = vendedor["nombre"]
+    ventas = vendedor["ventas"]
+    meta   = vendedor["meta"]
+
+    # TODO: validar que tasa esté entre 0 y 1
+
+    if ventas >= meta:
+        return {"nombre": nombre, "comision": ventas * tasa}
+    return {"nombre": nombre, "comision": 0}
+
+# Pruebas
+print(calcular_comision({"nombre":"Ana","ventas":250,"meta":150}))
+print(calcular_comision({"nombre":"Luis","ventas":90}))
+print(calcular_comision({"nombre":"Sol","ventas":180,"meta":150}, tasa=5))
+      </div>
+    </div>
+    <div class="col-40">
+      <span class="text-muted font-bold text-sm">Salida esperada:</span>
+      <div class="output-block"><pre><code>{'nombre': 'Ana', 'comision': 25.0}
+{'error': "Falta campo 'meta'"}
+{'error': 'Tasa debe estar entre 0 y 1'}</code></pre></div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">12</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: IMPORT
+     ============================================================= -->
+<section class="section-divider">
+  <h2>Importar Módulos</h2>
+  <p>El superpoder de Python: no reinventar la rueda</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 13: ¿QUÉ ES UN MÓDULO?
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">¿Qué Es un Módulo?</h3>
+  <div class="title-bar"></div>
+  <div class="concept-card">
+    <h4><i class="fas fa-cube"></i> Un módulo = un archivo .py con código reutilizable</h4>
+    <p>Funciones, clases y variables que alguien ya escribió y probó. Tú solo los <strong>importas</strong> y usas.</p>
+  </div>
+  <div class="columns mt-8">
+    <div class="col-50">
+      <span class="text-dark font-bold text-sm"><i class="fas fa-box-open text-red"></i> Librería estándar (viene con Python):</span>
+      <table style="margin-top:6px">
+        <thead><tr><th>Módulo</th><th>¿Para qué?</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">math</span></td><td>sqrt, pi, factorial</td></tr>
+          <tr><td><span class="ic">random</span></td><td>Números aleatorios</td></tr>
+          <tr><td><span class="ic">datetime</span></td><td>Fechas y horas</td></tr>
+          <tr><td><span class="ic">os</span></td><td>Archivos y sistema</td></tr>
+          <tr><td><span class="ic">json</span></td><td>Leer/escribir JSON</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-50">
+      <span class="text-dark font-bold text-sm"><i class="fas fa-globe text-red"></i> Librerías externas (se instalan con <span class="ic">pip</span>):</span>
+      <table style="margin-top:6px">
+        <thead><tr><th>Librería</th><th>¿Para qué?</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">pandas</span></td><td>Tablas de datos (DataFrames)</td></tr>
+          <tr><td><span class="ic">numpy</span></td><td>Cálculo numérico</td></tr>
+          <tr><td><span class="ic">matplotlib</span></td><td>Gráficas y visualización</td></tr>
+          <tr><td><span class="ic">scikit-learn</span></td><td>Machine Learning</td></tr>
+          <tr><td><span class="ic">requests</span></td><td>Descargar datos de la web</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <ul class="point-list mt-8">
+    <li><i class="fas fa-terminal text-red"></i> Para instalar: <span class="ic">pip install pandas</span> en la terminal. Aquí ya las tenemos listas.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">13</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 14: TRES FORMAS DE IMPORTAR
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Tres Formas de Importar</h3>
+  <div class="title-bar"></div>
+  <div class="py-editor" data-id="import_demo" data-height="320px">
+# 1. Importar el módulo completo
+import math
+print("Raíz de 144:", math.sqrt(144))
+print("Pi:", math.pi)
+
+# 2. Importar solo lo que necesitas
+from math import factorial
+print("5! =", factorial(5))
+
+# 3. Importar con alias (apodo)
+import datetime as dt
+hoy = dt.date.today()
+print("Hoy:", hoy)
+
+# Bono: combinar
+from random import randint
+print("Dado:", randint(1, 6))
+  </div>
+  <ul class="point-list mt-4">
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">import X</span> → usas <span class="ic">X.funcion()</span>. Mantiene el código claro.</li>
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">from X import Y</span> → usas <span class="ic">Y()</span> directo. Más corto pero menos explícito.</li>
+    <li><i class="fas fa-star text-red"></i> <span class="ic">import pandas as pd</span> — la convención que verán en todo Data Science.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">14</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 15: POLL 2 — PREDICCIÓN IMPORT
+     ============================================================= -->
+<section data-poll="prediction">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Predicción: ¿Qué imprime este código?</h3>
+  <div class="title-bar"></div>
+  <div class="code-block" style="margin-bottom:10px"><pre><code class="language-python">from math import sqrt
+print(sqrt(16))</code></pre></div>
+  <div class="columns">
+    <div class="col-60">
+      <div class="poll-container">
+        <h4>¿Qué valor se imprime?</h4>
+        <div class="poll-chart-wrap"><canvas id="chart_prediction"></canvas></div>
+        <div class="poll-total">0 votos</div>
+      </div>
+    </div>
+    <div class="col-40" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div class="poll-qr"><div id="qr_prediction"></div></div>
+      <p class="poll-qr-label">Voten antes de ejecutar</p>
+      <div class="py-editor" data-id="reveal_mean" data-height="80px" style="margin-top:12px">
+from math import sqrt
+print(sqrt(16))
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">15</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: CSV
+     ============================================================= -->
+<section class="section-divider">
+  <h2>Archivos CSV</h2>
+  <p>El formato universal de datos tabulares</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 16: ¿QUÉ ES CSV? — ANIMACIÓN
+     ============================================================= -->
+<section data-state="csv-anim">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">¿Qué Es un Archivo CSV?</h3>
+  <div class="title-bar"></div>
+  <div class="concept-card">
+    <h4><i class="fas fa-file-csv"></i> CSV = Comma Separated Values</h4>
+    <p>Un archivo de <strong>texto plano</strong> donde cada línea es una fila y las columnas se separan por comas. Es el formato más universal para intercambiar datos tabulares.</p>
+  </div>
+  <div class="columns mt-8">
+    <div class="col-50">
+      <span class="text-dark font-bold text-sm">Así se ve un CSV por dentro:</span>
+      <div class="csv-raw" id="csvRaw">nombre,ventas,meta,zona
+Ana,18500,15000,Norte
+Luis,9200,15000,Sur
+Sol,22000,15000,Norte
+Paco,15000,15000,Sur
+Mia,31000,20000,Norte
+Carlos,12800,15000,Centro
+Diana,27500,20000,Sur
+Felipe,8500,12000,Centro
+Rosa,19000,15000,Norte
+Tomas,16500,15000,Centro</div>
+      <button class="py-run-btn" style="margin-top:10px" onclick="animateCSV()"><i class="fas fa-wand-magic-sparkles"></i> Transformar en tabla</button>
+    </div>
+    <div class="col-50">
+      <div class="csv-table" id="csvTable">
+        <span class="text-dark font-bold text-sm">Lo mismo como tabla:</span>
+        <table style="margin-top:6px">
+          <thead><tr><th>nombre</th><th>ventas</th><th>meta</th><th>zona</th></tr></thead>
+          <tbody>
+            <tr><td>Ana</td><td>18500</td><td>15000</td><td>Norte</td></tr>
+            <tr><td>Luis</td><td>9200</td><td>15000</td><td>Sur</td></tr>
+            <tr><td>Sol</td><td>22000</td><td>15000</td><td>Norte</td></tr>
+            <tr><td>Paco</td><td>15000</td><td>15000</td><td>Sur</td></tr>
+            <tr><td>Mia</td><td>31000</td><td>20000</td><td>Norte</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <ul class="point-list mt-4">
+    <li><i class="fas fa-arrow-right text-red"></i> Excel, Google Sheets, bases de datos — todos exportan e importan CSV.</li>
+    <li><i class="fas fa-arrow-right text-red"></i> La primera fila son los <strong>encabezados</strong> (nombres de columna).</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">16</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: PANDAS
+     ============================================================= -->
+<section class="section-divider">
+  <h2>pandas</h2>
+  <p>La herramienta #1 para datos en Python</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 17: ¿QUÉ ES PANDAS?
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">¿Qué Es pandas?</h3>
+  <div class="title-bar"></div>
+  <div class="concept-card">
+    <h4><i class="fas fa-table"></i> pandas = Excel dentro de Python</h4>
+    <p>Una librería que te da <strong>DataFrames</strong>: tablas con filas y columnas, pero con todo el poder de Python para filtrar, agrupar y transformar datos.</p>
+  </div>
+  <div class="columns mt-8">
+    <div class="col-55">
+      <div class="py-editor" data-id="pd_intro" data-height="240px" data-preload="csv">
+import pandas as pd
+
+df = pd.read_csv("datos_ventas.csv")
+print("Tipo:", type(df))
+print("Forma:", df.shape)
+print()
+print(df)
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">¿Por qué pandas y no la librería csv?</span>
+      <ul class="point-list mt-8">
+        <li><i class="fas fa-check text-green"></i> Una línea para cargar un CSV.</li>
+        <li><i class="fas fa-check text-green"></i> Los tipos de dato se detectan automáticamente.</li>
+        <li><i class="fas fa-check text-green"></i> Filtros, agrupaciones y estadísticas integradas.</li>
+        <li><i class="fas fa-check text-green"></i> Usado en el 95% de proyectos de Data Science.</li>
+      </ul>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-star"></i> Convención universal</h4>
+        <p><span class="ic">import pandas as pd</span> — siempre.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">17</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 18: EXPLORAR EL DATAFRAME
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Explorar el DataFrame</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="pd_explore" data-height="300px" data-preload="csv">
+import pandas as pd
+
+df = pd.read_csv("datos_ventas.csv")
+
+# Primeras filas
+print("=== head() ===")
+print(df.head(3))
+
+# Columnas
+print("\nColumnas:", list(df.columns))
+
+# Estadísticas rápidas
+print("\n=== describe() ===")
+print(df.describe())
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Métodos esenciales:</span>
+      <table style="margin-top:6px">
+        <thead><tr><th>Método</th><th>¿Qué hace?</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">.head(n)</span></td><td>Primeras n filas</td></tr>
+          <tr><td><span class="ic">.tail(n)</span></td><td>Últimas n filas</td></tr>
+          <tr><td><span class="ic">.shape</span></td><td>(filas, columnas)</td></tr>
+          <tr><td><span class="ic">.columns</span></td><td>Nombres de columna</td></tr>
+          <tr><td><span class="ic">.dtypes</span></td><td>Tipos de dato</td></tr>
+          <tr><td><span class="ic">.describe()</span></td><td>Estadísticas resumen</td></tr>
+          <tr><td><span class="ic">.info()</span></td><td>Resumen del DataFrame</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">18</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 19: SELECCIONAR Y FILTRAR
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Seleccionar y Filtrar Datos</h3>
+  <div class="title-bar"></div>
+  <div class="py-editor" data-id="pd_filter" data-height="320px" data-preload="csv">
+import pandas as pd
+
+df = pd.read_csv("datos_ventas.csv")
+
+# Seleccionar una columna
+print("=== Nombres ===")
+print(df["nombre"])
+
+# Crear columna nueva
+df["cumple_meta"] = df["ventas"] >= df["meta"]
+print("\n=== Con nueva columna ===")
+print(df)
+
+# Filtrar filas
+sobre_meta = df[df["ventas"] >= df["meta"]]
+print(f"\n=== {len(sobre_meta)} vendedores sobre meta ===")
+print(sobre_meta[["nombre", "ventas", "meta"]])
+  </div>
+  <ul class="point-list mt-4">
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">df["col"]</span> → una columna. <span class="ic">df[["a","b"]]</span> → varias columnas.</li>
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">df[condición]</span> → filtra filas. Pueden combinar condiciones con <span class="ic">&</span> y <span class="ic">|</span>.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">19</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 20: GROUPBY Y AGREGACIONES
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Agrupar y Resumir: <span class="ic">groupby()</span></h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="pd_groupby" data-height="280px" data-preload="csv">
+import pandas as pd
+
+df = pd.read_csv("datos_ventas.csv")
+
+# Resumen por zona
+por_zona = df.groupby("zona")["ventas"].agg(
+    ["sum", "mean", "count"]
+)
+print("=== Ventas por zona ===")
+print(por_zona)
+
+# Total general
+print(f"\nTotal ventas: ${df['ventas'].sum():,}")
+print(f"Promedio: ${df['ventas'].mean():,.0f}")
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Funciones de agregación:</span>
+      <table style="margin-top:6px">
+        <thead><tr><th>Función</th><th>Resultado</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">.sum()</span></td><td>Suma total</td></tr>
+          <tr><td><span class="ic">.mean()</span></td><td>Promedio</td></tr>
+          <tr><td><span class="ic">.count()</span></td><td>Cantidad de filas</td></tr>
+          <tr><td><span class="ic">.min() / .max()</span></td><td>Mínimo / Máximo</td></tr>
+          <tr><td><span class="ic">.median()</span></td><td>Mediana</td></tr>
+          <tr><td><span class="ic">.std()</span></td><td>Desviación estándar</td></tr>
+        </tbody>
+      </table>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-lightbulb"></i> Equivalente a</h4>
+        <p>Una <strong>tabla dinámica</strong> de Excel, pero en una línea de código.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">20</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 21: EXPORTAR CON TO_CSV
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Exportar: <span class="ic">df.to_csv()</span></h3>
+  <div class="title-bar"></div>
+  <div class="py-editor" data-id="pd_export" data-height="300px" data-preload="csv">
+import pandas as pd
+
+df = pd.read_csv("datos_ventas.csv")
+
+# Calcular comisión
+df["comision"] = df.apply(
+    lambda v: v["ventas"] * 0.05 if v["ventas"] >= v["meta"] else 0,
+    axis=1
+)
+
+# Clasificar
+df["estado"] = df.apply(
+    lambda v: "Estrella" if v["ventas"] >= 2*v["meta"]
+              else "Cumple" if v["ventas"] >= v["meta"]
+              else "Bajo",
+    axis=1
+)
+
+# Exportar a CSV
+df.to_csv("reporte.csv", index=False)
+
+# Verificar
+print(pd.read_csv("reporte.csv").to_string())
+  </div>
+  <ul class="point-list mt-4">
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">to_csv(ruta, index=False)</span> — siempre <span class="ic">index=False</span> para no exportar el índice de pandas.</li>
+    <li><i class="fas fa-lightbulb text-red"></i> <span class="ic">read_csv()</span> → transformar → <span class="ic">to_csv()</span> — el pipeline estándar.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">21</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 22: PRÁCTICA PANDAS
+     ============================================================= -->
+<section data-timer="600">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Práctica: Analizar con pandas <span class="timer"><i class="fas fa-clock"></i> 10 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="practice-timer" id="timer_19"><div class="timer-bar-wrap"><div class="timer-bar"></div></div><span class="timer-text">10:00</span></div>
+  <div class="columns">
+    <div class="col-60">
+      <div class="py-editor" data-id="prac_pandas" data-height="280px" data-preload="csv">
+import pandas as pd
+
+df = pd.read_csv("datos_ventas.csv")
+
+# TODO: Crear columna "cumple" (True/False)
+# TODO: Filtrar los que NO cumplen meta
+# TODO: Calcular promedio de ventas por zona
+# TODO: Mostrar el vendedor con más ventas
+
+print(df)
+      </div>
+    </div>
+    <div class="col-40">
+      <span class="text-muted font-bold text-sm">Pistas:</span>
+      <div class="concept-card mt-4">
+        <h4><i class="fas fa-lightbulb"></i> Métodos útiles</h4>
+        <p><span class="ic">df["col"] >= df["col2"]</span> para comparar.<br>
+        <span class="ic">df[~condicion]</span> para negar.<br>
+        <span class="ic">df.groupby("zona")["ventas"].mean()</span> para promedios.<br>
+        <span class="ic">df.loc[df["ventas"].idxmax()]</span> para el máximo.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">22</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 23: POLL 3 — PANDAS
+     ============================================================= -->
+<section data-poll="useful">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Ejercicio: ¿Qué devuelve este código?</h3>
+  <div class="title-bar"></div>
+  <div class="code-block" style="margin-bottom:6px"><pre><code class="language-python">import pandas as pd
+# datos_ventas.csv: 10 vendedores, 3 zonas
+df = pd.read_csv("datos_ventas.csv")
+print(df.shape[0])</code></pre></div>
+  <p class="text-muted text-sm mb-4"><i class="fas fa-lightbulb text-red"></i> Pista: <span class="ic">.shape</span> devuelve <span class="ic">(filas, columnas)</span></p>
+  <div class="columns">
+    <div class="col-60">
+      <div class="poll-container">
+        <h4>¿Qué número imprime?</h4>
+        <div class="poll-chart-wrap"><canvas id="chart_useful"></canvas></div>
+        <div class="poll-total">0 votos</div>
+      </div>
+    </div>
+    <div class="col-40" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div class="poll-qr"><div id="qr_useful"></div></div>
+      <p class="poll-qr-label">Escaneen para votar</p>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">23</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: PROYECTO
+     ============================================================= -->
+<section class="section-divider">
+  <h2>Proyecto Integrador</h2>
+  <p>Pipeline completo con pandas: CSV → análisis → reporte</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 24: PROYECTO — ENUNCIADO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Proyecto: Reporte de Ventas con pandas <span class="timer"><i class="fas fa-clock"></i> 15 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="concept-card">
+    <h4><i class="fas fa-briefcase"></i> Escenario</h4>
+    <p>El gerente regional les pide un script que cargue el CSV de ventas, calcule comisiones, clasifique vendedores, genere un resumen por zona y exporte el resultado.</p>
+  </div>
+  <div class="columns mt-8">
+    <div class="col-55">
+      <span class="text-dark font-bold text-sm">Pasos del pipeline:</span>
+      <ol class="numbered-steps" style="margin-top:4px">
+        <li><span class="ic">pd.read_csv()</span> para cargar datos.</li>
+        <li>Crear columna <span class="ic">"comision"</span> — &lt;meta→0%, ≥meta→5%, ≥2×meta→10%.</li>
+        <li>Crear columna <span class="ic">"estado"</span> — "Estrella" / "Cumple" / "Bajo".</li>
+        <li><span class="ic">groupby("zona")</span> para resumen por zona.</li>
+        <li><span class="ic">to_csv()</span> para exportar reporte.</li>
+      </ol>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Reglas de comisión:</span>
+      <table style="margin-top:4px">
+        <thead><tr><th>Condición</th><th>Comisión</th></tr></thead>
+        <tbody>
+          <tr><td>ventas &lt; meta</td><td>0%</td></tr>
+          <tr><td>ventas ≥ meta</td><td>5%</td></tr>
+          <tr><td>ventas ≥ 2 × meta</td><td>10%</td></tr>
+        </tbody>
+      </table>
+      <span class="text-dark font-bold text-sm mt-12" style="display:block">Reporte esperado por zona:</span>
+      <div class="output-block"><pre><code>        ventas  comision
+zona
+Centro   37800     825.0
+Norte    90500    4525.0
+Sur      51700    2125.0
+Total: $7,475</code></pre></div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">24</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 25: PROYECTO — EDITOR GRANDE
+     ============================================================= -->
+<section data-timer="900">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Proyecto: ¡A Codear! <span class="timer"><i class="fas fa-clock"></i> 15 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="practice-timer" id="timer_24"><div class="timer-bar-wrap"><div class="timer-bar"></div></div><span class="timer-text">15:00</span></div>
+  <div class="py-editor" data-id="proyecto" data-height="480px" data-preload="csv">
+import pandas as pd
+
+# 1. Cargar datos
+df = pd.read_csv("datos_ventas.csv")
+
+# 2. TODO: Crear columna "comision"
+#    <meta→0%, >=meta→5%, >=2*meta→10%
+
+# 3. TODO: Crear columna "estado"
+#    "Estrella" / "Cumple" / "Bajo"
+
+# 4. TODO: Mostrar reporte por consola
+#    print(df[["nombre","zona","estado","comision"]])
+
+# 5. TODO: Resumen por zona con groupby
+
+# 6. TODO: Exportar a CSV
+#    df.to_csv("reporte_final.csv", index=False)
+
+print(df)
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">25</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: CIERRE
+     ============================================================= -->
+<section class="section-divider">
+  <h2>Cierre</h2>
+  <p>Lo que logramos hoy</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 26: CIERRE
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Lo que Aprendimos Hoy</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-50">
+      <ul class="check-list">
+        <li>Pipeline completo con funciones (clase 05).</li>
+        <li>Tres tipos de error: sintaxis, runtime, lógica.</li>
+        <li>Leer mensajes de error de abajo hacia arriba.</li>
+        <li><span class="ic">try/except</span> para código que no explota.</li>
+        <li><span class="ic">except</span> específico vs genérico.</li>
+      </ul>
+    </div>
+    <div class="col-50">
+      <ul class="check-list">
+        <li>Módulos: estándar vs externos, <span class="ic">pip install</span>.</li>
+        <li>Tres formas de importar: <span class="ic">import</span>, <span class="ic">from</span>, alias.</li>
+        <li>Qué es un CSV y por qué importa.</li>
+        <li><span class="ic">pandas</span>: read_csv, filtrar, groupby, to_csv.</li>
+        <li>Pipeline completo: CSV → pandas → reporte.</li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top:16px">
+    <span class="text-dark font-bold" style="font-size:17px"><i class="fas fa-arrow-right text-red"></i> Próxima clase:</span>
+    <ul class="point-list mt-8">
+      <li><i class="fas fa-arrow-right text-red"></i> <strong>pandas avanzado</strong> — merge, pivot tables, datos faltantes.</li>
+      <li><i class="fas fa-arrow-right text-red"></i> <strong>Visualización</strong> con matplotlib — gráficas de datos.</li>
+      <li><i class="fas fa-arrow-right text-red"></i> Conectar datos reales de la empresa.</li>
+    </ul>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">26</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 27: QR ENCUESTA
+     ============================================================= -->
+<section class="qr-slide">
+  <h2>¿Cómo estuvo la clase?</h2>
+  <img src="qr_encuesta.jpg" alt="QR Encuesta">
+  <p>Escaneen el QR para la encuesta rápida</p>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<!-- ===============================================================
+     SCRIPTS
+     =============================================================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script src="js/config.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/polls.js"></script>
+
+<script>
+/* ================================================================
+   REVEAL INIT
+   ================================================================ */
+Reveal.initialize({
+  width: 960, height: 700, margin: 0,
+  center: false, hash: true,
+  transition: 'slide', transitionSpeed: 'default',
+  backgroundTransition: 'fade',
+  slideNumber: false, controls: true, progress: true,
+  plugins: [RevealHighlight]
+});
+
+/* ================================================================
+   PYODIDE EDITORS — init on slide change
+   ================================================================ */
+(function patchRevealScale() {
+  const slides = document.querySelector('.reveal .slides');
+  if (!slides) return;
+  function replaceScaleWithZoom() {
+    const tf = slides.style.transform || '';
+    const m = tf.match(/scale\(([\d.]+)\)/);
+    if (!m) return;
+    const s = parseFloat(m[1]);
+    observer.disconnect();
+    slides.style.transform = tf.replace(/\s*scale\([\d.]+\)/, '');
+    slides.style.zoom = s;
+    observer.observe(slides, { attributes: true, attributeFilter: ['style'] });
+  }
+  const observer = new MutationObserver(replaceScaleWithZoom);
+  observer.observe(slides, { attributes: true, attributeFilter: ['style'] });
+  replaceScaleWithZoom();
+})();
+
+Reveal.on('slidechanged', e => {
+  setTimeout(() => { PyEditor.initAll(); PyEditor.refreshAll(); }, 80);
+});
+Reveal.on('ready', () => {
+  const sections = document.querySelectorAll('.reveal .slides section');
+  sections.forEach(s => {
+    s.style.display = 'block';
+    s.style.visibility = 'visible';
+    s.style.opacity = '1';
+  });
+  PyEditor.initAll();
+  setTimeout(() => {
+    PyEditor.refreshAll();
+    sections.forEach(s => {
+      s.style.display = '';
+      s.style.visibility = '';
+      s.style.opacity = '';
+    });
+    Reveal.sync();
+    setTimeout(() => PyEditor.refreshAll(), 200);
+  }, 150);
+  PyEditor.initPyodide();
+});
+
+/* ================================================================
+   FIREBASE POLLS + QR
+   ================================================================ */
+Polls.init();
+
+function setupPoll(pollId, canvasId, qrContainerId) {
+  Polls.listenPoll(pollId, canvasId);
+  if (qrContainerId) {
+    const container = document.getElementById(qrContainerId);
+    if (container && container.childElementCount === 0) {
+      const url = VOTAR_BASE_URL + '?p=' + pollId;
+      new QRCode(container, { text: url, width: 140, height: 140, colorDark: '#6B1525', colorLight: '#ffffff' });
+    }
+  }
+  const section = document.querySelector(`[data-poll="${pollId}"]`);
+  if (section && !section.querySelector('.poll-reset-btn')) {
+    const btn = document.createElement('button');
+    btn.className = 'poll-reset-btn';
+    btn.innerHTML = '<i class="fas fa-rotate-right"></i> Resetear encuesta';
+    btn.onclick = async () => {
+      if (!confirm('¿Resetear los votos de esta encuesta?')) return;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Reseteando...';
+      await Polls.resetPoll(pollId);
+      btn.innerHTML = '<i class="fas fa-check"></i> Lista';
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-rotate-right"></i> Resetear encuesta';
+      }, 800);
+    };
+    const footer = section.querySelector('.slide-footer');
+    if (footer) section.insertBefore(btn, footer);
+    else section.appendChild(btn);
+  }
+}
+
+Reveal.on('ready', () => {
+  setupPoll('comfort', 'chart_comfort', 'qr_comfort');
+  setupPoll('error_quiz', 'chart_error_quiz', 'qr_error_quiz');
+  setupPoll('prediction', 'chart_prediction', 'qr_prediction');
+  setupPoll('useful', 'chart_useful', 'qr_useful');
+
+  // Cover QR
+  const coverQR = document.getElementById('coverQR');
+  if (coverQR && coverQR.childElementCount === 0) {
+    new QRCode(coverQR, {
+      text: VOTAR_BASE_URL,
+      width: 130, height: 130, colorDark: '#6B1525', colorLight: '#ffffff'
+    });
+  }
+
+  // Set active poll for the initial slide (slidechanged doesn't fire on load)
+  const initialSlide = Reveal.getCurrentSlide();
+  if (initialSlide && initialSlide.dataset.poll) {
+    Polls.setActivePoll(initialSlide.dataset.poll);
+  }
+});
+
+// Set active poll when navigating to a poll slide
+Reveal.on('slidechanged', e => {
+  const pollId = e.currentSlide.dataset.poll;
+  Polls.setActivePoll(pollId || null);
+});
+
+/* ================================================================
+   TABS
+   ================================================================ */
+function showTab(group, index, btn) {
+  document.querySelectorAll(`[id^="${group}_"]`).forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+  btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === index);
+  });
+  setTimeout(() => { PyEditor.initAll(); PyEditor.refreshAll(); }, 50);
+}
+
+/* ================================================================
+   QUIZ
+   ================================================================ */
+function checkQuiz(btn, correctAnswer) {
+  const container = btn.closest('.quiz-options');
+  const isCorrect = btn.hasAttribute('data-correct');
+  container.querySelectorAll('.quiz-btn').forEach(b => b.disabled = true);
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    container.querySelector('[data-correct]').classList.add('correct');
+  }
+}
+
+/* ================================================================
+   STAGGER ANIMATION
+   ================================================================ */
+Reveal.on('slidechanged', e => {
+  const stagger = e.currentSlide.querySelector('.stagger-in');
+  if (stagger) {
+    stagger.classList.remove('animate');
+    setTimeout(() => stagger.classList.add('animate'), 100);
+  }
+});
+
+/* ================================================================
+   FLOW DIAGRAM ANIMATION
+   ================================================================ */
+Reveal.on('slidechanged', e => {
+  if (e.currentSlide.dataset.state === 'flow-anim') {
+    const boxes = e.currentSlide.querySelectorAll('.flow-box');
+    const arrows = e.currentSlide.querySelectorAll('.flow-arrow');
+    boxes.forEach(b => { b.classList.remove('visible', 'active'); });
+    arrows.forEach(a => a.classList.remove('visible'));
+
+    let delay = 200;
+    boxes.forEach((box, i) => {
+      setTimeout(() => {
+        box.classList.add('visible');
+        box.classList.add('active');
+        setTimeout(() => box.classList.remove('active'), 600);
+      }, delay);
+      if (arrows[i]) {
+        setTimeout(() => arrows[i].classList.add('visible'), delay + 200);
+      }
+      delay += 500;
+    });
+  }
+});
+
+/* ================================================================
+   CSV ANIMATION
+   ================================================================ */
+function animateCSV() {
+  document.getElementById('csvRaw').classList.add('morphed');
+  document.getElementById('csvTable').classList.add('visible');
+}
+
+/* ================================================================
+   TIMERS
+   ================================================================ */
+const activeTimers = {};
+
+Reveal.on('slidechanged', e => {
+  const seconds = parseInt(e.currentSlide.dataset.timer);
+  if (!seconds) return;
+
+  const timerEl = e.currentSlide.querySelector('.practice-timer');
+  if (!timerEl) return;
+  const bar = timerEl.querySelector('.timer-bar');
+  const text = timerEl.querySelector('.timer-text');
+  if (!bar || !text) return;
+
+  const timerId = timerEl.id;
+  if (activeTimers[timerId]) clearInterval(activeTimers[timerId]);
+
+  let remaining = seconds;
+  bar.style.width = '100%';
+  bar.classList.remove('warning');
+
+  activeTimers[timerId] = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(activeTimers[timerId]);
+      remaining = 0;
+      text.textContent = '0:00';
+      bar.style.width = '0%';
+      return;
+    }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    text.textContent = m + ':' + String(s).padStart(2, '0');
+    bar.style.width = (remaining / seconds * 100) + '%';
+    if (remaining <= 120) bar.classList.add('warning');
+  }, 1000);
+});
+</script>
+
+</body>
+</html>

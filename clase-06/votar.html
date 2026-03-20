@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Votar — Clase 6 | Diplomado Data Science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --arca-red: #C82B40;
+  --arca-dark: #6B1525;
+  --green: #16a34a;
+  --bg: #f8f8fa;
+  --card: #ffffff;
+  --text: #1e1e2e;
+  --muted: #6b7280;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Fira Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: var(--arca-dark);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 12px rgba(107,21,37,0.25);
+}
+header img { height: 20px; filter: brightness(0) invert(1); }
+header span {
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  flex: 1; text-align: center;
+  letter-spacing: 0.3px;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 28px 20px;
+}
+
+.waiting {
+  text-align: center;
+  animation: fade-pulse 2.5s ease-in-out infinite;
+}
+.waiting .icon-ring {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--arca-red), var(--arca-dark));
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px; box-shadow: 0 4px 20px rgba(200,43,64,0.3);
+}
+.waiting .icon-ring i { font-size: 32px; color: white; }
+.waiting h2 {
+  font-size: 22px; font-weight: 700; margin-bottom: 6px; color: var(--text);
+}
+.waiting p { font-size: 15px; color: var(--muted); line-height: 1.5; }
+@keyframes fade-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.poll-view { width: 100%; max-width: 420px; }
+.poll-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: var(--shadow);
+}
+.poll-card h2 {
+  font-size: 18px; font-weight: 700; text-align: center;
+  margin-bottom: 20px; line-height: 1.4; color: var(--text);
+}
+.poll-code {
+  background: #1e1e2e; color: #a3e635;
+  font-family: 'Fira Mono', 'Courier New', monospace;
+  font-size: 13px; line-height: 1.6;
+  padding: 12px 16px; border-radius: 10px;
+  margin-bottom: 20px; white-space: pre-wrap;
+}
+
+.poll-options { display: flex; flex-direction: column; gap: 10px; }
+
+.poll-btn {
+  display: flex; align-items: center; gap: 14px;
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'Fira Sans', sans-serif;
+  font-size: 16px; font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.poll-btn .opt-letter {
+  width: 34px; height: 34px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: white;
+  flex-shrink: 0;
+}
+
+.poll-btn:active { transform: scale(0.97); }
+.poll-btn:hover { border-color: rgba(200,43,64,0.3); background: #fff; }
+
+.poll-btn.selected {
+  border-color: var(--green);
+  background: rgba(22,163,74,0.08);
+}
+.poll-btn.selected .opt-letter {
+  background: var(--green) !important;
+}
+
+.poll-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+.voted-view { text-align: center; }
+.voted-view .check-circle {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 4px 20px rgba(34,197,94,0.3);
+  animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.voted-view .check-circle i { font-size: 38px; color: white; }
+.voted-view h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+.voted-view p { font-size: 15px; color: var(--muted); }
+@keyframes pop-in {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+.session-info {
+  text-align: center; padding: 12px;
+}
+.session-info small { color: var(--muted); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="../logo_udla_white.png" alt="UDLA">
+  <span>Diplomado Data Science · Clase 6</span>
+  <img src="../ArcaContinental_white.png" alt="Arca">
+</header>
+
+<main id="app"></main>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/polls.js"></script>
+<script>
+(function() {
+  const OPTION_COLORS = ['#C82B40', '#2563EB', '#EA580C', '#7c3aed'];
+  const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const app = document.getElementById('app');
+  const directPoll = new URLSearchParams(window.location.search).get('p');
+
+  Polls.init();
+
+  let currentPoll = null;
+
+  function showWaiting() {
+    app.innerHTML = `
+      <div class="waiting">
+        <div class="icon-ring"><i class="fas fa-satellite-dish"></i></div>
+        <h2>Conectado</h2>
+        <p>Esperando la siguiente pregunta del profesor...</p>
+      </div>`;
+  }
+
+  function showPoll(pollId) {
+    if (currentPoll === pollId) return;
+    currentPoll = pollId;
+    const def = Polls.getPollDef(pollId);
+    if (!def) { showWaiting(); return; }
+
+    if (Polls.hasVoted(pollId)) {
+      showVoted();
+      return;
+    }
+
+    let html = '<div class="poll-view"><div class="poll-card">';
+    html += `<h2>${def.question}</h2>`;
+    if (def.code) {
+      html += `<div class="poll-code">${def.code}</div>`;
+    }
+    html += '<div class="poll-options">';
+    def.options.forEach((opt, i) => {
+      const color = OPTION_COLORS[i % OPTION_COLORS.length];
+      const letter = OPTION_LETTERS[i] || (i + 1);
+      const escaped = opt.replace(/"/g, '&quot;');
+      html += `<button class="poll-btn" data-answer="${escaped}">
+        <span class="opt-letter" style="background:${color}">${letter}</span>
+        <span>${opt}</span>
+      </button>`;
+    });
+    html += '</div></div></div>';
+    app.innerHTML = html;
+
+    app.querySelectorAll('.poll-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleVote(pollId, btn));
+    });
+  }
+
+  async function handleVote(pollId, btn) {
+    const answer = btn.dataset.answer;
+    app.querySelectorAll('.poll-btn').forEach(b => b.disabled = true);
+    btn.classList.add('selected');
+
+    try {
+      await Polls.vote(pollId, answer);
+      Polls.markVoted(pollId);
+      setTimeout(showVoted, 400);
+    } catch (e) {
+      console.error('Vote failed', e);
+      btn.querySelector('span:last-child').textContent = 'Error, intenta de nuevo';
+      app.querySelectorAll('.poll-btn').forEach(b => b.disabled = false);
+    }
+  }
+
+  function showVoted() {
+    app.innerHTML = `
+      <div class="voted-view">
+        <div class="check-circle"><i class="fas fa-check"></i></div>
+        <h2>¡Voto registrado!</h2>
+        <p>Esperando la siguiente pregunta...</p>
+      </div>`;
+  }
+
+  if (directPoll) {
+    showPoll(directPoll);
+  } else {
+    showWaiting();
+  }
+
+  Polls.onActivePollChange(pollId => {
+    if (pollId && Polls.getPollDef(pollId)) {
+      currentPoll = null;
+      showPoll(pollId);
+    } else if (!directPoll) {
+      currentPoll = null;
+      showWaiting();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

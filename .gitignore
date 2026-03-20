@@ -12,6 +12,7 @@
 *.fdb_latexmk
 **/_minted-*
 **/presentacion.pdf
+**/test.pdf
 
 # ── Generated figures / previews ──
 **/preview_*.png
@@ -28,6 +29,8 @@ skills-lock.json
 # ── OS ──
 .DS_Store
 Thumbs.db
+*.uuid.jpg
+74b1429f-*.jpg
 
 # ── Editor ──
 *.swp
