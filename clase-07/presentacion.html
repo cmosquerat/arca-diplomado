@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clase 7: pandas en Profundidad | Diplomado Data Science</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&family=Fira+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+
+<style>
+/* ================================================================ PALETTE */
+:root {
+  --arca-red: #C82B40; --arca-dark: #6B1525; --arca-gray: #F5F5F5;
+  --arca-light-gray: #EBEBEB; --text-dark: #2D2D2D; --text-muted: #6B7280;
+  --code-green: #16A34A; --code-blue: #2563EB; --code-orange: #EA580C;
+  --terminal-bg: #0d0709; --editor-bg: #212121;
+}
+
+/* ================================================================ REVEAL BASE */
+.reveal { font-family: 'Fira Sans', sans-serif; font-size: 22px; color: var(--text-dark); }
+.reveal .slides { text-align: left; }
+.reveal .slides section { padding: 44px 50px 18px 50px; box-sizing: border-box; height: 100%; }
+.reveal .controls { z-index: 20; }
+.reveal .progress { z-index: 20; }
+
+/* ================================================================ HEADER BAR */
+.reveal .slides section:not(.cover-slide):not(.section-divider):not(.qr-slide)::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 38px; background: var(--arca-dark); z-index: 10;
+}
+.slide-logos {
+  position: absolute; top: 0; left: 0; right: 0; height: 38px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 24px; z-index: 11;
+}
+.slide-logos img { height: 22px; filter: brightness(0) invert(1); }
+
+/* ================================================================ FOOTER */
+.slide-footer {
+  position: absolute; bottom: 2px; left: 50px; right: 50px;
+  display: flex; justify-content: center; align-items: center;
+  z-index: 5; font-size: 10px; color: var(--text-muted); pointer-events: none;
+}
+.slide-footer .slide-num { position: absolute; right: 0; font-size: 12px; font-weight: 700; color: var(--arca-red); }
+
+/* ================================================================ TITLE */
+.slide-title { font-size: 26px; font-weight: 700; color: var(--arca-red); margin: 0 0 4px 0; line-height: 1.2; }
+.slide-title .timer { float: right; font-size: 16px; font-weight: 400; color: var(--arca-red); }
+.title-bar { height: 3px; background: linear-gradient(to right, var(--arca-red) 35%, var(--arca-light-gray) 35%); margin-bottom: 8px; border-radius: 2px; }
+
+/* ================================================================ COVER */
+.cover-slide {
+  background: var(--arca-dark) !important; display: flex !important; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center !important; padding: 0 !important;
+}
+.cover-slide .cover-stripe { position: absolute; top: 130px; left: 0; right: 0; height: 26px; background: var(--arca-red); }
+.cover-slide .cover-logos { position: absolute; top: 36px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 60px; }
+.cover-slide .cover-logos img { height: 46px; }
+.cover-slide h1 { font-size: 30px; font-weight: 700; color: white; margin: 0 0 14px 0; line-height: 1.3; }
+.cover-slide h2 { font-size: 22px; font-weight: 400; color: rgba(255,255,255,0.85); margin: 0 0 24px 0; }
+.cover-slide .cover-author { font-size: 17px; color: rgba(255,255,255,0.8); margin: 0; }
+.cover-slide .cover-date { font-size: 14px; color: rgba(255,255,255,0.6); margin: 5px 0 0 0; }
+.cover-slide .cover-badges { display: flex; gap: 12px; margin-top: 20px; justify-content: center; }
+.cover-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 6px 16px; font-size: 13px; color: rgba(255,255,255,0.85); }
+
+/* ================================================================ SECTION DIVIDER */
+.section-divider {
+  background: var(--arca-red) !important; display: flex !important; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center !important;
+}
+.section-divider h2 { font-size: 40px; font-weight: 800; color: white; margin: 0 0 10px 0; }
+.section-divider p { font-size: 20px; color: rgba(255,255,255,0.8); margin: 0; }
+.section-divider .section-icon { font-size: 60px; color: rgba(255,255,255,0.3); margin-bottom: 16px; }
+
+/* ================================================================ QR SLIDE */
+.qr-slide { background: var(--arca-dark) !important; display: flex !important; flex-direction: column; justify-content: center; align-items: center; text-align: center !important; }
+.qr-slide h2 { font-size: 36px; font-weight: 800; color: white; margin: 0 0 20px 0; }
+.qr-slide p { font-size: 18px; color: rgba(255,255,255,0.7); margin: 14px 0 0 0; }
+
+/* ================================================================ LAYOUT */
+.columns { display: flex; gap: 24px; align-items: flex-start; }
+.col { flex: 1; min-width: 0; }
+.col-55 { flex: 0 0 55%; min-width: 0; } .col-45 { flex: 0 0 43%; min-width: 0; } .col-50 { flex: 0 0 48%; min-width: 0; }
+.col-60 { flex: 0 0 58%; min-width: 0; } .col-40 { flex: 0 0 40%; min-width: 0; }
+
+/* ================================================================ CODE BLOCKS */
+.code-block { background: var(--arca-gray); border-left: 3px solid var(--arca-red); border-radius: 4px; padding: 10px 12px; margin: 6px 0; overflow-x: auto; }
+.code-block pre { margin: 0; padding: 0; background: transparent; box-shadow: none; }
+.code-block code { font-family: 'Fira Mono', monospace; font-size: 15px; line-height: 1.5; background: transparent; padding: 0; }
+.output-block { background: white; border: 1px solid var(--arca-light-gray); border-radius: 4px; padding: 8px 12px; margin: 5px 0; }
+.output-block::before { content: '\f120  Output'; font-family: 'Font Awesome 6 Free','Fira Mono',monospace; font-weight: 900; font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+.output-block pre { margin: 0; padding: 0; background: transparent; box-shadow: none; }
+.output-block code { font-family: 'Fira Mono', monospace; font-size: 14px; line-height: 1.5; color: var(--text-dark); background: transparent; padding: 0; }
+
+/* ================================================================ PYODIDE EDITOR */
+.py-editor-container { margin: 2px 0; border-radius: 8px; overflow: hidden; position: relative; z-index: 6; }
+.py-editor-container.py-expanded { position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999 !important; margin: 0; border-radius: 0; display: flex; flex-direction: column; }
+.py-expanded .py-editor-code { flex: 1; height: auto !important; }
+.py-expanded .py-editor-output { max-height: 35vh !important; }
+.py-expanded .py-editor-toolbar { border-radius: 0; }
+.py-editor-code { border-radius: 8px 8px 0 0; overflow: hidden; }
+.py-editor-code .CodeMirror { height: 100% !important; font-family: 'Fira Mono', monospace; font-size: 15px; line-height: 1.55; }
+.reveal .slides section .py-editor-container { visibility: visible !important; }
+.reveal .slides section .CodeMirror { visibility: visible !important; }
+.py-editor-toolbar { display: flex; gap: 6px; padding: 6px 10px; background: #1a1a2e; border-top: 1px solid rgba(255,255,255,0.06); }
+.py-run-btn, .py-reset-btn { font-family: 'Fira Sans', sans-serif; font-size: 13px; font-weight: 600; border: none; border-radius: 5px; padding: 5px 14px; cursor: pointer; transition: all 0.15s; }
+.py-run-btn { background: var(--code-green); color: white; }
+.py-run-btn:hover { background: #15803d; }
+.py-run-btn:disabled { opacity: 0.5; cursor: wait; }
+.py-reset-btn { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.py-reset-btn:hover { background: rgba(255,255,255,0.15); }
+.py-editor-output {
+  background: var(--terminal-bg); color: #a3e635;
+  font-family: 'Fira Mono', monospace; font-size: 14px; line-height: 1.5;
+  padding: 0; max-height: 0; overflow-y: auto;
+  transition: max-height 0.3s, padding 0.3s;
+  white-space: pre-wrap; word-break: break-word; border-radius: 0 0 8px 8px;
+}
+.py-editor-output.has-output, .py-editor-output.has-error { padding: 10px 14px; max-height: 220px; }
+.py-editor-output.has-error { color: #f87171; }
+.py-editor-output.has-chart { background: #f8f9fa; color: var(--text-dark); max-height: 360px; white-space: normal; }
+.py-chart { max-width: 100%; display: block; margin: 6px auto; border-radius: 6px; }
+.py-editor-status { background: var(--arca-dark); color: white; font-size: 13px; padding: 6px 14px; text-align: center; }
+
+/* ================================================================ QUIZ */
+.quiz-container { margin: 8px 0; }
+.quiz-question { background: var(--arca-gray); border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; }
+.quiz-question h4 { font-size: 16px; color: var(--arca-dark); margin: 0 0 8px 0; }
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-btn { display: block; width: 100%; padding: 10px 16px; background: white; border: 2px solid var(--arca-light-gray); border-radius: 8px; font-family: 'Fira Sans'; font-size: 15px; font-weight: 600; color: var(--text-dark); cursor: pointer; text-align: left; transition: all 0.2s; }
+.quiz-btn:hover { border-color: var(--arca-red); background: rgba(200,43,64,0.04); }
+.quiz-btn.correct { border-color: var(--code-green); background: rgba(22,163,74,0.1); animation: quiz-pop 0.3s ease; }
+.quiz-btn.wrong { border-color: #ef4444; background: rgba(239,68,68,0.08); animation: quiz-shake 0.4s ease; }
+.quiz-btn:disabled { cursor: default; opacity: 0.7; }
+@keyframes quiz-pop { 0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)} }
+@keyframes quiz-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.quiz-explanation { margin-top: 8px; padding: 8px 12px; border-radius: 6px; font-size: 14px; display: none; }
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { background: rgba(22,163,74,0.1); border-left: 3px solid var(--code-green); color: var(--code-green); }
+.quiz-explanation.wrong-exp { background: rgba(239,68,68,0.08); border-left: 3px solid #ef4444; color: #ef4444; }
+
+/* ================================================================ TIMER */
+.practice-timer { background: var(--arca-gray); border-radius: 8px; padding: 8px 14px; margin: 8px 0; display: flex; align-items: center; gap: 10px; }
+.timer-bar-wrap { flex: 1; height: 8px; background: var(--arca-light-gray); border-radius: 4px; overflow: hidden; }
+.timer-bar { height: 100%; background: var(--arca-red); border-radius: 4px; width: 100%; transition: width 1s linear; }
+.timer-bar.warning { background: var(--code-orange); }
+.timer-text { font-size: 18px; font-weight: 700; color: var(--arca-red); font-variant-numeric: tabular-nums; min-width: 50px; text-align: right; }
+
+/* ================================================================ CONCEPT CARD */
+.concept-card { background: var(--arca-gray); border-radius: 6px; padding: 12px 16px; margin: 8px 0; }
+.concept-card h4 { font-size: 15px; font-weight: 700; color: var(--arca-red); margin: 0 0 4px 0; }
+.concept-card p { font-size: 14px; color: var(--text-muted); margin: 0; line-height: 1.4; }
+
+/* ================================================================ TABS */
+.tab-bar { display: flex; gap: 2px; margin-bottom: 0; }
+.tab-btn { padding: 7px 16px; border: none; border-radius: 6px 6px 0 0; font-family: 'Fira Sans'; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--arca-light-gray); color: var(--text-muted); transition: all 0.2s; }
+.tab-btn.active { background: var(--editor-bg); color: white; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ================================================================ LISTS */
+.check-list { list-style: none; padding: 0; margin: 6px 0; }
+.check-list li { padding-left: 24px; position: relative; margin-bottom: 7px; font-size: 16px; color: var(--text-muted); line-height: 1.45; }
+.check-list li::before { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: 0; top: 3px; font-size: 14px; color: var(--code-green); }
+.point-list { list-style: none; padding: 0; margin: 6px 0; }
+.point-list li { padding-left: 22px; position: relative; margin-bottom: 7px; font-size: 16px; color: var(--text-muted); line-height: 1.45; }
+.point-list li i { position: absolute; left: 0; top: 4px; font-size: 13px; }
+.numbered-steps { counter-reset: step; list-style: none; padding: 0; margin: 6px 0; }
+.numbered-steps li { counter-increment: step; position: relative; padding-left: 30px; margin-bottom: 8px; font-size: 15px; line-height: 1.4; color: var(--text-muted); }
+.numbered-steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 20px; height: 20px; background: var(--arca-red); color: white; font-size: 12px; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* ================================================================ TABLE */
+.reveal table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+.reveal table thead th { background: var(--arca-dark); color: white; padding: 7px 10px; font-weight: 600; text-align: left; font-size: 13px; }
+.reveal table tbody td { padding: 6px 10px; border-bottom: 1px solid var(--arca-light-gray); color: var(--text-muted); font-size: 13px; }
+.reveal table tbody tr:nth-child(even) { background: var(--arca-gray); }
+
+/* ================================================================ INLINE CODE */
+.ic { font-family: 'Fira Mono', monospace; font-size: 0.88em; background: var(--arca-gray); padding: 1px 5px; border-radius: 3px; color: var(--arca-red); }
+
+/* ================================================================ HELPERS */
+.text-sm { font-size: 14px; } .text-xs { font-size: 12px; } .font-bold { font-weight: 700; }
+.text-red { color: var(--arca-red); } .text-green { color: var(--code-green); }
+.text-dark { color: var(--arca-dark); } .text-muted { color: var(--text-muted); }
+.mt-4 { margin-top: 4px; } .mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; }
+.mb-4 { margin-bottom: 4px; } .mb-8 { margin-bottom: 8px; }
+
+/* ================================================================ STAGGER ANIMATION */
+.stagger-in > * { opacity: 0; transform: translateY(16px); transition: opacity 0.4s ease, transform 0.4s ease; }
+.stagger-in.animate > * { opacity: 1; transform: translateY(0); }
+.stagger-in > *:nth-child(1){transition-delay:0.1s} .stagger-in > *:nth-child(2){transition-delay:0.25s}
+.stagger-in > *:nth-child(3){transition-delay:0.4s} .stagger-in > *:nth-child(4){transition-delay:0.55s}
+
+/* ================================================================ DATA EXPLORER */
+.df-explorer { border-radius: 8px; overflow: hidden; border: 1px solid var(--arca-light-gray); }
+.df-explorer-top { background: var(--arca-dark); padding: 10px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.df-search { font-family: 'Fira Sans'; font-size: 13px; padding: 5px 12px; border-radius: 5px; border: none; background: rgba(255,255,255,0.12); color: white; min-width: 140px; }
+.df-search::placeholder { color: rgba(255,255,255,0.4); }
+.df-search:focus { outline: 2px solid var(--arca-red); background: rgba(255,255,255,0.18); }
+.df-col-toggles { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.df-col-toggle-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: rgba(255,255,255,0.7); cursor: pointer; user-select: none; }
+.df-col-toggle-label input { accent-color: var(--arca-red); }
+.df-reset-btn { margin-left: auto; background: rgba(200,43,64,0.3); border: 1px solid rgba(200,43,64,0.5); color: white; font-family: 'Fira Sans'; font-size: 12px; padding: 4px 10px; border-radius: 5px; cursor: pointer; }
+.df-reset-btn:hover { background: rgba(200,43,64,0.5); }
+.df-table-wrap { overflow-x: auto; max-height: 220px; overflow-y: auto; }
+.df-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.df-th { background: var(--arca-gray); padding: 6px 10px; font-weight: 600; font-size: 12px; color: var(--text-dark); cursor: pointer; user-select: none; white-space: nowrap; border-bottom: 2px solid var(--arca-light-gray); }
+.df-th:hover { background: var(--arca-light-gray); }
+.df-th.df-sorted { color: var(--arca-red); background: rgba(200,43,64,0.06); }
+.df-table td { padding: 5px 10px; border-bottom: 1px solid var(--arca-light-gray); font-family: 'Fira Mono'; font-size: 12px; color: var(--text-muted); }
+.df-table tr:hover td { background: rgba(200,43,64,0.03); }
+.df-nan { color: var(--code-orange) !important; font-style: italic; }
+.df-survived { color: var(--code-green) !important; font-weight: 700; }
+.df-died { color: var(--arca-red) !important; }
+.df-bottom { background: var(--arca-gray); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.df-stats { font-size: 12px; color: var(--text-muted); display: flex; gap: 14px; }
+.df-code-gen { background: var(--editor-bg); border-radius: 5px; padding: 6px 12px; font-family: 'Fira Mono'; font-size: 12px; color: #a3e635; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.df-code-label { font-size: 11px; color: rgba(255,255,255,0.4); display: block; margin-bottom: 2px; }
+
+/* ================================================================ GROUPBY DEMO */
+.gb-demo { border: 1px solid var(--arca-light-gray); border-radius: 8px; overflow: hidden; }
+.gb-controls { background: #1a1a2e; padding: 10px 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.gb-label { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 600; }
+.gb-select { font-family: 'Fira Sans'; font-size: 13px; padding: 5px 10px; border-radius: 5px; border: none; background: rgba(255,255,255,0.1); color: white; cursor: pointer; }
+.gb-select:focus { outline: 2px solid var(--arca-red); }
+.gb-result { padding: 0; }
+.gb-result-table { margin: 0; }
+.gb-result-table th { font-size: 12px; }
+.gb-result-table td { font-size: 13px; }
+.gb-bar { height: 12px; background: linear-gradient(to right, var(--arca-red), var(--arca-dark)); border-radius: 6px; min-width: 4px; transition: width 0.4s ease; }
+.gb-code-wrap { background: var(--editor-bg); padding: 8px 14px; display: flex; gap: 8px; align-items: center; }
+.gb-code-label { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; }
+.gb-code-val { font-family: 'Fira Mono'; font-size: 13px; color: #a3e635; }
+
+/* ================================================================ METHOD CARD */
+.method-ref { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0; }
+.method-card { background: var(--arca-gray); border-radius: 6px; padding: 10px 14px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+.method-card:hover { border-color: var(--arca-red); background: rgba(200,43,64,0.04); }
+.method-card.active { border-color: var(--arca-red); background: rgba(200,43,64,0.06); }
+.method-card h5 { font-family: 'Fira Mono'; font-size: 14px; font-weight: 700; color: var(--arca-red); margin: 0 0 3px 0; }
+.method-card p { font-size: 12px; color: var(--text-muted); margin: 0; }
+
+/* ================================================================ NAN VISUAL */
+.nan-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin: 8px 0; }
+.nan-cell { height: 28px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-family: 'Fira Mono'; font-size: 10px; font-weight: 600; }
+.nan-cell.ok { background: rgba(22,163,74,0.15); color: var(--code-green); }
+.nan-cell.nan { background: rgba(234,88,12,0.15); color: var(--code-orange); }
+
+/* ================================================================ NAN STRATEGY DEMO */
+.ns-demo { border: 1px solid var(--arca-light-gray); border-radius: 8px; overflow: hidden; }
+.ns-btns { display: flex; }
+.ns-btn {
+  flex: 1; padding: 8px 4px; border: none; border-right: 1px solid rgba(255,255,255,0.08);
+  background: #1a1a2e; color: rgba(255,255,255,0.45); font-family: 'Fira Mono'; font-size: 12px;
+  cursor: pointer; transition: all 0.2s; line-height: 1.3;
+}
+.ns-btn:last-child { border-right: none; }
+.ns-btn:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.05); }
+.ns-btn.active { color: white; font-weight: 700; }
+.ns-btn.active.raw    { background: var(--text-muted); }
+.ns-btn.active.drop   { background: var(--code-blue); }
+.ns-btn.active.median { background: var(--code-green); }
+.ns-btn.active.zero   { background: var(--code-orange); }
+.ns-body { display: flex; min-height: 220px; }
+.ns-chart-area { flex: 1; padding: 14px 16px; }
+.ns-histogram { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; }
+.ns-bar-row { display: flex; align-items: center; gap: 8px; }
+.ns-bin-label { font-size: 12px; color: var(--text-muted); width: 38px; text-align: right; flex-shrink: 0; font-family: 'Fira Mono'; }
+.ns-bar-track { flex: 1; height: 22px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.ns-bar-fill { height: 100%; border-radius: 4px; transition: width .35s ease, background .3s ease; min-width: 3px; }
+.ns-count { font-size: 13px; font-family: 'Fira Mono'; font-weight: 700; color: var(--text-muted); width: 22px; flex-shrink: 0; }
+.ns-stats { background: var(--arca-gray); padding: 10px 16px; border-top: 1px solid var(--arca-light-gray); display: flex; flex-direction: row; gap: 6px; align-items: flex-start; flex-wrap: wrap; }
+.ns-stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 1px; }
+.ns-stat-val { font-size: 20px; font-weight: 700; font-family: 'Fira Mono'; }
+.ns-verdict { font-size: 12px; font-weight: 700; margin-top: 4px; }
+
+/* ================================================================ CHALLENGE LEVELS */
+.challenge-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-right: 4px; vertical-align: middle; }
+.challenge-badge.easy { background: rgba(22,163,74,0.15); color: var(--code-green); }
+.challenge-badge.medium { background: rgba(37,99,235,0.15); color: var(--code-blue); }
+.challenge-badge.hard { background: rgba(200,43,64,0.15); color: var(--arca-red); }
+.challenge-badge.boss { background: rgba(234,88,12,0.15); color: var(--code-orange); }
+
+/* ================================================================ ENHANCED DIVIDER */
+.section-divider .section-subtitle {
+  font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 12px;
+  font-style: italic; max-width: 500px; line-height: 1.5;
+}
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- =============================================================
+     SLIDE 0: COVER
+     ============================================================= -->
+<section class="cover-slide">
+  <div class="cover-logos">
+    <img src="../logo_udla_white.png" alt="UDLA">
+    <img src="../ArcaContinental_white.png" alt="Arca Continental">
+  </div>
+  <div class="cover-stripe"></div>
+  <div style="margin-top:50px">
+    <h1>Diplomado en Data Science Aplicada<br>con Python para la Toma de Decisiones</h1>
+    <h2>Clase 7: pandas en Profundidad — Del Dato al Análisis</h2>
+    <p class="cover-author">Carlos Enrique Mosquera Trujillo</p>
+    <p class="cover-date">27 de Marzo, 2026</p>
+    <div class="cover-badges">
+      <span class="cover-badge"><i class="fas fa-table"></i> DataFrame</span>
+      <span class="cover-badge"><i class="fas fa-filter"></i> Filtrado</span>
+      <span class="cover-badge"><i class="fas fa-layer-group"></i> groupby</span>
+      <span class="cover-badge"><i class="fas fa-chart-bar"></i> Visualización</span>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================
+     SLIDE 1: RECAP
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">¿Dónde Quedamos?</h3>
+  <div class="title-bar"></div>
+  <div class="columns stagger-in">
+    <div class="col">
+      <span class="text-dark font-bold text-sm"><i class="fas fa-arrow-left text-red"></i> Clase 6 — lo que vimos:</span>
+      <ul class="check-list" style="margin-top:8px">
+        <li>Manejo de errores: <span class="ic">try/except</span>.</li>
+        <li>Módulos: <span class="ic">import</span>, <span class="ic">from X import Y</span>, alias.</li>
+        <li>Archivos CSV: qué son y por qué importan.</li>
+        <li><span class="ic">pd.read_csv()</span> — cargar un CSV.</li>
+        <li>Explorar: <span class="ic">.head()</span>, <span class="ic">.shape</span>, <span class="ic">.describe()</span>.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <span class="text-red font-bold text-sm"><i class="fas fa-arrow-right"></i> Hoy — pandas en profundidad:</span>
+      <ul class="point-list" style="margin-top:8px">
+        <li><i class="fas fa-arrow-right text-red"></i> Dataset estándar desde GitHub.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <strong>Selección</strong>: columnas, filas, <span class="ic">loc</span>/<span class="ic">iloc</span>.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <strong>Filtrado</strong>: máscaras booleanas, <span class="ic">isin</span>.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <strong>Transformar</strong>: columnas derivadas, <span class="ic">apply</span>.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <strong>Agrupar</strong>: <span class="ic">groupby</span>, <span class="ic">agg</span>.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <strong>Datos faltantes</strong> + <strong>Visualización</strong>.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">1</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: EL DATASET
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-ship"></i></div>
+  <h2>El Dataset de Hoy</h2>
+  <p>Titanic — el conjunto de datos estándar en Data Science</p>
+  <p class="section-subtitle">Tiene números, texto, valores faltantes y una pregunta analítica clara — los mismos ingredientes que cualquier dataset real.</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 2: CARGAR DESDE GITHUB
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Cargar un CSV Directamente desde GitHub</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="concept-card mb-8">
+        <h4><i class="fas fa-globe"></i> pandas acepta URLs</h4>
+        <p><span class="ic">pd.read_csv()</span> no necesita un archivo local — puede leer desde cualquier URL pública con datos en CSV.</p>
+      </div>
+      <div class="py-editor" data-id="load_github" data-height="230px">
+import pandas as pd
+from pyodide.http import open_url
+
+# Cargar el dataset Titanic desde GitHub
+# (Pyodide usa open_url en lugar de urllib)
+url = ("https://raw.githubusercontent.com"
+       "/datasciencedojo/datasets/master/titanic.csv")
+df = pd.read_csv(open_url(url))
+
+print(f"Filas: {df.shape[0]}, Columnas: {df.shape[1]}")
+print(f"Columnas: {list(df.columns)}")
+print()
+print(df.head(5).to_string())
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">El dataset Titanic:</span>
+      <table style="margin-top:6px">
+        <thead><tr><th>Columna</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">Survived</span></td><td>0=No, 1=Sí</td></tr>
+          <tr><td><span class="ic">Pclass</span></td><td>Clase (1=1ra, 3=3ra)</td></tr>
+          <tr><td><span class="ic">Sex</span></td><td>male / female</td></tr>
+          <tr><td><span class="ic">Age</span></td><td>Edad (con NaN)</td></tr>
+          <tr><td><span class="ic">Fare</span></td><td>Tarifa pagada</td></tr>
+          <tr><td><span class="ic">Embarked</span></td><td>Puerto (S/C/Q)</td></tr>
+        </tbody>
+      </table>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-star"></i> ¿Por qué Titanic?</h4>
+        <p>Tiene números, texto, valores faltantes y una pregunta interesante: <strong>¿quién sobrevivió?</strong></p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">2</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 3: DATAFRAME EXPLORER INTERACTIVO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Explorador Interactivo del DataFrame <span class="timer"><i class="fas fa-hand-pointer"></i> Interactivo</span></h3>
+  <div class="title-bar"></div>
+
+  <div class="df-explorer" id="dfExplorer">
+    <!-- Controls -->
+    <div class="df-explorer-top">
+      <input class="df-search" type="text" placeholder="🔍 Buscar en cualquier columna…">
+      <div class="df-col-toggles">
+        <span style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:600">COLUMNAS:</span>
+        <label class="df-col-toggle-label"><input type="checkbox" class="df-col-toggle" data-col="Survived" checked> Survived</label>
+        <label class="df-col-toggle-label"><input type="checkbox" class="df-col-toggle" data-col="Pclass" checked> Pclass</label>
+        <label class="df-col-toggle-label"><input type="checkbox" class="df-col-toggle" data-col="Sex" checked> Sex</label>
+        <label class="df-col-toggle-label"><input type="checkbox" class="df-col-toggle" data-col="Age" checked> Age</label>
+        <label class="df-col-toggle-label"><input type="checkbox" class="df-col-toggle" data-col="Fare" checked> Fare</label>
+        <label class="df-col-toggle-label"><input type="checkbox" class="df-col-toggle" data-col="Embarked" checked> Embarked</label>
+      </div>
+      <button class="df-reset-btn"><i class="fas fa-undo"></i> Reset</button>
+    </div>
+    <!-- Table -->
+    <div class="df-table-wrap"></div>
+    <!-- Bottom bar -->
+    <div class="df-bottom">
+      <div class="df-stats"></div>
+      <div class="df-code-gen">
+        <span class="df-code-label">Código pandas equivalente:</span>
+        <span class="df-code-val">df</span>
+      </div>
+    </div>
+  </div>
+
+  <ul class="point-list mt-8">
+    <li><i class="fas fa-arrow-right text-red"></i> Haz clic en los encabezados para <strong>ordenar</strong>. Busca "female" o "1" para <strong>filtrar</strong>.</li>
+    <li><i class="fas fa-lightbulb text-red"></i> El código pandas en la barra inferior se actualiza en tiempo real.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">3</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: SELECCIÓN
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-mouse-pointer"></i></div>
+  <h2>Selección de Datos</h2>
+  <p>Columnas, filas y acceso preciso con loc / iloc</p>
+  <p class="section-subtitle">Seleccionar exactamente las columnas y filas que necesitas es el primer paso de cualquier análisis.</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 4: SELECCIONAR COLUMNAS
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Seleccionar Columnas</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="sel_cols" data-height="280px" data-preload="titanic">
+import pandas as pd
+
+df = pd.read_csv("titanic.csv")
+
+# Una sola columna → Series
+edades = df["Age"]
+print("Tipo:", type(edades).__name__)
+print(edades.head(5))
+
+print()
+
+# Varias columnas → DataFrame
+subdf = df[["Sex", "Age", "Survived"]]
+print("Tipo:", type(subdf).__name__)
+print(subdf.head(5))
+      </div>
+    </div>
+    <div class="col-45">
+      <div class="concept-card">
+        <h4><i class="fas fa-lightbulb"></i> Series vs DataFrame</h4>
+        <p><span class="ic">df["col"]</span> devuelve una <strong>Serie</strong> (una columna).<br>
+        <span class="ic">df[["c1","c2"]]</span> devuelve un <strong>DataFrame</strong> (tabla).</p>
+      </div>
+      <table style="margin-top:8px">
+        <thead><tr><th>Sintaxis</th><th>Resultado</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">df["Age"]</span></td><td>Series</td></tr>
+          <tr><td><span class="ic">df[["Age"]]</span></td><td>DataFrame de 1 col</td></tr>
+          <tr><td><span class="ic">df[["Age","Sex"]]</span></td><td>DataFrame de 2 cols</td></tr>
+          <tr><td><span class="ic">df.Age</span></td><td>Series (atributo)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">4</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 5: LOC E ILOC
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Acceso Preciso: <span class="ic">loc</span> e <span class="ic">iloc</span></h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-50">
+      <span class="text-dark font-bold text-sm"><span class="ic">.loc[]</span> — por etiqueta / condición</span>
+      <div class="py-editor" data-id="loc_demo" data-height="200px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# Fila por índice, columnas por nombre
+print(df.loc[0, "Sex"])
+
+# Rango de filas + columnas
+print(df.loc[0:3, ["Sex","Age","Survived"]])
+      </div>
+    </div>
+    <div class="col-50">
+      <span class="text-dark font-bold text-sm"><span class="ic">.iloc[]</span> — por posición numérica</span>
+      <div class="py-editor" data-id="iloc_demo" data-height="200px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# Fila 0, columna 2 (por posición)
+print(df.iloc[0, 2])
+
+# Primeras 4 filas, columnas 2, 3, 5
+print(df.iloc[0:4, [2, 3, 5]])
+      </div>
+    </div>
+  </div>
+  <div class="concept-card mt-8">
+    <h4><i class="fas fa-ruler"></i> Regla de oro</h4>
+    <p>Usa <span class="ic">.loc[]</span> con nombres — más legible. Usa <span class="ic">.iloc[]</span> cuando necesites posiciones numéricas (ej: primeras N columnas sin saber sus nombres).</p>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">5</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 5.5: CONOCER LOS VALORES ANTES DE FILTRAR
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">¿Qué Hay en Cada Columna? — Antes de Filtrar</h3>
+  <div class="title-bar"></div>
+  <div class="concept-card mb-8">
+    <h4><i class="fas fa-magnifying-glass"></i> Regla de oro</h4>
+    <p>Antes de filtrar, necesitas saber <strong>qué valores existen</strong>. Estos métodos no son estadística — son simplemente "¿qué hay aquí?"</p>
+  </div>
+  <div class="py-editor" data-id="explore_vals" data-height="310px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# ¿Qué valores únicos tiene Sex?
+print("Sex — valores únicos:", df["Sex"].unique())
+
+# ¿Cuántos de cada uno?
+print("\nSex — conteo:")
+print(df["Sex"].value_counts())
+
+# ¿Cuántos valores únicos tiene Pclass?
+print("\nPclass — valores únicos:", df["Pclass"].unique())
+print("Pclass — conteo:")
+print(df["Pclass"].value_counts().sort_index())
+
+# ¿Cuál es el rango de Age?
+print(f"\nAge — mínimo: {df['Age'].min()}, máximo: {df['Age'].max()}")
+print(f"Age — cuántos NaN: {df['Age'].isna().sum()}")
+  </div>
+  <ul class="point-list mt-4">
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">.unique()</span> → lista de valores distintos. <span class="ic">.value_counts()</span> → frecuencia de cada valor.</li>
+    <li><i class="fas fa-lightbulb text-red"></i> <strong>Siempre explora primero</strong>. Ahora sí sabes qué puedes filtrar.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">6</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: FILTRADO
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-filter"></i></div>
+  <h2>Filtrado de Datos</h2>
+  <p>Máscaras booleanas — el corazón del análisis</p>
+  <p class="section-subtitle">Filtrar es la operación que más vas a usar. Aplica a ventas, clientes, inventarios — cualquier tabla.</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 6: MÁSCARAS BOOLEANAS
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Filtrar Filas: Máscaras Booleanas</h3>
+  <div class="title-bar"></div>
+  <div class="py-editor" data-id="bool_mask" data-height="320px" data-preload="titanic">
+import pandas as pd
+
+df = pd.read_csv("titanic.csv")
+
+# 1. La máscara: columna de True/False
+mascara = df["Sex"] == "female"
+print("Máscara (primeros 8):", list(mascara[:8]))
+
+# 2. Aplicar la máscara para filtrar filas
+mujeres = df[mascara]
+print(f"\nMujeres: {len(mujeres)} de {len(df)} pasajeros")
+
+# 3. En una línea (lo más común)
+primera_clase = df[df["Pclass"] == 1]
+print(f"1ra clase: {len(primera_clase)} pasajeros")
+
+# 4. Filtrar + seleccionar columnas
+print("\n--- Jóvenes (Age < 10) ---")
+jovenes = df[df["Age"] < 10][["Sex","Age","Pclass","Survived"]]
+print(jovenes)
+  </div>
+  <ul class="point-list mt-4">
+    <li><i class="fas fa-lightbulb text-red"></i> <span class="ic">df[condicion]</span> es el patrón fundamental. Condición = Serie de booleanos.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">6</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 7: MÚLTIPLES CONDICIONES
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Múltiples Condiciones: <span class="ic">&amp;</span>  <span class="ic">|</span>  <span class="ic">~</span></h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="multi_cond" data-height="310px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# & = Y (ambas condiciones verdaderas)
+mujeres_1ra = df[(df["Sex"]=="female") & (df["Pclass"]==1)]
+print(f"Mujeres en 1ra clase: {len(mujeres_1ra)}")
+
+# | = O (al menos una verdadera)
+ninos_o_1ra = df[(df["Age"] < 12) | (df["Pclass"]==1)]
+print(f"Niños O 1ra clase: {len(ninos_o_1ra)}")
+
+# ~ = NO (invierte la condición)
+no_southampton = df[~(df["Embarked"]=="S")]
+print(f"NO embarcaron en S: {len(no_southampton)}")
+
+# Combinación compleja
+analisis = df[(df["Pclass"]==3) & (df["Survived"]==1)]
+print(f"\nSupervivientes 3ra clase: {len(analisis)}")
+print(f"Tasa: {len(analisis)/len(df[df['Pclass']==3])*100:.1f}%")
+      </div>
+    </div>
+    <div class="col-45">
+      <div class="concept-card">
+        <h4><i class="fas fa-exclamation-triangle"></i> Error común</h4>
+        <p>Cada condición <strong>debe ir entre paréntesis</strong>. Sin paréntesis, Python aplica los operadores en el orden incorrecto.</p>
+      </div>
+      <div class="code-block mt-8">
+        <pre><code class="language-python"># ✗ Error (no paréntesis)
+df[df["Sex"]=="female" & df["Pclass"]==1]
+
+# ✓ Correcto
+df[(df["Sex"]=="female") & (df["Pclass"]==1)]</code></pre>
+      </div>
+      <table style="margin-top:8px">
+        <thead><tr><th>Operador</th><th>Significado</th><th>Python</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">&amp;</span></td><td>Y lógico</td><td><span class="ic">and</span></td></tr>
+          <tr><td><span class="ic">|</span></td><td>O lógico</td><td><span class="ic">or</span></td></tr>
+          <tr><td><span class="ic">~</span></td><td>NO lógico</td><td><span class="ic">not</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">7</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 8: ISIN + STR.CONTAINS
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Filtros Especiales: <span class="ic">isin()</span> y <span class="ic">between()</span></h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="isin_demo" data-height="290px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# isin() — como "IN" de SQL
+puertos = ["C", "Q"]
+no_southampton = df[df["Embarked"].isin(puertos)]
+print(f"Embarcaron en C o Q: {len(no_southampton)}")
+
+# between() — rango de valores
+adultos_medios = df[df["Age"].between(30, 50)]
+print(f"\nEdad 30-50: {len(adultos_medios)} pasajeros")
+print(adultos_medios[["Age","Sex","Survived"]].head(5))
+
+# Negación con isin
+solo_southampton = df[~df["Embarked"].isin(["C","Q"])]
+print(f"\nSolo Southampton: {len(solo_southampton)}")
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Cuándo usar cada uno:</span>
+      <div class="concept-card mt-8">
+        <h4><span class="ic">isin(lista)</span></h4>
+        <p>Cuando tienes múltiples valores válidos para una columna. Evita cadenas de <span class="ic">|</span>.</p>
+      </div>
+      <div class="concept-card mt-4">
+        <h4><span class="ic">between(a, b)</span></h4>
+        <p>Para rangos numéricos. Equivalente a <span class="ic">(df["col"] >= a) &amp; (df["col"] &lt;= b)</span> — pero más limpio.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">8</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 9: QUIZ FILTRADO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Quiz: ¿Cuál es el código correcto?</h3>
+  <div class="title-bar"></div>
+  <p class="text-dark font-bold text-sm mb-4">Queremos <strong>mujeres en 2da clase que sobrevivieron</strong>:</p>
+  <div class="quiz-container">
+    <div class="quiz-question">
+      <h4>Selecciona el código correcto:</h4>
+      <div class="quiz-options">
+        <button class="quiz-btn" onclick="checkQuiz(this)">
+          <span class="ic">df[df["Sex"]=="female" and df["Pclass"]==2 and df["Survived"]==1]</span>
+        </button>
+        <button class="quiz-btn" data-correct onclick="checkQuiz(this)">
+          <span class="ic">df[(df["Sex"]=="female") &amp; (df["Pclass"]==2) &amp; (df["Survived"]==1)]</span>
+        </button>
+        <button class="quiz-btn" onclick="checkQuiz(this)">
+          <span class="ic">df[df["Sex"]=="female" &amp; df["Pclass"]==2 &amp; df["Survived"]==1]</span>
+        </button>
+        <button class="quiz-btn" onclick="checkQuiz(this)">
+          <span class="ic">df.filter(Sex="female", Pclass=2, Survived=1)</span>
+        </button>
+      </div>
+      <div class="quiz-explanation correct-exp" id="qexp_correct">
+        <i class="fas fa-check-circle"></i> <strong>Correcto.</strong> En pandas se usan <span class="ic">&amp;</span> (no <span class="ic">and</span>) y cada condición va entre paréntesis.
+      </div>
+      <div class="quiz-explanation wrong-exp" id="qexp_wrong">
+        <i class="fas fa-times-circle"></i> Opción B es la correcta: <span class="ic">&amp;</span> en lugar de <span class="ic">and</span>, y paréntesis en cada condición.
+      </div>
+    </div>
+  </div>
+  <div class="py-editor" data-id="quiz_verify" data-height="80px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+resultado = df[(df["Sex"]=="female") & (df["Pclass"]==2) & (df["Survived"]==1)]
+print(f"Mujeres 2da clase sobrevivientes: {len(resultado)}")
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">9</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 10: PRÁCTICA FILTRADO — ESCENARIO DE NEGOCIO
+     ============================================================= -->
+<section data-timer="420">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Práctica: Filtrado <span class="timer"><i class="fas fa-clock"></i> 7 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="practice-timer" id="timer_10"><div class="timer-bar-wrap"><div class="timer-bar"></div></div><span class="timer-text">7:00</span></div>
+  <div class="concept-card" style="margin-top:2px;margin-bottom:6px">
+    <h4><i class="fas fa-bullseye"></i> Objetivo</h4>
+    <p>Responde cada pregunta con un filtro. Imprime <span class="ic">len(resultado)</span> para verificar cuántas filas obtienes.</p>
+  </div>
+  <div class="columns">
+    <div class="col-60">
+      <div class="py-editor" data-id="prac_filter" data-height="280px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# 1. ¿Cuántos pasajeros pagaron más de $50?
+#    ¿Qué % del total representan?
+
+# 2. Niños (< 10 años) que sobrevivieron
+#    ¿Cuántos hay? Muestra sus columnas Sex, Age, Survived
+
+# 3. Pasajeros de 1ra o 2da clase (usa isin)
+
+# 4. Adultos jóvenes (20-30 años) en 3ra clase
+#    ¿Cuál fue su tasa de supervivencia?
+
+print(df.head())
+      </div>
+    </div>
+    <div class="col-40">
+      <span class="text-dark font-bold text-sm">Herramientas:</span>
+      <div class="concept-card mt-4">
+        <h4><i class="fas fa-check-circle"></i> Verifica tus resultados</h4>
+        <p>
+          <span class="challenge-badge easy">1</span> <span class="ic">len(resultado)</span><br>
+          <span class="challenge-badge easy">2</span> <span class="ic">[["Sex","Age","Survived"]]</span><br>
+          <span class="challenge-badge medium">3</span> <span class="ic">.isin([1, 2])</span><br>
+          <span class="challenge-badge hard">4</span> <span class="ic">.mean()</span> de Survived
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">10</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: TRANSFORMAR
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+  <h2>Transformar Datos</h2>
+  <p>Crear columnas derivadas con operaciones vectoriales y apply</p>
+  <p class="section-subtitle">Los datos crudos casi nunca vienen listos. Transformar es donde agregas inteligencia al dataset.</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 11: CREAR COLUMNAS
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Crear Columnas Nuevas</h3>
+  <div class="title-bar"></div>
+  <div class="py-editor" data-id="new_cols" data-height="320px" data-preload="titanic">
+import pandas as pd
+
+df = pd.read_csv("titanic.csv")
+
+# 1. Operación directa (vectorizada — muy rápida)
+df["Fare_doble"] = df["Fare"] * 2
+
+# 2. Condición booleana como columna
+df["Es_mayor"] = df["Age"] >= 18
+
+# 3. Categoría basada en condición
+df["Rango_edad"] = "Desconocido"
+df.loc[df["Age"] < 12, "Rango_edad"] = "Niño"
+df.loc[(df["Age"] >= 12) & (df["Age"] < 18), "Rango_edad"] = "Adolescente"
+df.loc[df["Age"] >= 18, "Rango_edad"] = "Adulto"
+
+print(df[["Age","Es_mayor","Rango_edad","Fare","Fare_doble"]].head(10))
+  </div>
+  <ul class="point-list mt-4">
+    <li><i class="fas fa-arrow-right text-red"></i> Operaciones en columnas son <strong>vectorizadas</strong>: aplican a toda la columna de una sola vez. Mucho más rápido que un <span class="ic">for</span>.</li>
+    <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">df.loc[condición, "col"] = valor</span> — asignación condicional segura.</li>
+  </ul>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">11</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 12: APPLY
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title"><span class="ic">apply()</span> — Aplica una Función a Cada Valor</h3>
+  <div class="title-bar"></div>
+  <div class="concept-card mb-8">
+    <h4><i class="fas fa-lightbulb"></i> La idea en una frase</h4>
+    <p><span class="ic">df["col"].apply(mi_funcion)</span> toma cada valor de la columna, lo pasa por tu función, y devuelve una columna nueva con los resultados.</p>
+  </div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="apply_demo" data-height="300px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# Paso 1: defines una función normal
+def etiqueta_clase(numero):
+    if numero == 1:
+        return "1ra Clase"
+    elif numero == 2:
+        return "2da Clase"
+    else:
+        return "3ra Clase"
+
+# Paso 2: apply la pasa por cada valor de la columna
+df["Clase_texto"] = df["Pclass"].apply(etiqueta_clase)
+
+print(df[["Pclass", "Clase_texto"]].head(10))
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">¿Qué hace apply paso a paso?</span>
+      <div class="code-block mt-8">
+        <pre><code class="language-python"># Sin apply, harías esto:
+resultados = []
+for n in df["Pclass"]:
+    resultados.append(etiqueta_clase(n))
+df["Clase_texto"] = resultados
+
+# apply() hace exactamente eso,
+# pero en una sola línea:
+df["Clase_texto"] = df["Pclass"].apply(
+    etiqueta_clase
+)</code></pre>
+      </div>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-arrow-right"></i> Cuándo usar apply</h4>
+        <p>Cuando necesitas <strong>lógica con if/elif</strong> que no cabe en una sola expresión. Ej: clasificar clientes como "Premium" / "Regular" / "Nuevo".</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">12</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 13: PRÁCTICA COLUMNAS — ENRIQUECER PARA EL DASHBOARD
+     ============================================================= -->
+<section data-timer="420">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Práctica: Columnas Derivadas <span class="timer"><i class="fas fa-clock"></i> 7 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="practice-timer" id="timer_13"><div class="timer-bar-wrap"><div class="timer-bar"></div></div><span class="timer-text">7:00</span></div>
+  <div class="concept-card" style="margin-top:2px;margin-bottom:6px">
+    <h4><i class="fas fa-bullseye"></i> Objetivo</h4>
+    <p>Enriquece el dataset con columnas calculadas. Los datos crudos casi nunca son suficientes — el análisis real empieza cuando agregas <strong>indicadores derivados</strong>.</p>
+  </div>
+  <div class="columns">
+    <div class="col-60">
+      <div class="py-editor" data-id="prac_cols" data-height="280px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# 1. "Tarifa_alta" → True si Fare > 50
+
+# 2. "Sobrevivio" → "Sí" o "No"  (usa apply o map)
+
+# 3. "Familia" = SibSp + Parch
+
+# 4. "Viaja_solo" → True si Familia == 0
+#    ¿Sobrevivieron más los que viajaban solos?
+
+# RETO: Tasa de supervivencia solos vs acompañados
+#   → groupby("Viaja_solo")["Survived"].mean()
+
+print(df[["Sex","Age","Fare"]].head(6))
+      </div>
+    </div>
+    <div class="col-40">
+      <span class="text-dark font-bold text-sm">Nivel de dificultad:</span>
+      <div class="concept-card mt-4">
+        <h4><i class="fas fa-signal"></i> Progresión</h4>
+        <p>
+          <span class="challenge-badge easy">1</span> Una línea directa<br>
+          <span class="challenge-badge easy">2</span> Requiere <span class="ic">apply</span> o <span class="ic">map</span><br>
+          <span class="challenge-badge easy">3</span> Operación entre columnas<br>
+          <span class="challenge-badge medium">4</span> Derivada + comparación<br>
+          <span class="challenge-badge hard">RETO</span> groupby sobre columna nueva
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">13</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: GROUPBY
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-layer-group"></i></div>
+  <h2>Agrupar y Resumir</h2>
+  <p>groupby() — la tabla dinámica de Python</p>
+  <p class="section-subtitle">El equivalente a la tabla dinámica de Excel, pero programable y reproducible.</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 14: GROUPBY INTERACTIVO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title"><span class="ic">groupby()</span> — Preguntas sobre Grupos <span class="timer"><i class="fas fa-hand-pointer"></i> Interactivo</span></h3>
+  <div class="title-bar"></div>
+
+  <div class="columns" style="gap:16px">
+    <div class="col-40">
+      <div class="concept-card">
+        <h4><i class="fas fa-question-circle"></i> ¿Para qué sirve?</h4>
+        <p>Para responder preguntas del tipo <strong>"¿cuánto/cuál es el promedio… <em>por grupo</em>?"</strong></p>
+      </div>
+      <ul class="point-list mt-8">
+        <li><i class="fas fa-circle text-red" style="font-size:8px;top:6px"></i> ¿Cuántos pasajeros viajaron <strong>por clase</strong>?</li>
+        <li><i class="fas fa-circle text-red" style="font-size:8px;top:6px"></i> ¿Cuál fue la tarifa promedio <strong>por sexo</strong>?</li>
+        <li><i class="fas fa-circle text-red" style="font-size:8px;top:6px"></i> ¿Quién sobrevivió más <strong>por puerto</strong>?</li>
+      </ul>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-layer-group"></i> Primero agrupa, luego calcula</h4>
+        <p>pandas divide los datos en grupos y aplica el cálculo a cada uno por separado. El resultado es una fila por grupo.</p>
+      </div>
+    </div>
+    <div class="col-60">
+      <div class="gb-demo" id="gbDemo">
+        <div class="gb-controls">
+          <span class="gb-label">AGRUPAR POR:</span>
+          <select class="gb-col-sel gb-select" onchange="GroupByDemo.render('gbDemo')">
+            <option value="Sex">Sex</option>
+            <option value="Pclass">Pclass</option>
+            <option value="Embarked">Embarked</option>
+          </select>
+          <span class="gb-label" style="margin-left:12px">CALCULAR:</span>
+          <select class="gb-agg-sel gb-select" onchange="GroupByDemo.render('gbDemo')">
+            <option value="count">Cantidad de pasajeros</option>
+            <option value="survived">Tasa de supervivencia (%)</option>
+            <option value="mean_age">Promedio de edad</option>
+            <option value="sum_fare">Suma de tarifas</option>
+          </select>
+        </div>
+        <div class="gb-result"></div>
+        <div class="gb-code-wrap">
+          <span class="gb-code-label">Código pandas equivalente:</span>
+          <span class="gb-code-val"></span>
+        </div>
+      </div>
+      <p class="text-xs text-muted mt-4"><i class="fas fa-info-circle"></i> Muestra 20 filas del dataset. El código funciona igual con 891 filas reales.</p>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">14</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 15: GROUPBY — SINTAXIS PASO A PASO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title"><span class="ic">groupby()</span> — La Sintaxis</h3>
+  <div class="title-bar"></div>
+
+  <!-- Anatomía visual -->
+  <div style="background:var(--arca-gray);border-radius:8px;padding:12px 18px;margin-bottom:10px;font-family:'Fira Mono',monospace;font-size:16px;line-height:2">
+    <span style="color:var(--code-blue)">df</span>
+    <span style="color:var(--text-muted)">.</span><span style="color:var(--arca-red)">groupby</span><span style="color:var(--text-muted)">(</span><span style="color:var(--code-green)">"Sex"</span><span style="color:var(--text-muted)">)</span>
+    <span style="color:var(--text-muted)">[</span><span style="color:var(--code-green)">"Age"</span><span style="color:var(--text-muted)">]</span>
+    <span style="color:var(--text-muted)">.</span><span style="color:var(--code-orange)">mean</span><span style="color:var(--text-muted)">()</span>
+    <br>
+    <span style="color:var(--code-blue);font-size:12px">① el DataFrame</span>
+    <span style="color:var(--arca-red);font-size:12px;margin-left:18px">② agrupar por esta columna</span>
+    <span style="color:var(--code-green);font-size:12px;margin-left:14px">③ calcular esta columna</span>
+    <span style="color:var(--code-orange);font-size:12px;margin-left:10px">④ con esta función</span>
+  </div>
+
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="groupby_syntax" data-height="240px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# ① ¿Cuántos pasajeros hay por sexo?
+print(df.groupby("Sex")["PassengerId"].count())
+
+# ② ¿Cuál fue la tarifa promedio por clase?
+print()
+print(df.groupby("Pclass")["Fare"].mean().round(2))
+
+# ③ ¿Cuántos sobrevivieron por clase?
+print()
+print(df.groupby("Pclass")["Survived"].sum())
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Funciones disponibles:</span>
+      <table style="margin-top:6px">
+        <thead><tr><th>Función</th><th>Responde…</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">.count()</span></td><td>¿Cuántos hay?</td></tr>
+          <tr><td><span class="ic">.sum()</span></td><td>¿Cuánto en total?</td></tr>
+          <tr><td><span class="ic">.mean()</span></td><td>¿Cuál es el promedio?</td></tr>
+          <tr><td><span class="ic">.min()</span></td><td>¿Cuál es el mínimo?</td></tr>
+          <tr><td><span class="ic">.max()</span></td><td>¿Cuál es el máximo?</td></tr>
+        </tbody>
+      </table>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-lightbulb"></i> Lee el código en voz alta</h4>
+        <p><em>"Del DataFrame, agrupa por Sex, toma la columna Age y calcula el promedio."</em> Si suena lógico, está bien escrito.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">15</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 16: GROUPBY + AGG — VARIAS MÉTRICAS
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title"><span class="ic">groupby()</span> + <span class="ic">agg()</span> — Varias Métricas a la Vez</h3>
+  <div class="title-bar"></div>
+
+  <p class="text-dark font-bold text-sm mb-8">¿Qué pasa si quieres calcular <em>varias cosas</em> al mismo tiempo? Usas <span class="ic">.agg()</span>.</p>
+
+  <!-- Anatomía de agg -->
+  <div style="background:var(--arca-gray);border-radius:8px;padding:10px 18px;margin-bottom:10px;font-family:'Fira Mono',monospace;font-size:14px;line-height:2.2">
+    <span style="color:var(--text-muted)">df.groupby("Pclass").agg(</span><br>
+    <span style="color:var(--code-orange)">&nbsp;&nbsp;&nbsp;&nbsp;total</span>
+    <span style="color:var(--text-muted)">&nbsp;&nbsp; = (</span><span style="color:var(--code-green)">"PassengerId"</span><span style="color:var(--text-muted)">, </span><span style="color:var(--code-blue)">"count"</span><span style="color:var(--text-muted)">),</span><br>
+    <span style="color:var(--code-orange)">&nbsp;&nbsp;&nbsp;&nbsp;tarifa_prom</span>
+    <span style="color:var(--text-muted)"> = (</span><span style="color:var(--code-green)">"Fare"</span><span style="color:var(--text-muted)">, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:var(--code-blue)">"mean"</span><span style="color:var(--text-muted)">),</span><br>
+    <span style="color:var(--text-muted)">)</span>
+    <br>
+    <span style="color:var(--code-orange);font-size:11px">&nbsp;&nbsp;&nbsp;&nbsp;↑ nombre que tú eliges</span>
+    <span style="color:var(--code-green);font-size:11px;margin-left:28px">↑ columna del df</span>
+    <span style="color:var(--code-blue);font-size:11px;margin-left:46px">↑ qué calcular</span>
+  </div>
+
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="groupby_agg" data-height="220px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+resumen = df.groupby("Pclass").agg(
+    total       = ("PassengerId", "count"),
+    sobreviven  = ("Survived",    "sum"),
+    tarifa_prom = ("Fare",        "mean"),
+).round(1)
+
+print(resumen)
+      </div>
+    </div>
+    <div class="col-45">
+      <div class="concept-card">
+        <h4><i class="fas fa-lightbulb"></i> La ventaja de .agg()</h4>
+        <p>En lugar de hacer tres <span class="ic">groupby</span> separados y luego unirlos, <span class="ic">.agg()</span> los calcula todos de una vez y devuelve una tabla limpia.</p>
+      </div>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-pen"></i> El nombre es tuyo</h4>
+        <p><span class="ic">total</span>, <span class="ic">sobreviven</span>, <span class="ic">tarifa_prom</span> — tú decides cómo se llama cada columna del resultado.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">16</span></div>
+</section>
+
+
+<!-- =============================================================
+     SLIDE 17: PRÁCTICA GROUPBY — RESUMEN EJECUTIVO
+     ============================================================= -->
+<section data-timer="480">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Práctica: Agrupar y Resumir <span class="timer"><i class="fas fa-clock"></i> 8 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="practice-timer" id="timer_17"><div class="timer-bar-wrap"><div class="timer-bar"></div></div><span class="timer-text">8:00</span></div>
+  <div class="concept-card" style="margin-top:2px;margin-bottom:6px">
+    <h4><i class="fas fa-bullseye"></i> Objetivo</h4>
+    <p>Responde cada pregunta analítica usando <span class="ic">groupby</span>. El resultado debe ser una tabla resumen, no el DataFrame completo.</p>
+  </div>
+  <div class="columns">
+    <div class="col-60">
+      <div class="py-editor" data-id="prac_gb" data-height="280px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# 1. Promedio de edad por sexo
+
+# 2. Total de sobrevivientes por clase (Pclass)
+
+# 3. Tabla resumen por clase: cantidad, suma de Fare,
+#    promedio de Fare → usa .agg()
+
+# RETO: ¿Qué puerto (Embarked) tuvo la mejor tasa
+#        de supervivencia? (groupby + sort_values)
+
+print(df.head())
+      </div>
+    </div>
+    <div class="col-40">
+      <span class="text-dark font-bold text-sm">Herramientas:</span>
+      <div class="concept-card mt-4">
+        <h4><i class="fas fa-toolbox"></i> Referencia rápida</h4>
+        <p>
+          <span class="challenge-badge easy">1</span> <span class="ic">.groupby("col")["x"].mean()</span><br>
+          <span class="challenge-badge easy">2</span> <span class="ic">.groupby("col")["x"].sum()</span><br>
+          <span class="challenge-badge medium">3</span> <span class="ic">.groupby("col").agg(...)</span><br>
+          <span class="challenge-badge hard">R</span> <span class="ic">.sort_values(ascending=False)</span>
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">17</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: DATOS FALTANTES
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-question-circle"></i></div>
+  <h2>Datos Faltantes</h2>
+  <p>NaN — el problema más común en datos reales</p>
+  <p class="section-subtitle">Esta decisión — eliminar filas o rellenar valores — puede cambiar completamente tus conclusiones.</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 18: DETECTAR NAN
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Detectar Valores Faltantes</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="nan_detect" data-height="290px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# Mapa de NaN por columna
+print("=== NaN por columna ===")
+print(df.isna().sum())
+
+# Porcentaje
+print("\n=== % faltante ===")
+nan_pct = (df.isna().sum() / len(df) * 100).round(1)
+print(nan_pct[nan_pct > 0])
+
+# Filas con al menos un NaN
+con_nan = df[df.isna().any(axis=1)]
+print(f"\nFilas con algún NaN: {len(con_nan)}")
+
+# Revisar filas con Age faltante
+sin_edad = df[df["Age"].isna()]
+print(f"\nSin edad registrada: {len(sin_edad)}")
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Visualización de NaN en Age (30 filas):</span>
+      <div class="nan-grid" style="margin-top:8px" id="nanGrid"></div>
+      <p class="text-xs text-muted mt-4"><i class="fas fa-square text-green"></i> Con valor &nbsp;&nbsp; <i class="fas fa-square" style="color:var(--code-orange)"></i> NaN</p>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-exclamation-triangle"></i> NaN ≠ 0</h4>
+        <p>Un valor faltante no es cero. Incluirlo en promedios o sumas puede distorsionar el análisis.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">18</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 19: ESTRATEGIAS NAN — DEMO INTERACTIVO JS
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">¿Cómo Limpiar los NaN? — Compara las Estrategias <span class="timer"><i class="fas fa-hand-pointer"></i> Interactivo</span></h3>
+  <div class="title-bar"></div>
+
+  <div class="columns" style="gap:16px">
+    <div class="col-60">
+      <p class="text-sm text-muted mb-4">Columna <strong>Age</strong> del dataset — 6 valores NaN de 30. Haz clic en cada estrategia para ver el efecto en la distribución y el promedio.</p>
+      <div class="ns-demo" id="nsDemoMain">
+        <div class="ns-btns">
+          <button class="ns-btn active raw"    data-strategy="raw"    onclick="NanDemo.show('raw')">Sin limpiar</button>
+          <button class="ns-btn drop"          data-strategy="drop"   onclick="NanDemo.show('drop')">dropna()</button>
+          <button class="ns-btn median"        data-strategy="median" onclick="NanDemo.show('median')">fillna(mediana)</button>
+          <button class="ns-btn zero"          data-strategy="zero"   onclick="NanDemo.show('zero')">fillna(0)</button>
+        </div>
+        <div class="ns-body">
+          <div class="ns-chart-area" id="nsChart"></div>
+        </div>
+        <div class="ns-stats" id="nsStats"></div>
+      </div>
+    </div>
+    <div class="col-40">
+      <span class="text-dark font-bold text-sm">¿Cuándo usar cada una?</span>
+      <div class="concept-card mt-8">
+        <h4 style="color:var(--code-blue)"><i class="fas fa-trash"></i> dropna()</h4>
+        <p>Cuando los NaN son <strong>pocos</strong> (menos del 5%) y perder esas filas no importa.</p>
+      </div>
+      <div class="concept-card mt-4">
+        <h4 style="color:var(--code-green)"><i class="fas fa-chart-line"></i> fillna(mediana)</h4>
+        <p>Para números. La mediana <strong>no se distorsiona</strong> por valores extremos. Primera opción para columnas numéricas.</p>
+      </div>
+      <div class="concept-card mt-4">
+        <h4 style="color:var(--arca-red)"><i class="fas fa-tag"></i> fillna("valor")</h4>
+        <p>Para columnas de texto o cuando hay un valor <strong>lógicamente correcto</strong>: el más frecuente, "Desconocido", etc.</p>
+      </div>
+      <div class="concept-card mt-4">
+        <h4 style="color:var(--code-orange)"><i class="fas fa-times-circle"></i> fillna(0)</h4>
+        <p>Casi nunca para datos reales. El <strong>0 tiene significado propio</strong> — no es lo mismo que "dato faltante".</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">19</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 19b: FILLNA Y DROPNA EN CÓDIGO
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title"><span class="ic">fillna()</span> y <span class="ic">dropna()</span> en Código</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="nan_clean" data-height="310px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+print(f"NaN en Age: {df['Age'].isna().sum()}")
+print(f"NaN en Embarked: {df['Embarked'].isna().sum()}")
+
+# Numérica → fillna con mediana
+mediana = df["Age"].median()
+df["Age"] = df["Age"].fillna(mediana)
+print(f"\nAge después: {df['Age'].isna().sum()} NaN (mediana={mediana})")
+
+# Categórica → fillna con valor lógico
+df["Embarked"] = df["Embarked"].fillna("S")  # S es el más común
+print(f"Embarked después: {df['Embarked'].isna().sum()} NaN")
+
+# dropna → eliminar filas donde Fare sea NaN
+df2 = df.dropna(subset=["Fare"])
+print(f"\ndropna(Fare): {len(df)} → {len(df2)} filas")
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Verificar siempre con:</span>
+      <div class="code-block mt-8">
+        <pre><code class="language-python"># Antes de limpiar
+df.isna().sum()
+
+# Después de limpiar — debería ser 0
+df["Age"].isna().sum()</code></pre>
+      </div>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-lightbulb"></i> .copy() para no modificar el original</h4>
+        <p>Si quieres conservar el df original intacto mientras pruebas:<br>
+        <span class="ic">df_limpio = df.copy()</span><br>
+        <span class="ic">df_limpio["Age"] = df_limpio["Age"].fillna(…)</span></p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">19</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 19c: PRÁCTICA NaN — DECISIONES DE LIMPIEZA
+     ============================================================= -->
+<section data-timer="420">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Práctica: Limpiar Valores Faltantes <span class="timer"><i class="fas fa-clock"></i> 7 min</span></h3>
+  <div class="title-bar"></div>
+  <div id="timer_nan_practice" class="practice-timer">
+    <div class="timer-bar-wrap"><div class="timer-bar"></div></div>
+    <span class="timer-text">7:00</span>
+  </div>
+  <div class="concept-card" style="margin-top:2px;margin-bottom:6px">
+    <h4><i class="fas fa-bullseye"></i> Objetivo</h4>
+    <p>Audita los NaN del dataset, decide cómo tratarlos, y compara el impacto de cada estrategia en los resultados.</p>
+  </div>
+  <div class="columns" style="gap:16px">
+    <div class="col-60">
+      <div class="py-editor" data-id="prac_nan" data-height="300px" data-preload="titanic">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# 1. ¿Cuántos NaN por columna? ¿Qué % representan?
+print("NaN por columna:")
+print(df.isna().sum())
+pct = (df.isna().sum() / len(df) * 100).round(1)
+print("\n% faltante:")
+print(pct[pct > 0])
+
+# 2. Si haces dropna(), ¿cuántas filas pierdes?
+
+# 3. Rellena Age con la mediana.
+#    Compara df["Age"].mean() ANTES y DESPUÉS.
+
+# 4. Rellena Embarked con el valor más frecuente.
+#    Pista: df["Embarked"].mode()[0]
+
+# RETO: ¿Cambia la tasa de supervivencia si usas
+#        dropna() vs fillna(mediana) en Age?
+      </div>
+    </div>
+    <div class="col-40">
+      <span class="text-dark font-bold text-sm">Guía paso a paso:</span>
+      <ul class="numbered-steps mt-4">
+        <li>¿Cuántos NaN hay? ¿Es mucho o poco?</li>
+        <li>Si eliminas filas con NaN, ¿cuántas pierdes?</li>
+        <li>Compara <span class="ic">.mean()</span> antes y después de <span class="ic">fillna</span></li>
+        <li>¿Por qué <span class="ic">mode()[0]</span> es mejor que un valor fijo?</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">20</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: VISUALIZACIÓN
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-chart-bar"></i></div>
+  <h2>Visualización</h2>
+  <p>pandas tiene su propio módulo de gráficas</p>
+  <p class="section-subtitle">Visualizar es comunicar tus hallazgos de forma clara y accionable.</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 20: PANDAS .PLOT()
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Visualizar Datos con <span class="ic">.plot()</span></h3>
+  <div class="title-bar"></div>
+  <div class="concept-card mb-8">
+    <h4><i class="fas fa-lightbulb"></i> pandas ya sabe graficar</h4>
+    <p>Cualquier Serie o DataFrame tiene un método <span class="ic">.plot()</span> que genera una gráfica directamente. No es necesario aprender matplotlib por ahora.</p>
+  </div>
+  <div class="columns">
+    <div class="col-55">
+      <div class="py-editor" data-id="pd_plot" data-height="270px" data-preload="titanic_mpl">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# Agrupar primero, luego graficar
+por_clase = df.groupby("Pclass")["Survived"].mean() * 100
+
+# .plot() en una línea
+por_clase.plot(
+    kind="bar",
+    color=["#16A34A", "#2563EB", "#C82B40"],
+    title="Tasa de supervivencia por clase (%)"
+)
+
+mostrar_grafica()
+      </div>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Tipos de gráfica disponibles:</span>
+      <table style="margin-top:6px">
+        <thead><tr><th><span class="ic">kind=</span></th><th>Cuándo usarlo</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">"bar"</span></td><td>Comparar categorías</td></tr>
+          <tr><td><span class="ic">"line"</span></td><td>Tendencia en el tiempo</td></tr>
+          <tr><td><span class="ic">"hist"</span></td><td>Distribución de valores</td></tr>
+          <tr><td><span class="ic">"scatter"</span></td><td>Relación entre dos columnas</td></tr>
+        </tbody>
+      </table>
+      <ul class="point-list mt-8">
+        <li><i class="fas fa-arrow-right text-red"></i> Primero calcula (groupby, filtro, etc.), luego <span class="ic">.plot()</span>.</li>
+        <li><i class="fas fa-arrow-right text-red"></i> <span class="ic">mostrar_grafica()</span> la convierte en imagen aquí en el slide.</li>
+        <li><i class="fas fa-lightbulb text-red"></i> Cambia <span class="ic">kind=</span> y ejecuta de nuevo para ver distintos tipos.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">20</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 21: PRÁCTICA VISUALIZACIÓN — CONTAR UNA HISTORIA
+     ============================================================= -->
+<section data-timer="420">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Práctica: Tu Primera Gráfica <span class="timer"><i class="fas fa-clock"></i> 7 min</span></h3>
+  <div class="title-bar"></div>
+  <div id="timer_viz_practice" class="practice-timer">
+    <div class="timer-bar-wrap"><div class="timer-bar"></div></div>
+    <span class="timer-text">7:00</span>
+  </div>
+  <div class="concept-card" style="margin-top:2px;margin-bottom:6px">
+    <h4><i class="fas fa-bullseye"></i> Objetivo</h4>
+    <p>Crea gráficas a partir de datos agrupados. Un buen título de gráfica es una <strong>conclusión</strong>, no una descripción.</p>
+  </div>
+  <div class="columns" style="gap:16px">
+    <div class="col-60">
+      <div class="py-editor" data-id="prac_viz" data-height="300px" data-preload="titanic_mpl">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# 1. Supervivencia por sexo (barras)
+por_sexo = df.groupby("Sex")["Survived"].mean() * 100
+por_sexo.plot(kind="bar",
+    title="Supervivencia por Sexo (%)",
+    color=["#C82B40", "#2563EB"])
+mostrar_grafica()
+
+# 2. Crea una gráfica de supervivencia por clase
+#    Cambia el title a una conclusión, no descripción
+
+# 3. RETO: Histograma de edades
+#    df["Age"].dropna().plot(kind="hist", bins=15,
+#        color="#2563EB", title="Distribución de edades")
+#    mostrar_grafica()
+      </div>
+    </div>
+    <div class="col-40">
+      <span class="text-dark font-bold text-sm">Elige la gráfica correcta:</span>
+      <table style="width:100%;font-size:13px;margin-top:8px;border-collapse:collapse">
+        <tr style="border-bottom:1px solid var(--arca-light-gray)">
+          <th style="text-align:left;padding:5px 4px;color:var(--text-muted)">Pregunta</th>
+          <th style="text-align:left;padding:5px 4px;color:var(--text-muted)">Gráfica</th>
+        </tr>
+        <tr><td style="padding:5px 4px">¿Quién más/menos?</td><td class="ic" style="padding:5px 4px">"bar"</td></tr>
+        <tr><td style="padding:5px 4px">¿Cómo se distribuyen?</td><td class="ic" style="padding:5px 4px">"hist"</td></tr>
+        <tr><td style="padding:5px 4px">¿Cómo evoluciona?</td><td class="ic" style="padding:5px 4px">"line"</td></tr>
+        <tr><td style="padding:5px 4px">¿Existe relación?</td><td class="ic" style="padding:5px 4px">"scatter"</td></tr>
+      </table>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-lightbulb"></i> Siempre al final</h4>
+        <p>Llama <span class="ic">mostrar_grafica()</span> para que la imagen aparezca en el editor.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">21</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: PROYECTO
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-briefcase"></i></div>
+  <h2>Proyecto Integrador</h2>
+  <p>Todo lo aprendido, en un análisis de principio a fin</p>
+  <p class="section-subtitle">Toma un dataset crudo y conviértelo en un análisis completo con lo que aprendiste hoy.</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 23: PROYECTO — BRIEF DEL CLIENTE
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Proyecto: Análisis de Supervivencia <span class="timer"><i class="fas fa-clock"></i> 15 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="concept-card mb-8">
+    <h4><i class="fas fa-briefcase"></i> Objetivo</h4>
+    <p>Realiza un análisis completo del dataset Titanic: limpia, transforma, agrupa y responde <strong>¿quién sobrevivió y por qué?</strong></p>
+  </div>
+  <div class="columns">
+    <div class="col-55">
+      <span class="text-dark font-bold text-sm">Pasos del análisis:</span>
+      <ol class="numbered-steps" style="margin-top:4px">
+        <li>Limpiar NaN — rellena Age con mediana.</li>
+        <li>Crear <span class="ic">"Grupo_edad"</span>: Niño (&lt;15) / Adulto (15-60) / Mayor (&gt;60).</li>
+        <li>Crear <span class="ic">"Familia"</span> = SibSp + Parch.</li>
+        <li>Tasa de supervivencia por <span class="ic">Pclass</span> y <span class="ic">Sex</span>.</li>
+        <li>¿Qué grupo tuvo la mayor/menor supervivencia?</li>
+        <li><span class="challenge-badge boss">BONUS</span> Graficar el resultado con <span class="ic">.plot(kind="bar")</span>.</li>
+      </ol>
+    </div>
+    <div class="col-45">
+      <span class="text-dark font-bold text-sm">Reglas de categorización:</span>
+      <table style="margin-top:4px">
+        <thead><tr><th>Condición</th><th>Grupo_edad</th></tr></thead>
+        <tbody>
+          <tr><td>Age &lt; 15</td><td>"Niño"</td></tr>
+          <tr><td>Age entre 15 y 60</td><td>"Adulto"</td></tr>
+          <tr><td>Age &gt; 60</td><td>"Mayor"</td></tr>
+        </tbody>
+      </table>
+      <div class="concept-card mt-8">
+        <h4><i class="fas fa-lightbulb"></i> Clave</h4>
+        <p>El proceso — limpiar, transformar, agrupar, visualizar — es el mismo que usarás con cualquier dataset.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">23</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 24: PROYECTO — EDITOR GRANDE
+     ============================================================= -->
+<section data-timer="900">
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Proyecto: Manos a la Obra <span class="timer"><i class="fas fa-clock"></i> 15 min</span></h3>
+  <div class="title-bar"></div>
+  <div class="practice-timer" id="timer_24"><div class="timer-bar-wrap"><div class="timer-bar"></div></div><span class="timer-text">15:00</span></div>
+  <div class="py-editor" data-id="proyecto" data-height="470px" data-preload="titanic_mpl">
+import pandas as pd
+df = pd.read_csv("titanic.csv")
+
+# ══════════════════════════════════════════════════════
+# PASO 1: LIMPIEZA — Audita y limpia los datos
+# ══════════════════════════════════════════════════════
+print("NaN antes:", df.isna().sum().to_dict())
+df["Age"] = df["Age"].fillna(df["Age"].median())
+print("NaN después:", df["Age"].isna().sum())
+
+# ══════════════════════════════════════════════════════
+# PASO 2: SEGMENTACIÓN — Crea "Grupo_edad"
+#   Niño (<15) / Adulto (15-60) / Mayor (>60)
+# ══════════════════════════════════════════════════════
+
+
+# ══════════════════════════════════════════════════════
+# PASO 3: KPI — Crea "Familia" y "Viaja_solo"
+# ══════════════════════════════════════════════════════
+
+
+# ══════════════════════════════════════════════════════
+# PASO 4: ANÁLISIS — Supervivencia por Pclass × Sex
+#   Usa groupby con agg para un resumen completo
+# ══════════════════════════════════════════════════════
+
+
+# ══════════════════════════════════════════════════════
+# PASO 5: CONCLUSIÓN — ¿Qué grupo sobrevivió más/menos?
+#   Imprime tu hallazgo en una frase
+# ══════════════════════════════════════════════════════
+
+
+# BONUS: Gráfica con título-conclusión
+# por_clase = df.groupby("Pclass")["Survived"].mean() * 100
+# por_clase.plot(kind="bar", title="Tu conclusión aquí",
+#     color=["#16A34A","#2563EB","#C82B40"])
+# mostrar_grafica()
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">24</span></div>
+</section>
+
+<!-- =============================================================
+     DIVIDER: CIERRE
+     ============================================================= -->
+<section class="section-divider">
+  <div class="section-icon"><i class="fas fa-flag-checkered"></i></div>
+  <h2>Cierre</h2>
+  <p>Lo que construiste hoy</p>
+</section>
+
+<!-- =============================================================
+     SLIDE 25: CIERRE — RESUMEN + TRANSFERENCIA
+     ============================================================= -->
+<section>
+  <div class="slide-logos"><img src="../logo_udla_white.png"><img src="../ArcaContinental_white.png"></div>
+  <h3 class="slide-title">Tu Nuevo Toolkit de pandas</h3>
+  <div class="title-bar"></div>
+  <div class="columns">
+    <div class="col-50">
+      <span class="text-dark font-bold text-sm">Lo que aprendimos hoy:</span>
+      <ul class="check-list" style="margin-top:6px">
+        <li><strong>Seleccionar</strong>: <span class="ic">df["col"]</span>, <span class="ic">loc[]</span>, <span class="ic">iloc[]</span></li>
+        <li><strong>Filtrar</strong>: máscaras <span class="ic">&amp;</span> <span class="ic">|</span> <span class="ic">~</span>, <span class="ic">isin()</span>, <span class="ic">between()</span></li>
+        <li><strong>Transformar</strong>: columnas derivadas, <span class="ic">apply()</span></li>
+        <li><strong>Agrupar</strong>: <span class="ic">groupby()</span> + <span class="ic">agg()</span></li>
+        <li><strong>Limpiar</strong>: <span class="ic">isna()</span>, <span class="ic">fillna()</span>, <span class="ic">dropna()</span></li>
+        <li><strong>Visualizar</strong>: <span class="ic">.plot()</span> con matplotlib</li>
+      </ul>
+    </div>
+    <div class="col-50">
+      <span class="text-dark font-bold text-sm">Aplicaciones directas:</span>
+      <div class="concept-card mt-4">
+        <h4 style="color:var(--code-green)"><i class="fas fa-check"></i> Ya puedes hacer</h4>
+        <p style="font-size:13px;line-height:1.7">
+          Filtrar registros por condiciones múltiples<br>
+          Agregar columnas de indicadores derivados<br>
+          Resúmenes agrupados por categorías<br>
+          Auditar y limpiar datos faltantes<br>
+          Gráficas de barras, histogramas, líneas
+        </p>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:12px">
+    <span class="text-dark font-bold" style="font-size:17px"><i class="fas fa-arrow-right text-red"></i> Próxima clase:</span>
+    <ul class="point-list mt-8">
+      <li><i class="fas fa-arrow-right text-red"></i> <strong>Análisis Exploratorio de Datos (EDA)</strong> — entender un dataset antes de modelar.</li>
+      <li><i class="fas fa-arrow-right text-red"></i> <strong>Estadística descriptiva</strong>: media, mediana, distribución, outliers.</li>
+      <li><i class="fas fa-arrow-right text-red"></i> <strong>Correlaciones</strong> y relaciones entre variables.</li>
+    </ul>
+  </div>
+  <div class="slide-footer">Diplomado en Data Science Aplicada con Python · Arca Continental Ecuador<span class="slide-num">25</span></div>
+</section>
+
+<!-- =============================================================
+     SLIDE 26: QR + CIERRE MOTIVACIONAL
+     ============================================================= -->
+<section class="qr-slide">
+  <h2>¿Cómo estuvo la clase?</h2>
+  <p style="font-size:20px;margin-top:20px">Escaneen el QR para la encuesta rápida</p>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<!-- ================================================================ SCRIPTS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+
+<script src="js/editor.js"></script>
+<script src="js/dataexplorer.js"></script>
+
+<script>
+/* ================================================================ REVEAL */
+Reveal.initialize({
+  width: 960, height: 700, margin: 0,
+  center: false, hash: true,
+  transition: 'slide', transitionSpeed: 'fast',
+  backgroundTransition: 'fade',
+  slideNumber: false, controls: true, progress: true,
+  autoAnimateEasing: 'ease-out',
+  autoAnimateDuration: 0.6,
+  plugins: [RevealHighlight]
+});
+
+/* ================================================================ SCALE → ZOOM PATCH */
+(function patchRevealScale() {
+  const slides = document.querySelector('.reveal .slides');
+  if (!slides) return;
+  function replaceScaleWithZoom() {
+    const tf = slides.style.transform || '';
+    const m = tf.match(/scale\(([\d.]+)\)/);
+    if (!m) return;
+    const s = parseFloat(m[1]);
+    observer.disconnect();
+    slides.style.transform = tf.replace(/\s*scale\([\d.]+\)/, '');
+    slides.style.zoom = s;
+    observer.observe(slides, { attributes: true, attributeFilter: ['style'] });
+  }
+  const observer = new MutationObserver(replaceScaleWithZoom);
+  observer.observe(slides, { attributes: true, attributeFilter: ['style'] });
+  replaceScaleWithZoom();
+})();
+
+/* ================================================================ STAGGER ANIMATION TRIGGER */
+Reveal.on('slidechanged', e => {
+  e.currentSlide.querySelectorAll('.stagger-in').forEach(el => {
+    el.classList.remove('animate');
+    void el.offsetWidth;
+    setTimeout(() => el.classList.add('animate'), 50);
+  });
+});
+
+/* ================================================================ EDITORS */
+Reveal.on('slidechanged', e => {
+  setTimeout(() => { PyEditor.initAll(); PyEditor.refreshAll(); }, 80);
+});
+Reveal.on('ready', () => {
+  const sections = document.querySelectorAll('.reveal .slides section');
+  sections.forEach(s => { s.style.display = 'block'; s.style.visibility = 'visible'; s.style.opacity = '1'; });
+  PyEditor.initAll();
+  setTimeout(() => {
+    PyEditor.refreshAll();
+    sections.forEach(s => { s.style.display = ''; s.style.visibility = ''; s.style.opacity = ''; });
+    Reveal.sync();
+    setTimeout(() => PyEditor.refreshAll(), 200);
+  }, 150);
+  PyEditor.initPyodide();
+});
+
+/* ================================================================ INTERACTIVE COMPONENTS */
+Reveal.on('ready', () => {
+  // DataFrame Explorer
+  DataExplorer.init('dfExplorer');
+
+  // GroupBy Demo
+  GroupByDemo.render('gbDemo');
+
+  // NaN visual grid
+  const nanGrid = document.getElementById('nanGrid');
+  if (nanGrid) {
+    const ages = [22,38,26,35,35,null,54,2,27,14,4,58,20,39,14,55,2,null,31,null,35,34,15,28,8,38,null,19,null,null];
+    nanGrid.innerHTML = ages.map(a =>
+      `<div class="nan-cell ${a === null ? 'nan' : 'ok'}">${a === null ? 'NaN' : a}</div>`
+    ).join('');
+  }
+
+  // NaN Strategy Demo
+  NanDemo.show('raw');
+});
+
+/* ================================================================ NAN STRATEGY DEMO */
+const NanDemo = (() => {
+  // 30-row Age column (matches editor.js _TITANIC_CSV)
+  const RAW_AGES = [22,38,26,35,35,null,54,2,27,14,4,58,20,39,14,55,2,null,31,null,
+                    35,34,15,28,8,38,null,19,null,null];
+
+  const STRATEGIES = {
+    raw:    { label: 'Sin limpiar',       color: '#6B7280' },
+    drop:   { label: 'dropna()',          color: '#C82B40' },
+    median: { label: 'fillna(mediana)',   color: '#2563EB' },
+    zero:   { label: 'fillna(0)',         color: '#EA580C' }
+  };
+
+  const VERDICTS = {
+    raw:    { icon: '⚠️', text: 'pandas excluye NaN de mean/std — resultados incompletos.' },
+    drop:   { icon: '✅', text: 'Filas eliminadas. Útil cuando hay pocos NaN y no sesgan.' },
+    median: { icon: '✅', text: 'Recomendado: preserva filas y no distorsiona la distribución.' },
+    zero:   { icon: '⚠️', text: 'Baja artificialmente la media. Solo si 0 tiene sentido real.' }
+  };
+
+  function _getAges(strategy) {
+    const valid = RAW_AGES.filter(a => a !== null);
+    const median = _median(valid);
+    switch (strategy) {
+      case 'raw':    return RAW_AGES;
+      case 'drop':   return valid;
+      case 'median': return RAW_AGES.map(a => a === null ? median : a);
+      case 'zero':   return RAW_AGES.map(a => a === null ? 0 : a);
+    }
+  }
+
+  function _median(arr) {
+    const s = [...arr].sort((a,b)=>a-b);
+    const m = Math.floor(s.length/2);
+    return s.length % 2 ? s[m] : (s[m-1]+s[m])/2;
+  }
+
+  function _histogram(ages, bins) {
+    // bins: array of {lo, hi} edges
+    return bins.map(({lo, hi}) => ages.filter(a => a !== null && a >= lo && a < hi).length);
+  }
+
+  function show(strategy) {
+    // Update buttons
+    document.querySelectorAll('#nsDemoMain .ns-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.strategy === strategy);
+    });
+
+    const ages = _getAges(strategy);
+    const valid = ages.filter(a => a !== null);
+    const nanCount = ages.filter(a => a === null).length;
+    const mean = valid.length ? (valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(1) : 'N/A';
+    const med  = valid.length ? _median(valid).toFixed(1) : 'N/A';
+    const def = STRATEGIES[strategy];
+
+    // Histogram (6 bins: 0-10, 10-20, 20-30, 30-40, 40-50, 50-60+)
+    const BINS = [{lo:0,hi:10},{lo:10,hi:20},{lo:20,hi:30},{lo:30,hi:40},{lo:40,hi:50},{lo:50,hi:100}];
+    const BIN_LABELS = ['0–9','10–19','20–29','30–39','40–49','50+'];
+    const counts = _histogram(valid, BINS);
+    const maxCount = Math.max(...counts, 1);
+
+    const chartEl = document.getElementById('nsChart');
+    if (chartEl) {
+      chartEl.innerHTML = `
+        <div style="font-size:12px;color:var(--text-muted)">Distribución de edades (Age) — n=${valid.length}</div>
+        <div class="ns-histogram">
+          ${counts.map((c, i) => `
+            <div class="ns-bar-row">
+              <div class="ns-bin-label">${BIN_LABELS[i]}</div>
+              <div class="ns-bar-track">
+                <div class="ns-bar-fill" style="width:${maxCount > 0 ? Math.round(c/maxCount*100) : 0}%;background:${def.color}"></div>
+              </div>
+              <div class="ns-count">${c}</div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    const statsEl = document.getElementById('nsStats');
+    if (statsEl) {
+      const verdict = VERDICTS[strategy];
+      statsEl.innerHTML = `
+        <span style="font-size:13px"><strong>Filas:</strong> ${valid.length}${nanCount ? ` <span style="color:#9CA3AF">(+${nanCount} NaN)</span>` : ''}</span>
+        <span style="color:var(--arca-light-gray)">·</span>
+        <span style="font-size:13px"><strong>Media:</strong> ${mean}</span>
+        <span style="color:var(--arca-light-gray)">·</span>
+        <span style="font-size:13px"><strong>Mediana:</strong> ${med}</span>
+        <span style="color:var(--arca-light-gray)">·</span>
+        <span class="ns-verdict" style="font-size:12px;padding:2px 8px;background:var(--bg-code);border-radius:6px;border-left:3px solid ${def.color}">
+          ${verdict.icon} ${verdict.text}
+        </span>`;
+    }
+  }
+
+  return { show };
+})();
+
+/* ================================================================ TABS */
+function showTab(group, index, btn) {
+  document.querySelectorAll(`[id^="${group}_"]`).forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+  btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === index);
+  });
+  setTimeout(() => { PyEditor.initAll(); PyEditor.refreshAll(); }, 50);
+}
+
+/* ================================================================ QUIZ */
+function checkQuiz(btn) {
+  const container = btn.closest('.quiz-options');
+  const isCorrect = btn.hasAttribute('data-correct');
+  container.querySelectorAll('.quiz-btn').forEach(b => b.disabled = true);
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    container.querySelector('[data-correct]').classList.add('correct');
+  }
+  const section = btn.closest('section');
+  const correctExp = section.querySelector('#qexp_correct');
+  const wrongExp = section.querySelector('#qexp_wrong');
+  if (correctExp) correctExp.classList.toggle('show', isCorrect);
+  if (wrongExp) wrongExp.classList.toggle('show', !isCorrect);
+}
+
+/* ================================================================ TIMERS */
+const timers = {};
+Reveal.on('slidechanged', e => {
+  const sec = e.currentSlide;
+  const secs = parseInt(sec.dataset.timer);
+  if (!secs) return;
+  const timerId = sec.querySelector('[id^="timer_"]')?.id;
+  if (!timerId || timers[timerId]) return;
+  const timerEl = document.getElementById(timerId);
+  const bar = timerEl.querySelector('.timer-bar');
+  const text = timerEl.querySelector('.timer-text');
+  let remaining = secs;
+  const total = secs;
+  timers[timerId] = setInterval(() => {
+    remaining--;
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    text.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    const pct = (remaining / total) * 100;
+    bar.style.width = pct + '%';
+    if (pct < 30) bar.classList.add('warning');
+    if (remaining <= 0) {
+      clearInterval(timers[timerId]);
+      text.textContent = '0:00';
+      bar.style.width = '0%';
+    }
+  }, 1000);
+});
+</script>
+</body>
+</html>
