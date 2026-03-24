@@ -1,0 +1,989 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 6: Archivos y Manejo de Errores — Datos del Mundo Real
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% ── Codificación y lenguaje ──────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+% ── Fuentes ──────────────────────────────────────────────────────────────────
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Gráficos y diagramas ────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc, calc, fit, decorations.pathreplacing}
+\usepackage{fontawesome5}
+
+% ── Código fuente ────────────────────────────────────────────────────────────
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+
+% ── Tablas y utilidades ──────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+
+% =============================================================================
+%  PALETA DE COLORES CORPORATIVA
+% =============================================================================
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+
+% =============================================================================
+%  CONFIGURACIÓN DEL TEMA BEAMER
+% =============================================================================
+\usetheme{default}
+\usecolortheme{default}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \draw[arcaLightGray, line width=0.4pt]
+      ([yshift=0.35cm, xshift=0.6cm]current page.south west) --
+      ([yshift=0.35cm, xshift=-0.6cm]current page.south east);
+    \node[anchor=south, font=\tiny\color{textMuted}] at
+      ([yshift=0.08cm]current page.south)
+      {Diplomado en Data Science Aplicada con Python \(\cdot\) Arca Continental Ecuador};
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.6cm, yshift=0.08cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.65cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 6: Archivos y Manejo de Errores --- Datos del Mundo Real}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{20 de Marzo, 2026}
+
+\begin{document}
+
+% ── PORTADA ──────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ── ¿DÓNDE QUEDAMOS? ────────────────────────────────────────────────────────
+\begin{frame}{¿Dónde Quedamos?}
+  \vspace{-4pt}
+  {\small\color{arcaDark}\bfseries En la clase anterior:}
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{codeGreen}\faCheckCircle}]
+      Funciones: \texttt{def}, parámetros, \texttt{return}.
+    \item[{\color{codeGreen}\faCheckCircle}]
+      Posicionales, por nombre, valores por defecto.
+    \item[{\color{codeGreen}\faCheckCircle}]
+      Scope, validación y patrón guardia.
+  \end{itemize}
+  }
+  \vspace{8pt}
+  {\small\color{arcaRed}\bfseries Hoy agregamos:}
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      Los tres tipos de error y cómo manejarlos.
+    \item[{\color{arcaRed}\faArrowRight}]
+      \texttt{try/except} --- código que no explota.
+    \item[{\color{arcaRed}\faArrowRight}]
+      \texttt{import} --- usar módulos de otros.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Archivos CSV y pandas.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 1: PIPELINE DE DISTRIBUCIÓN
+% =============================================================================
+\sectionframe{Pipeline de Distribución}{Resolver el ejercicio pendiente}
+
+\begin{frame}[fragile,shrink=28]{Pipeline de Distribución --- El Reto}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Creen tres funciones para analizar rendimiento de vendedores.}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize
+      \begin{enumerate}\setlength{\itemsep}{3pt}
+        \item \texttt{calcular\_bono(v, tasa=0.10)}
+        \item \texttt{clasificar\_vendedor(v)}
+        \item \texttt{reporte\_equipo(lista)}
+      \end{enumerate}
+      }
+
+      \vspace{4pt}
+      \begin{pyblock}
+vendedores = [
+  {"nombre":"Ana", "ventas":250, "meta":150},
+  {"nombre":"Luis","ventas":90,  "meta":150},
+  {"nombre":"Sol", "ventas":180, "meta":150},
+  {"nombre":"Paco","ventas":310, "meta":200}
+]
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\scriptsize\color{textMuted}\bfseries Salida esperada:}
+      \begin{outputblock}
+Ana: Estrella, bono=25.0
+Luis: Bajo, bono=0
+Sol: Cumple, bono=18.0
+Paco: Estrella, bono=31.0
+Total bonos: 74.0
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          ``Estrella'' si ventas $\geq$ 200,
+          ``Cumple'' si $\geq$ meta,
+          ``Bajo'' si no.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Construyamos la Solución Juntos}
+  \vspace{-6pt}
+  \begin{pyblock}
+def calcular_bono(vendedor, tasa=0.10):
+    # Si ventas >= meta: bono = ventas * tasa
+    # Si no: bono = 0
+    # Retorna el dict con clave "bono" agregada
+    pass
+
+def clasificar_vendedor(vendedor):
+    # "Estrella" / "Cumple" / "Bajo"
+    pass
+
+def reporte_equipo(lista, tasa=0.10):
+    # Recorrer, aplicar ambas, imprimir + total
+    pass
+
+reporte_equipo(vendedores)
+  \end{pyblock}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 2: LOS TRES TIPOS DE ERROR
+% =============================================================================
+\sectionframe{Los Tres Tipos de Error}{¿Por qué mi código no funciona?}
+
+\begin{frame}[fragile,shrink=28]{Los Tres Tipos de Error}
+  \vspace{-6pt}
+  {\footnotesize
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Tipo} & \textbf{Cuándo} & \textbf{Ejemplo} \\
+    \midrule
+    Sintaxis & No arranca & Falta \texttt{:} \\
+    Runtime  & Al ejecutar & División por cero \\
+    Lógico   & Da resultado mal & \texttt{+} en vez de \texttt{*} \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries Sintaxis:}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+def ingreso(cajas, precio)
+    return cajas * precio
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{codeOrange}\bfseries Runtime:}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+def promedio(lista):
+    return sum(lista) / len(lista)
+promedio([])  # ZeroDivisionError
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeBlue}\bfseries Lógico:}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+def ingreso(cajas, precio):
+    return cajas + precio  # deberia ser *
+print(ingreso(30, 12.50))
+      \end{pyblock}
+      \vspace{-2pt}
+      \begin{outputblock}[minted options={fontsize=\scriptsize, breaklines}]
+42.5
+      \end{outputblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+        \faExclamationTriangle\ El lógico es el más difícil:
+        no da error, pero el resultado está \textbf{mal}.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Quiz: ¿Qué Tipo de Error Es?}
+  \vspace{-6pt}
+  \begin{pyblock}
+datos = {"nombre": "Ana", "ventas": 250}
+print(datos["meta"])
+  \end{pyblock}
+
+  \vspace{8pt}
+  \pause
+  {\footnotesize\color{arcaRed}\bfseries
+    \faArrowRight\ Runtime --- \texttt{KeyError}.
+    La clave \mintinline{python}{"meta"} no existe en el diccionario.}
+
+  \vspace{8pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      La sintaxis está bien, Python lo entiende.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Pero al ejecutar, pide algo que no existe.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Lean el error \textbf{de abajo hacia arriba}:
+      la última línea dice qué pasó.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: TRY/EXCEPT
+% =============================================================================
+\sectionframe{\texttt{try/except}}{Código que no explota}
+
+\begin{frame}[fragile,shrink=28]{\texttt{try/except} --- La Red de Seguridad}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Sin protección --- explota}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+def promedio(lista):
+    return sum(lista) / len(lista)
+
+print(promedio([]))
+print("Nunca llega aqui")
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Con \texttt{try/except} --- sigue}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+def promedio(lista):
+    try:
+        return sum(lista) / len(lista)
+    except ZeroDivisionError:
+        return 0
+
+print(promedio([]))
+print("El programa sigue")
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{try}: ``intenta ejecutar este código''.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{except ZeroDivisionError}: ``si falla con ESE error, haz esto''.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      El programa \textbf{no se detiene}.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Flujo Completo: \texttt{try/except/else/finally}}
+  \vspace{-6pt}
+  \begin{pyblock}
+def leer_precio(texto):
+    try:
+        precio = float(texto)
+    except ValueError:
+        print(f"'{texto}' no es numero")
+        return None
+    else:
+        print(f"Precio valido: {precio}")
+        return precio
+    finally:
+        print("--- Proceso terminado ---")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{else}: se ejecuta si \textbf{no} hubo error.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{finally}: se ejecuta \textbf{siempre}, haya error o no.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{\texttt{except} Específico vs Genérico}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Genérico --- oculta bugs}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+try:
+    resultado = 100 / 0
+except:
+    print("Algo fallo")
+    resultado = 0
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Específico --- sabes qué pasó}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+try:
+    resultado = 100 / 0
+except ZeroDivisionError:
+    print("Division por cero")
+    resultado = 0
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Regla: cada \texttt{except} debe nombrar el error que espera.}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    Si no sabes cuál puede ocurrir, deja que explote ---
+    así aprendes qué es.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{\texttt{try/except} en Funciones Reales}
+  \vspace{-6pt}
+  \begin{pyblock}
+def procesar_venta(vendedor):
+    try:
+        nombre = vendedor["nombre"]
+        ventas = vendedor["ventas"]
+        meta = vendedor["meta"]
+    except KeyError as e:
+        return {"error": f"Falta el campo {e}"}
+    if ventas < 0:
+        return {"error": "Ventas negativas"}
+    bono = ventas * 0.10 if ventas >= meta else 0
+    return {"nombre": nombre, "bono": bono}
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{try/except} para errores de \textbf{datos}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{if} para reglas de \textbf{negocio}.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Práctica: Blindar con \texttt{try/except} \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Modifiquen para que nunca explote:}
+
+  \vspace{4pt}
+  \begin{pyblock}
+def calcular_comision(vendedor, tasa=0.10):
+    nombre = vendedor["nombre"]
+    ventas = vendedor["ventas"]
+    meta   = vendedor["meta"]
+    if ventas >= meta:
+        return {"nombre": nombre, "comision": ventas * tasa}
+    return {"nombre": nombre, "comision": 0}
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}\bfseries Salida esperada:}
+  \begin{outputblock}[minted options={fontsize=\scriptsize, breaklines}]
+{'nombre': 'Ana', 'comision': 25.0}
+{'error': "Falta campo 'meta'"}
+{'error': 'Tasa debe estar entre 0 y 1'}
+  \end{outputblock}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 4: IMPORTAR MÓDULOS
+% =============================================================================
+\sectionframe{Importar Módulos}{No reinventar la rueda}
+
+\begin{frame}{¿Qué Es un Módulo?}
+  \vspace{-4pt}
+  {\footnotesize
+    Un módulo es un archivo \texttt{.py} con funciones y variables
+    ya escritas y probadas. Solo hay que importarlo.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaDark}\bfseries Librería estándar (incluida):}
+      \vspace{2pt}
+
+      {\scriptsize
+      \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Módulo} & \textbf{Uso} \\
+        \midrule
+        \texttt{math}     & sqrt, pi, factorial \\
+        \texttt{random}   & Números aleatorios \\
+        \texttt{datetime} & Fechas y horas \\
+        \texttt{os}       & Archivos y sistema \\
+        \texttt{json}     & Leer/escribir JSON \\
+        \bottomrule
+      \end{tabular}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaDark}\bfseries Externas (\texttt{pip install}):}
+      \vspace{2pt}
+
+      {\scriptsize
+      \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Librería} & \textbf{Uso} \\
+        \midrule
+        \texttt{pandas}       & DataFrames \\
+        \texttt{numpy}        & Cálculo numérico \\
+        \texttt{matplotlib}   & Gráficas \\
+        \texttt{scikit-learn} & Machine Learning \\
+        \texttt{requests}     & Datos de la web \\
+        \bottomrule
+      \end{tabular}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Tres Formas de Importar}
+  \vspace{-6pt}
+  \begin{pyblock}
+# 1. Importar el modulo completo
+import math
+print("Raiz de 144:", math.sqrt(144))
+
+# 2. Importar solo lo que necesitas
+from math import factorial
+print("5! =", factorial(5))
+
+# 3. Importar con alias
+import datetime as dt
+hoy = dt.date.today()
+print("Hoy:", hoy)
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{import X} $\to$ usas \texttt{X.funcion()}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{from X import Y} $\to$ usas \texttt{Y()} directo.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Convención: \texttt{import pandas as pd}.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 5: ARCHIVOS CSV
+% =============================================================================
+\sectionframe{Archivos CSV}{Formato universal de datos tabulares}
+
+\begin{frame}[fragile,shrink=28]{¿Qué Es un Archivo CSV?}
+  \vspace{-6pt}
+  {\footnotesize
+    \textbf{CSV = Comma Separated Values.}
+    Texto plano donde cada línea es una fila
+    y las columnas se separan por comas.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaDark}\bfseries Así se ve por dentro:}
+      \begin{outputblock}[minted options={fontsize=\scriptsize, breaklines}]
+nombre,ventas,meta,zona
+Ana,18500,15000,Norte
+Luis,9200,15000,Sur
+Sol,22000,15000,Norte
+Paco,15000,15000,Sur
+Mia,31000,20000,Norte
+      \end{outputblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Excel y Google Sheets exportan CSV.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          La primera fila son los encabezados.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          Cualquier lenguaje puede leerlo.
+        \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+          Es el formato estándar para compartir datos.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 6: PANDAS
+% =============================================================================
+\sectionframe{pandas}{La herramienta principal para datos en Python}
+
+\begin{frame}[fragile,shrink=28]{¿Qué Es pandas?}
+  \vspace{-6pt}
+  {\footnotesize
+    \textbf{pandas = Excel dentro de Python.}
+    DataFrames: tablas con filas y columnas.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+import pandas as pd
+
+df = pd.read_csv("datos_ventas.csv")
+print("Tipo:", type(df))
+print("Forma:", df.shape)
+print()
+print(df)
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Una línea para cargar un CSV completo.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Tipos de dato detectados automáticamente.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Convención: \texttt{import pandas as pd} --- siempre.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{Explorar el DataFrame}
+  \vspace{-4pt}
+  {\footnotesize
+    Métodos para conocer tus datos antes de analizarlos:}
+
+  \vspace{8pt}
+  {\small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Método} & \textbf{Uso} \\
+    \midrule
+    \texttt{.head(n)}    & Primeras $n$ filas \\
+    \texttt{.tail(n)}    & Últimas $n$ filas \\
+    \texttt{.shape}      & (filas, columnas) \\
+    \texttt{.columns}    & Nombres de columnas \\
+    \texttt{.dtypes}     & Tipos de dato \\
+    \texttt{.describe()} & Estadísticas resumen \\
+    \texttt{.info()}     & Resumen del DataFrame \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{8pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Siempre empiecen con
+    \texttt{df.shape} y \texttt{df.head()}
+    para entender qué tienen.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Seleccionar y Filtrar Datos}
+  \vspace{-6pt}
+  \begin{pyblock}
+import pandas as pd
+df = pd.read_csv("datos_ventas.csv")
+
+# Seleccionar una columna
+print(df["nombre"])
+
+# Crear columna nueva
+df["cumple_meta"] = df["ventas"] >= df["meta"]
+
+# Filtrar filas
+sobre_meta = df[df["ventas"] >= df["meta"]]
+print(f"{len(sobre_meta)} vendedores sobre meta")
+print(sobre_meta[["nombre", "ventas", "meta"]])
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{df["col"]} $\to$ una columna.
+      \texttt{df[["a","b"]]} $\to$ varias.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{df[condición]} $\to$ filtra filas.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Agrupar y Resumir: \texttt{groupby()}}
+  \vspace{-6pt}
+  {\footnotesize
+    Equivalente a una tabla dinámica de Excel.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+import pandas as pd
+df = pd.read_csv("datos_ventas.csv")
+
+por_zona = df.groupby("zona")["ventas"].agg(
+    ["sum", "mean", "count"]
+)
+print(por_zona)
+
+print(f"\nTotal: ${df['ventas'].sum():,}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize
+  \begin{tabular}{@{}ll@{}}
+    \texttt{.sum()} & Suma total \\
+    \texttt{.mean()} & Promedio \\
+    \texttt{.count()} & Cantidad \\
+  \end{tabular}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=31]{Exportar: \texttt{df.to\_csv()}}
+  \vspace{-6pt}
+  \begin{pyblock}
+import pandas as pd
+df = pd.read_csv("datos_ventas.csv")
+
+df["comision"] = df.apply(
+    lambda v: v["ventas"] * 0.05
+              if v["ventas"] >= v["meta"] else 0,
+    axis=1
+)
+
+df["estado"] = df.apply(
+    lambda v: "Estrella" if v["ventas"] >= 2*v["meta"]
+              else "Cumple" if v["ventas"] >= v["meta"]
+              else "Bajo",
+    axis=1
+)
+
+df.to_csv("reporte.csv", index=False)
+  \end{pyblock}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Pipeline: \texttt{read\_csv()} $\to$ transformar
+    $\to$ \texttt{to\_csv()}.
+    Siempre \texttt{index=False}.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Práctica: Analizar con pandas \hfill
+    {\normalsize\color{arcaRed}\faClock\ 10 min}}
+  \vspace{-6pt}
+  \begin{pyblock}
+import pandas as pd
+df = pd.read_csv("datos_ventas.csv")
+
+# TODO: Crear columna "cumple" (True/False)
+# TODO: Filtrar los que NO cumplen meta
+# TODO: Promedio de ventas por zona
+# TODO: Vendedor con mas ventas
+
+print(df)
+  \end{pyblock}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      \texttt{df[\~{}condicion]} para negar.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      \texttt{df.groupby("zona")["ventas"].mean()}.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      \texttt{df.loc[df["ventas"].idxmax()]} para el máximo.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 7: PROYECTO INTEGRADOR
+% =============================================================================
+\sectionframe{Proyecto Integrador}{Pipeline completo con pandas}
+
+\begin{frame}[fragile,shrink=28]{Proyecto: Reporte de Ventas con pandas \hfill
+    {\normalsize\color{arcaRed}\faClock\ 15 min}}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Reglas de comisión:}
+      \vspace{2pt}
+
+      {\scriptsize
+      \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Condición} & \textbf{Comisión} \\
+        \midrule
+        ventas $<$ meta & 0\% \\
+        ventas $\geq$ meta & 5\% \\
+        ventas $\geq$ 2$\times$meta & 10\% \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{6pt}
+      {\footnotesize\color{arcaDark}\bfseries Pasos del pipeline:}
+      {\scriptsize
+      \begin{enumerate}\setlength{\itemsep}{2pt}
+        \item \texttt{pd.read\_csv()} para cargar.
+        \item Columna \texttt{"comision"}.
+        \item Columna \texttt{"estado"}.
+        \item \texttt{groupby("zona")} resumen.
+        \item \texttt{to\_csv()} exportar.
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+import pandas as pd
+
+df = pd.read_csv("datos_ventas.csv")
+
+# TODO: columna "comision"
+# TODO: columna "estado"
+# TODO: reporte por consola
+# TODO: resumen por zona
+# TODO: exportar a CSV
+
+print(df)
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que logramos hoy}
+
+\begin{frame}{Lo que Aprendimos Hoy}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Pipeline completo con funciones.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Tres tipos de error.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{try/except} para código robusto.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Módulos: estándar vs externos.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Tres formas de importar.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Qué es un CSV.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          pandas: \texttt{read\_csv}, filtrar.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{groupby}, \texttt{to\_csv}.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Pipeline: CSV $\to$ pandas $\to$ reporte.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries Próxima clase:}
+  \vspace{2pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      pandas avanzado --- filtros, \texttt{apply()}, datos faltantes.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Visualización con matplotlib.
+  \end{itemize}
+  }
+\end{frame}
+
+% ── QR ENCUESTA ──────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1cm}
+  \begin{center}
+    {\Huge\bfseries\color{white} ¿Cómo estuvo la clase?\par}
+    \vspace{0.6cm}
+    \includegraphics[width=4cm]{qr_encuesta.jpg}
+    \vspace{0.4cm}
+    {\large\color{white!80} Escaneen el QR para la encuesta rápida\par}
+  \end{center}
+\end{frame}
+}
+
+\end{document}

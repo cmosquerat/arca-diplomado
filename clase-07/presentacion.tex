@@ -1,0 +1,896 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 7: pandas en Profundidad — Del Dato al Análisis
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% ── Codificación y lenguaje ──────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+
+% ── Fuentes ──────────────────────────────────────────────────────────────────
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Gráficos y diagramas ────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc, calc, fit, decorations.pathreplacing}
+\usepackage{fontawesome5}
+
+% ── Código fuente ────────────────────────────────────────────────────────────
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+
+% ── Tablas y utilidades ──────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+
+% =============================================================================
+%  PALETA DE COLORES CORPORATIVA
+% =============================================================================
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+
+% =============================================================================
+%  CONFIGURACIÓN DEL TEMA BEAMER
+% =============================================================================
+\usetheme{default}
+\usecolortheme{default}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \draw[arcaLightGray, line width=0.4pt]
+      ([yshift=0.35cm, xshift=0.6cm]current page.south west) --
+      ([yshift=0.35cm, xshift=-0.6cm]current page.south east);
+    \node[anchor=south, font=\tiny\color{textMuted}] at
+      ([yshift=0.08cm]current page.south)
+      {Diplomado en Data Science Aplicada con Python \(\cdot\) Arca Continental Ecuador};
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.6cm, yshift=0.08cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.65cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 7: pandas en Profundidad --- Del Dato al Análisis}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{27 de Marzo, 2026}
+
+\begin{document}
+
+% ── PORTADA ──────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ── ¿DÓNDE QUEDAMOS? ────────────────────────────────────────────────────────
+\begin{frame}{¿Dónde Quedamos?}
+  \vspace{-4pt}
+  {\small\color{arcaDark}\bfseries En la clase anterior:}
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{codeGreen}\faCheckCircle}]
+      Tres tipos de error: sintaxis, runtime, lógico.
+    \item[{\color{codeGreen}\faCheckCircle}]
+      \texttt{try/except} para código robusto.
+    \item[{\color{codeGreen}\faCheckCircle}]
+      Importar módulos: \texttt{import}, \texttt{from}, alias.
+    \item[{\color{codeGreen}\faCheckCircle}]
+      pandas básico: \texttt{read\_csv}, filtrar, \texttt{groupby}, \texttt{to\_csv}.
+  \end{itemize}
+  }
+  \vspace{8pt}
+  {\small\color{arcaRed}\bfseries Hoy agregamos:}
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      Dataset real: Titanic desde la web.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Filtrado avanzado, \texttt{apply()}, \texttt{groupby() + agg()}.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Datos faltantes (NaN) y visualización.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 1: CARGAR DATASET
+% =============================================================================
+\sectionframe{Cargar un Dataset}{Datos reales desde la web}
+
+\begin{frame}[fragile,shrink=28]{Cargar un CSV desde URL}
+  \vspace{-6pt}
+  {\footnotesize
+    \texttt{pd.read\_csv()} acepta URLs.
+    Usaremos el dataset \textbf{Titanic}: números, texto, NaN,
+    y una pregunta clara: \textbf{¿quién sobrevivió?}}
+
+  \vspace{4pt}
+  \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+import pandas as pd
+
+url = "https://raw.githubusercontent.com/" \
+      "datasciencedojo/datasets/master/titanic.csv"
+df = pd.read_csv(url)
+print(f"Filas: {df.shape[0]}, Columnas: {df.shape[1]}")
+df.head()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Columna} & \textbf{Descripción} \\
+    \midrule
+    \texttt{Survived} & 0=No, 1=Sí \\
+    \texttt{Pclass}   & Clase (1, 2, 3) \\
+    \texttt{Sex / Age} & Sexo / Edad \\
+    \texttt{Fare}     & Tarifa pagada \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 2: SELECCIÓN
+% =============================================================================
+\sectionframe{Selección de Datos}{Acceder exactamente a lo que necesitas}
+
+\begin{frame}[fragile,shrink=28]{Seleccionar Columnas}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize
+      \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Sintaxis} & \textbf{Resultado} \\
+        \midrule
+        \texttt{df["Age"]}        & Series \\
+        \texttt{df[["Age"]]}      & DataFrame 1 col \\
+        \texttt{df[["Age","Sex"]]} & DataFrame 2 col \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{6pt}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+edades = df["Age"]
+print("Tipo:", type(edades).__name__)
+
+subdf = df[["Sex", "Age", "Survived"]]
+subdf.head()
+      \end{pyblock}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize\color{arcaDark}\bfseries \texttt{loc} vs \texttt{iloc}:}
+      \vspace{2pt}
+
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+# loc: por nombre
+df.loc[0, "Sex"]
+df.loc[0:3, ["Sex", "Age"]]
+
+# iloc: por posicion
+df.iloc[0, 2]
+df.iloc[0:4, [2, 3, 5]]
+      \end{pyblock}
+
+      \vspace{2pt}
+      {\scriptsize\color{textMuted}
+      \begin{itemize}\setlength{\itemsep}{2pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{.loc} = etiquetas.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \texttt{.iloc} = posiciones.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: EXPLORAR VALORES
+% =============================================================================
+\sectionframe{Explorar Valores}{Antes de filtrar, hay que conocer los datos}
+
+\begin{frame}[fragile,shrink=28]{Explorar Antes de Filtrar}
+  \vspace{-6pt}
+  \begin{pyblock}
+print("Valores unicos:", df["Sex"].unique())
+print()
+print("Conteo:")
+print(df["Sex"].value_counts())
+print()
+print(f"Edad min: {df['Age'].min()}")
+print(f"Edad max: {df['Age'].max()}")
+print(f"NaN en Age: {df['Age'].isna().sum()}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{.unique()} $\to$ lista de valores distintos.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{.value\_counts()} $\to$ frecuencia de cada valor.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Siempre explorar \textbf{antes} de filtrar.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 4: FILTRADO
+% =============================================================================
+\sectionframe{Filtrado de Datos}{Preguntas que los datos responden}
+
+\begin{frame}[fragile,shrink=28]{Máscaras Booleanas}
+  \vspace{-6pt}
+  {\footnotesize
+    Una condición sobre una columna produce True/False.
+    Al pasarla como índice, pandas filtra.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+mujeres = df[df["Sex"] == "female"]
+print(f"Mujeres: {len(mujeres)} de {len(df)}")
+
+primera_clase = df[df["Pclass"] == 1]
+print(f"1ra clase: {len(primera_clase)}")
+
+jovenes = df[df["Age"] < 10][["Sex", "Age", "Survived"]]
+jovenes.head()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \texttt{df[condición]} $\to$ solo filas donde es \texttt{True}.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Múltiples Condiciones: \texttt{\&}, \texttt{|}, \texttt{\~{}}}
+  \vspace{-6pt}
+  {\scriptsize
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Operador} & \textbf{Significado} & \textbf{Python} \\
+    \midrule
+    \texttt{\&} & Y lógico & \texttt{and} \\
+    \texttt{|}  & O lógico & \texttt{or} \\
+    \texttt{\~{}} & NO lógico & \texttt{not} \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{4pt}
+  \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+# & = Y (ambas verdaderas)
+m_1ra = df[(df["Sex"] == "female") & (df["Pclass"] == 1)]
+print(f"Mujeres 1ra clase: {len(m_1ra)}")
+
+# | = O (al menos una)
+ninos_o_1 = df[(df["Age"] < 12) | (df["Pclass"] == 1)]
+print(f"Ninos O 1ra clase: {len(ninos_o_1)}")
+
+# ~ = NO (invierte)
+no_s = df[~(df["Embarked"] == "S")]
+print(f"NO Southampton: {len(no_s)}")
+  \end{pyblock}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faExclamationTriangle\ Cada condición debe ir
+    \textbf{entre paréntesis}.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Filtros Especiales: \texttt{isin()} y \texttt{between()}}
+  \vspace{-6pt}
+  \begin{pyblock}
+# isin() -- como IN de SQL
+puertos_cq = df[df["Embarked"].isin(["C", "Q"])]
+print(f"Embarcaron en C o Q: {len(puertos_cq)}")
+
+# between() -- rango inclusivo
+adultos = df[df["Age"].between(30, 50)]
+print(f"Edad 30-50: {len(adultos)}")
+
+# Negacion con isin
+solo_s = df[~df["Embarked"].isin(["C", "Q"])]
+print(f"Solo Southampton: {len(solo_s)}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{isin(lista)} evita cadenas de \texttt{|}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{between(a, b)} incluye ambos extremos.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Práctica: Filtrado \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  \begin{pyblock}
+# 1. Pasajeros que pagaron mas de $50
+#    Que % del total representan?
+
+# 2. Ninos (< 10) que sobrevivieron
+
+# 3. Pasajeros de 1ra o 2da clase (isin)
+
+# 4. Adultos 20-30 en 3ra clase
+#    Tasa de supervivencia?
+  \end{pyblock}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      \texttt{len(resultado) / len(df) * 100} para porcentaje.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Combinar condiciones con \texttt{\&}.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      \texttt{.isin([1, 2])} para 1ra o 2da clase.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 5: TRANSFORMAR
+% =============================================================================
+\sectionframe{Transformar Datos}{Enriquecer el dataset}
+
+\begin{frame}[fragile,shrink=28]{Crear Columnas Nuevas}
+  \vspace{-6pt}
+  {\footnotesize
+    Las operaciones en columnas son \textbf{vectorizadas}:
+    aplican a toda la columna de una vez.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+# Operacion directa
+df["Fare_doble"] = df["Fare"] * 2
+
+# Condicion booleana
+df["Es_mayor"] = df["Age"] >= 18
+
+# Categoria con loc
+df["Rango"] = "Desconocido"
+df.loc[df["Age"] < 12, "Rango"] = "Nino"
+df.loc[df["Age"] >= 18, "Rango"] = "Adulto"
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Mucho más rápido que un \texttt{for}.
+    Siempre preferir operaciones vectorizadas.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{\texttt{apply()} --- Función a Cada Valor}
+  \vspace{-6pt}
+  {\footnotesize
+    Cuando necesitas lógica con \texttt{if/elif}
+    que no cabe en una expresión:}
+
+  \vspace{4pt}
+  \begin{pyblock}
+def etiqueta_clase(numero):
+    if numero == 1:
+        return "1ra Clase"
+    elif numero == 2:
+        return "2da Clase"
+    else:
+        return "3ra Clase"
+
+df["Clase_texto"] = df["Pclass"].apply(etiqueta_clase)
+df[["Pclass", "Clase_texto"]].head()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faArrowRight\ \texttt{.apply(mi\_funcion)} toma cada valor,
+    lo pasa por la función, y retorna una columna nueva.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Práctica: Columnas Derivadas \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  \begin{pyblock}
+df = pd.read_csv(url)
+
+# 1. "Tarifa_alta" -> True si Fare > 50
+
+# 2. "Sobrevivio" -> "Si" o "No"
+
+# 3. "Familia" = SibSp + Parch
+
+# 4. "Viaja_solo" -> True si Familia == 0
+#    Sobrevivieron mas los que viajaban solos?
+
+df.head()
+  \end{pyblock}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      \texttt{df["Survived"].apply(lambda x: "Si" if x == 1 else "No")}.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Agrupar por \texttt{Viaja\_solo} y calcular \texttt{.mean()} de \texttt{Survived}.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 6: GROUPBY
+% =============================================================================
+\sectionframe{\texttt{groupby()}}{Resumir por grupos}
+
+\begin{frame}[fragile,shrink=28]{Anatomía de \texttt{groupby}}
+  \vspace{-6pt}
+  {\footnotesize
+    Para preguntas tipo ``¿cuál es el promedio \textbf{por grupo}?''}
+
+  \vspace{4pt}
+  \begin{pyblock}
+# Cuantos por sexo?
+print(df.groupby("Sex")["PassengerId"].count())
+print()
+# Tarifa promedio por clase?
+print(df.groupby("Pclass")["Fare"].mean().round(2))
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Función} & \textbf{Responde\ldots} \\
+    \midrule
+    \texttt{.count()} & ¿Cuántos? \\
+    \texttt{.sum()} & ¿Cuánto en total? \\
+    \texttt{.mean()} & ¿Cuál es el promedio? \\
+    \texttt{.min() / .max()} & ¿Cuál es el extremo? \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{\texttt{groupby() + agg()} --- Varias Métricas}
+  \vspace{-6pt}
+  {\footnotesize
+    En lugar de tres \texttt{groupby} separados,
+    \texttt{.agg()} calcula todo de una vez:}
+
+  \vspace{4pt}
+  \begin{pyblock}
+resumen = df.groupby("Pclass").agg(
+    total       = ("PassengerId", "count"),
+    sobreviven  = ("Survived",    "sum"),
+    tarifa_prom = ("Fare",        "mean"),
+).round(1)
+print(resumen)
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Sintaxis: \texttt{nombre = ("columna", "funcion")}.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Equivale a una tabla dinámica de Excel.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Práctica: Agrupar y Resumir \hfill
+    {\normalsize\color{arcaRed}\faClock\ 8 min}}
+  \vspace{-6pt}
+  \begin{pyblock}
+df = pd.read_csv(url)
+
+# 1. Promedio de edad por sexo
+
+# 2. Total de sobrevivientes por clase
+
+# 3. Tabla resumen por clase: cantidad,
+#    suma de Fare, promedio de Fare -> .agg()
+
+# RETO: Que puerto (Embarked) tuvo la mejor
+#       tasa de supervivencia?
+  \end{pyblock}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Pregunta 1: \texttt{groupby("Sex")["Age"].mean()}.
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Reto: tasa = \texttt{mean()} de Survived (ya es 0/1).
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 7: DATOS FALTANTES
+% =============================================================================
+\sectionframe{Datos Faltantes: NaN}{El enemigo silencioso}
+
+\begin{frame}[fragile,shrink=28]{Detectar Valores Faltantes}
+  \vspace{-6pt}
+  \begin{pyblock}
+df = pd.read_csv(url)
+
+print("=== NaN por columna ===")
+print(df.isna().sum())
+
+nan_pct = (df.isna().sum() / len(df) * 100).round(1)
+print("\n=== % faltante ===")
+print(nan_pct[nan_pct > 0])
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      NaN \textbf{no es cero}. Incluirlo en promedios distorsiona.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{.isna()} $\to$ máscara True/False.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{.isna().sum()} $\to$ cuenta de NaN.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Estrategias para Limpiar NaN}
+  \vspace{-6pt}
+  {\scriptsize
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Estrategia} & \textbf{Cuándo} \\
+    \midrule
+    \texttt{dropna()} & Pocos NaN ($<$ 5\%) \\
+    \texttt{fillna(mediana)} & Columnas numéricas \\
+    \texttt{fillna("valor")} & Columnas de texto \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{4pt}
+  \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+# Numerica -> mediana
+mediana = df["Age"].median()
+df["Age"] = df["Age"].fillna(mediana)
+print(f"Age NaN: {df['Age'].isna().sum()}")
+
+# Categorica -> valor mas frecuente
+df["Embarked"] = df["Embarked"].fillna("S")
+
+# dropna -> eliminar filas
+df2 = df.dropna(subset=["Fare"])
+print(f"dropna: {len(df)} -> {len(df2)} filas")
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Práctica: Limpiar NaN \hfill
+    {\normalsize\color{arcaRed}\faClock\ 7 min}}
+  \vspace{-6pt}
+  \begin{pyblock}
+df = pd.read_csv(url)
+
+# 1. Cuantos NaN por columna? Que % representan?
+
+# 2. Si haces dropna(), cuantas filas pierdes?
+
+# 3. Rellena Age con la mediana.
+#    Compara df["Age"].mean() ANTES y DESPUES.
+
+# 4. Rellena Embarked con el mas frecuente.
+#    Pista: df["Embarked"].mode()[0]
+  \end{pyblock}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Guarda el \texttt{.mean()} antes de rellenar
+    para comparar el impacto.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 8: VISUALIZACIÓN
+% =============================================================================
+\sectionframe{Visualización}{Una imagen vale más que mil filas}
+
+\begin{frame}[fragile,shrink=28]{Gráficas con \texttt{.plot()}}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize
+      \begin{tabular}{@{}ll@{}}
+        \toprule
+        \texttt{kind=} & \textbf{Cuándo} \\
+        \midrule
+        \texttt{"bar"}     & Comparar categorías \\
+        \texttt{"hist"}    & Distribución \\
+        \texttt{"line"}    & Tendencia \\
+        \texttt{"scatter"} & Relación 2 cols \\
+        \bottomrule
+      \end{tabular}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+import matplotlib.pyplot as plt
+df = pd.read_csv(url)
+
+por_clase = df.groupby("Pclass") \
+  ["Survived"].mean() * 100
+por_clase.plot(kind="bar",
+    title="Supervivencia %")
+plt.ylabel("%")
+plt.show()
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Cualquier Serie o DataFrame
+    tiene \texttt{.plot()} integrado.
+    Necesita \texttt{import matplotlib.pyplot as plt}.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 9: PROYECTO INTEGRADOR
+% =============================================================================
+\sectionframe{Proyecto Integrador}{Análisis completo de supervivencia}
+
+\begin{frame}[fragile,shrink=28]{Proyecto: Análisis del Titanic \hfill
+    {\normalsize\color{arcaRed}\faClock\ 15 min}}
+  \vspace{-6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaDark}\bfseries Pasos:}
+      {\scriptsize
+      \begin{enumerate}\setlength{\itemsep}{3pt}
+        \item Limpiar NaN (Age $\to$ mediana).
+        \item Crear \texttt{"Grupo\_edad"}:\\
+              Niño / Adulto / Mayor.
+        \item Crear \texttt{"Familia"} = SibSp + Parch.
+        \item Supervivencia por Pclass $\times$ Sex.
+        \item ¿Quién sobrevivió más/menos?
+        \item \textbf{(Bonus)} Graficar.
+      \end{enumerate}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{pyblock}[minted options={fontsize=\scriptsize, breaklines}]
+import pandas as pd
+df = pd.read_csv(url)
+
+# 1. Limpiar NaN
+df["Age"] = df["Age"].fillna(
+    df["Age"].median())
+
+# 2. TODO: Grupo_edad
+
+# 3. TODO: Familia, Viaja_solo
+
+# 4. TODO: Supervivencia
+
+# 5. TODO: Mejor/peor grupo
+
+df.head()
+      \end{pyblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que logramos hoy}
+
+\begin{frame}{Lo que Aprendimos Hoy}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Cargar CSV desde URL.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{loc}, \texttt{iloc}, selección.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Filtros: \texttt{\&}, \texttt{|}, \texttt{\~{}},
+          \texttt{isin}, \texttt{between}.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Columnas derivadas y \texttt{apply()}.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.44\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{groupby() + agg()}.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          NaN: detectar y limpiar.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Visualización con \texttt{.plot()}.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Análisis completo del Titanic.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries Próxima clase:}
+  \vspace{2pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      EDA --- Análisis Exploratorio de Datos.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Estadística descriptiva y correlaciones.
+  \end{itemize}
+  }
+\end{frame}
+
+% ── QR ENCUESTA ──────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1cm}
+  \begin{center}
+    {\Huge\bfseries\color{white} ¿Cómo estuvo la clase?\par}
+    \vspace{0.6cm}
+    \includegraphics[width=4cm]{qr_encuesta.jpg}
+    \vspace{0.4cm}
+    {\large\color{white!80} Escaneen el QR para la encuesta rápida\par}
+  \end{center}
+\end{frame}
+}
+
+\end{document}
