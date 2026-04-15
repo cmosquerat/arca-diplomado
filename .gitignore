@@ -10,7 +10,27 @@
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+*.bbl
+*.blg
+*.lof
+*.lot
+*.idx
+*.ilg
+*.ind
+*.xdv
+*.dvi
+*.ps
+*.run.xml
+*-blx.bib
+*.bcf
+*.figlist
+*.makefile
+*.figlist
+*.auxlock
+texput.log
 **/_minted-*
+**/_markdown_*
+**/_region_.tex
 **/presentacion.pdf
 **/test.pdf
 
@@ -24,6 +44,8 @@ clase-01/figures/human_in_loop.png
 # ── Cursor / IDE internals ──
 .cursor/
 .agents/
+.vscode/
+.idea/
 skills-lock.json
 
 # ── OS ──
@@ -34,9 +56,24 @@ Thumbs.db
 
 # ── Editor ──
 *.swp
+*.swo
 *~
 
 # ── Python ──
 __pycache__/
 *.pyc
+*.pyo
 .ipynb_checkpoints/
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Jupyter ──
+.jupyter/
+
+# ── Documentos administrativos (no versionar) ──
+CRONOGRAMA*.pdf
