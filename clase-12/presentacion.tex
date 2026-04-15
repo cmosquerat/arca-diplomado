@@ -1,0 +1,1484 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 12: Variables Categóricas — Encoding y Correlación
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc,
+  calc, fit, decorations.pathreplacing, backgrounds}
+\usepackage{fontawesome5}
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+\usepackage{amsmath}
+
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+\definecolor{codePurple}{HTML}{7C3AED}
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.5cm, yshift=0.15cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.3cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 12: Variables Categóricas — Encoding y Correlación}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{6 de Abril, 2026}
+
+\begin{document}
+
+% ── PORTADA ──────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ── MÓDULO 2 ─────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Large\bfseries, text width=12cm,
+          align=center] at ([yshift=1cm]current page.center)
+      {Módulo 2};
+    \node[anchor=center, text=white!90, font=\huge\bfseries, text width=12cm,
+          align=center] at ([yshift=-0.3cm]current page.center)
+      {Estadística Aplicada para Datos};
+  \end{tikzpicture}
+\end{frame}
+}
+
+% ── RECAPITULACIÓN ──────────────────────────────────────────────────────────
+\begin{frame}[shrink=5]{Recapitulación: Clase 11}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} Clase pasada:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Correlación: Pearson, Spearman, heatmaps.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Scatter plots y regplot.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Análisis categórico: pd.cut, groupby, crosstab.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Boxplot, violinplot, countplot.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed} Hoy avanzamos:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\faArrowRight}]
+          Retomamos el Titanic.
+        \item[{\color{arcaRed}\faArrowRight}]
+          Variables categóricas: ¿qué son y cómo analizarlas?
+        \item[{\color{arcaRed}\faArrowRight}]
+          Encoding: convertir categorías en números.
+        \item[{\color{arcaRed}\faArrowRight}]
+          Correlación para variables categóricas.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ── ROADMAP ─────────────────────────────────────────────────────────────────
+\begin{frame}[shrink=9]{Hoja de Ruta de Hoy}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.35cm,
+    roadstep/.style={rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!8,
+                 minimum width=11cm, minimum height=0.65cm,
+                 font=\footnotesize\bfseries\color{arcaDark}, align=left,
+                 text width=10cm, inner sep=6pt},
+    num/.style={circle, fill=arcaRed, text=white, font=\scriptsize\bfseries,
+                minimum size=0.5cm, inner sep=0pt},
+  ]
+    \node[roadstep] (s1) {\hspace{0.8cm}Nuevo dataset --- Titanic};
+    \node[roadstep, below=of s1] (s2) {\hspace{0.8cm}¿Todo número es un número? --- Variables categóricas};
+    \node[roadstep, below=of s2] (s3) {\hspace{0.8cm}Explorar categóricas correctamente};
+    \node[roadstep, below=of s3] (s4) {\hspace{0.8cm}Encoding --- Darle forma numérica a las categorías};
+    \node[roadstep, below=of s4] (s5) {\hspace{0.8cm}Correlación con variables categóricas};
+    \node[roadstep, below=of s5] (s6) {\hspace{0.8cm}Ejercicios integradores};
+
+    \node[num] at ([xshift=0.45cm]s1.west) {1};
+    \node[num] at ([xshift=0.45cm]s2.west) {2};
+    \node[num] at ([xshift=0.45cm]s3.west) {3};
+    \node[num] at ([xshift=0.45cm]s4.west) {4};
+    \node[num] at ([xshift=0.45cm]s5.west) {5};
+    \node[num] at ([xshift=0.45cm]s6.west) {6};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 1: RETOMAMOS TITANIC
+% =============================================================================
+\sectionframe{Retomamos el Titanic}{Un dataset con muchas variables categóricas}
+
+\begin{frame}[shrink=5]{¿Por Qué el Titanic?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Ya conocemos este dataset. Hoy lo miramos con otros ojos:
+    sus variables categóricas.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} Lo que ya sabemos:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          891 pasajeros, 15 columnas.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Mezcla de números, textos y booleanos.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Viene incluido en seaborn.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed} Lo nuevo de hoy:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\faArrowRight}]
+          ¿Qué columnas son realmente numéricas?
+        \item[{\color{arcaRed}\faArrowRight}]
+          ¿Cómo convertir categorías en números?
+        \item[{\color{arcaRed}\faArrowRight}]
+          ¿Qué correlación usar con cada tipo?
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Cargar el Dataset}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Mismo dataset, nuevas preguntas.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+df = sns.load_dataset("titanic")
+print(f"{df.shape[0]} pasajeros, {df.shape[1]} columnas")
+df.head()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}] Hoy nos enfocamos en las columnas de texto y las ``falsas numéricas''.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Explorar la Estructura}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Qué tipos de datos tiene cada columna?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+df.info()
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+survived      891 non-null    int64
+pclass        891 non-null    int64
+sex           891 non-null    object
+age           714 non-null    float64   # <-- faltan datos
+embarked      889 non-null    object
+class         891 non-null    category
+who           891 non-null    object
+deck          203 non-null    category  # <-- muchos NaN
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      \texttt{age} y \texttt{deck} tienen datos faltantes --- lo veremos en la clase 13.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 2: ¿TODO NÚMERO ES UN NÚMERO?
+% =============================================================================
+\sectionframe{¿Todo Número Es Un Número?}{La trampa de las variables numéricas}
+
+\begin{frame}[shrink=5]{La Trampa Numérica}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \texttt{df.describe()} incluye \texttt{pclass} y \texttt{survived} como numéricas.
+    ¿Tiene sentido?}
+
+  \vspace{8pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Operaciones sin sentido:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item \texttt{pclass.mean()} $= 2.31$
+
+          ¿Qué es la ``clase 2.31''?
+        \item \texttt{survived.std()} $= 0.49$
+
+          ¿Desviación estándar de estar vivo?
+        \item \texttt{survived.median()} $= 0$
+
+          ¿El pasajero ``mediano'' murió?
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Lo que sí tiene sentido:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item \texttt{pclass.value\_counts()}
+
+          ¿Cuántos en cada clase?
+        \item \texttt{survived.value\_counts(normalize=True)}
+
+          ¿Qué proporción sobrevivió?
+        \item \texttt{pclass.mode()}
+
+          ¿Cuál es la clase más frecuente?
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{8pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    Que una variable esté almacenada como número \textbf{no significa}
+    que sea numérica. \texttt{pclass} y \texttt{survived} son
+    \textbf{categóricas disfrazadas}.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Demostración: La Media No Tiene Sentido}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Comparemos operaciones sobre \texttt{pclass} y \texttt{age}.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+print("=== pclass (categorica disfrazada) ===")
+print(f"Media:   {df['pclass'].mean():.2f}")   # 2.31 ???
+print(f"Moda:    {df['pclass'].mode()[0]}")     # 3 (tercera clase)
+print()
+print("=== age (numerica real) ===")
+print(f"Media:   {df['age'].mean():.2f}")       # 29.70 tiene sentido
+print(f"Mediana: {df['age'].median():.2f}")     # 28.00 tiene sentido
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Para \texttt{age}: media, mediana y std tienen sentido (es una cantidad).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Para \texttt{pclass}: solo frecuencias y moda tienen sentido (es un grupo).
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{Tipos de Variables}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Clasificación formal de las variables según su naturaleza.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    \textbf{Tipo} & \textbf{Definición} & \textbf{Ejemplo Titanic} & \textbf{Operaciones válidas} \\
+    \midrule
+    \textbf{Nominal} & Categorías sin orden & sex, embarked, who &
+      moda, frecuencia \\
+    \textbf{Ordinal} & Categorías con orden & class (1ra > 2da > 3ra) &
+      moda, frecuencia, mediana \\
+    \textbf{Binaria} & Solo dos valores & survived, alone &
+      moda, proporción \\
+    \midrule
+    \textbf{Discreta} & Números contables & sibsp, parch &
+      media, mediana, std \\
+    \textbf{Continua} & Números medibles & age, fare &
+      media, mediana, std \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    Las tres primeras son \textbf{categóricas}: representan \textbf{grupos},
+    no cantidades. No les calcules media ni desviación estándar.}
+\end{frame}
+
+\begin{frame}[shrink=8]{Clasificar las Columnas del Titanic}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Ejercicio mental: ¿cada columna es categórica o numérica?}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}lllp{4cm}@{}}
+    \toprule
+    \textbf{Columna} & \textbf{dtype} & \textbf{Tipo real} & \textbf{¿Por qué?} \\
+    \midrule
+    survived & int64 & Binaria & 0/1 = murió/sobrevivió \\
+    pclass & int64 & Ordinal & 1, 2, 3 = clase social \\
+    sex & object & Nominal & male/female, sin orden \\
+    age & float64 & Continua & Años de vida \\
+    fare & float64 & Continua & Precio del boleto \\
+    embarked & object & Nominal & C/Q/S = puertos \\
+    class & category & Ordinal & First/Second/Third \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    \faExclamationTriangle\hspace{4pt}
+    \texttt{pclass} es \texttt{int64} pero NO es numérica.
+    \texttt{survived} es \texttt{int64} pero es binaria.
+    El \texttt{dtype} \textbf{no determina} el tipo de variable.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: EXPLORAR CATEGÓRICAS CORRECTAMENTE
+% =============================================================================
+\sectionframe{Explorar Categóricas}{Frecuencias, proporciones y tablas cruzadas}
+
+\begin{frame}[fragile,shrink=28]{Frecuencias con \texttt{value\_counts()}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    La herramienta básica para explorar variables categóricas.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+print(df["embarked"].value_counts())
+print()
+print(df["embarked"].value_counts(normalize=True))
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+S    644        S    0.724
+C    168        C    0.189
+Q     77        Q    0.087
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{normalize=True} da proporciones en vez de conteos.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      72\,\% embarcó en Southampton (S).
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Visualizar Frecuencias}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \texttt{countplot} ya lo conocemos --- perfecto para categóricas.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+sns.countplot(x="embarked", data=df)
+plt.title("Pasajeros por Puerto de Embarque")
+plt.xlabel("Puerto")
+plt.ylabel("Cantidad")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      C = Cherbourg, Q = Queenstown, S = Southampton.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      También funciona con \texttt{survived}, \texttt{pclass}, \texttt{sex}.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Tabla Cruzada: Dos Categóricas}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Cómo se relaciona el sexo con la supervivencia?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+pd.crosstab(df["sex"], df["survived"],
+            margins=True)
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+survived    0    1  All
+sex
+female     81  233  314
+male      468  109  577
+All       549  342  891
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      233 de 314 mujeres sobrevivieron (74\,\%).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Solo 109 de 577 hombres sobrevivieron (19\,\%).
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Proporciones con \texttt{crosstab}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Mejor con proporciones por fila para comparar.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+pd.crosstab(df["sex"], df["survived"],
+            normalize="index").round(3)
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+survived      0      1
+sex
+female    0.258  0.742
+male      0.811  0.189
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      74.2\,\% de mujeres vs 18.9\,\% de hombres sobrevivieron.
+    \item[{\color{codeOrange}\scriptsize\faLightbulb}]
+      ``Women and children first'' se confirma en los datos.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 4: ENCODING
+% =============================================================================
+\sectionframe{Encoding}{Convertir categorías en números}
+
+\begin{frame}[shrink=5]{¿Por Qué Encoding?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Las computadoras necesitan números para calcular.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Sin encoding:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item No puedes calcular correlación con \texttt{"male"}/\texttt{"female"}.
+        \item No puedes incluir \texttt{embarked} en un modelo.
+        \item \texttt{.corr()} ignora columnas de texto.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        Con encoding:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item male $\to$ 0, female $\to$ 1: ahora es un número.
+        \item C $\to$ [1,0,0], Q $\to$ [0,1,0], S $\to$ [0,0,1].
+        \item Puedes calcular correlación, hacer modelos, etc.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{8pt}
+  {\footnotesize\color{arcaDark}
+    \faExclamationTriangle\hspace{4pt}
+    Pero \textbf{no todos los encodings sirven para todo}.
+    Elegir mal produce resultados sin sentido.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Label Encoding (Variables Binarias)}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Para variables con exactamente dos valores: asignar 0 y 1.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+df["sex_encoded"] = df["sex"].map({
+    "male": 0,
+    "female": 1
+})
+
+print(df[["sex", "sex_encoded"]].head())
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+      sex  sex_encoded
+0    male            0
+1  female            1
+2  female            1
+3  female            1
+4    male            0
+  \end{outputblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{Label Encoding: Antes $\to$ Después}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.40\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} Transformación:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Original} & & \textbf{Encoded} \\
+        \midrule
+        male & $\to$ & 0 \\
+        female & $\to$ & 1 \\
+        \midrule
+        no & $\to$ & 0 \\
+        yes & $\to$ & 1 \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{8pt}
+      {\scriptsize\color{arcaDark}
+        \faLightbulb\hspace{4pt}
+        Una sola columna nueva.
+        La más simple de todas.}
+    \end{column}
+
+    \begin{column}{0.55\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} ¿Cuándo usarlo?}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Correlación}: funciona (Point-Biserial).
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Regresión lineal}: funciona perfectamente.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Árboles de decisión}: funciona.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Cualquier modelo}: no hay ambigüedad con 2 valores.
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      {\scriptsize\color{arcaRed}
+        \faExclamationTriangle\hspace{4pt}
+        \textbf{Solo} para variables con exactamente 2 categorías.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Ordinal Encoding (Variables con Orden)}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Para variables donde las categorías tienen un orden natural.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+df["class_encoded"] = df["class"].map(
+    {"Third": 1, "Second": 2, "First": 3})
+print(df[["class", "class_encoded"]].head(3))
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+    class  class_encoded
+0   Third             1
+1   First             3
+2   Third             1
+  \end{outputblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{Ordinal Encoding: Antes $\to$ Después}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.40\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} Transformación:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Original} & & \textbf{Encoded} \\
+        \midrule
+        Third & $\to$ & 1 \\
+        Second & $\to$ & 2 \\
+        First & $\to$ & 3 \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{6pt}
+      {\scriptsize\color{arcaDark}
+        \faLightbulb\hspace{4pt}
+        Una sola columna nueva.
+        Los números respetan el orden.}
+    \end{column}
+
+    \begin{column}{0.55\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} ¿Cuándo usarlo?}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Correlación Spearman}: ideal (usa rangos).
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Árboles de decisión}: funcionan bien
+          (solo necesitan comparar ``$>$'' o ``$<$'').
+        \item[{\color{codeOrange}\faExclamationTriangle}]
+          \textbf{Regresión lineal}: cuidado --- asume que la
+          distancia Third$\to$Second = Second$\to$First.
+        \item[{\color{codeOrange}\faExclamationTriangle}]
+          \textbf{Pearson}: mismo problema de distancias.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{One-Hot Encoding (Variables Nominales)}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Para nominales: crear una columna por cada categoría.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+dummies = pd.get_dummies(df["embarked"], prefix="emb")
+print(dummies.head())
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+   emb_C  emb_Q  emb_S
+0  False  False   True
+1   True  False  False
+2  False  False   True
+3   True  False  False
+4  False  False   True
+  \end{outputblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{One-Hot Encoding: Antes $\to$ Después}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.40\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} Transformación:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{tabular}{@{}lccc@{}}
+        \toprule
+        \textbf{Original} & \textbf{emb\_C} & \textbf{emb\_Q} & \textbf{emb\_S} \\
+        \midrule
+        C & 1 & 0 & 0 \\
+        Q & 0 & 1 & 0 \\
+        S & 0 & 0 & 1 \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{6pt}
+      {\scriptsize\color{arcaDark}
+        \faLightbulb\hspace{4pt}
+        Crea $k$ columnas nuevas
+        (una por categoría).}
+    \end{column}
+
+    \begin{column}{0.55\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} ¿Cuándo usarlo?}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Regresión lineal}: funciona (cada dummy
+          se interpreta por separado).
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Cualquier modelo}: es la opción más segura.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \textbf{Correlación}: cada dummy es binaria $\to$ Point-Biserial.
+        \item[{\color{codeOrange}\faExclamationTriangle}]
+          \textbf{Muchas categorías}: 50 categorías $=$ 50 columnas
+          nuevas. El dataset ``explota''.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=5]{El Peligro: Encoding Incorrecto}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Qué pasa si usas Label Encoding en una nominal?}
+
+  \vspace{4pt}
+  \begin{columns}[T]
+    \begin{column}{0.44\textwidth}
+      {\scriptsize\color{arcaRed}\bfseries\faTimesCircle\hspace{4pt}
+        Label en embarked:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Puerto} & \textbf{Label} & \textbf{Problema} \\
+        \midrule
+        Cherbourg & 0 & \\
+        Queenstown & 1 & Q $>$ C ? \\
+        Southampton & 2 & S $>$ Q ? \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{4pt}
+      {\scriptsize
+      El modelo ``aprende'' que S $>$ Q $>$ C
+      y que las distancias son iguales.
+      \textbf{Ambas cosas son falsas.}
+      }
+    \end{column}
+
+    \begin{column}{0.52\textwidth}
+      {\scriptsize\color{codeGreen}\bfseries\faCheckCircle\hspace{4pt}
+        One-Hot en embarked:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{tabular}{@{}lccc@{}}
+        \toprule
+        \textbf{Puerto} & \textbf{C} & \textbf{Q} & \textbf{S} \\
+        \midrule
+        Cherbourg & 1 & 0 & 0 \\
+        Queenstown & 0 & 1 & 0 \\
+        Southampton & 0 & 0 & 1 \\
+        \bottomrule
+      \end{tabular}
+      }
+
+      \vspace{4pt}
+      {\scriptsize
+      Cada puerto tiene su propia columna.
+      \textbf{Sin orden falso.}
+      El modelo trata cada uno independiente.
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=8]{¿Qué Encoding para Cada Tarea?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Resumen: depende del tipo de variable \textbf{y} de lo que vas a hacer.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    \textbf{Tarea} & \textbf{Binaria} & \textbf{Ordinal} & \textbf{Nominal} \\
+    \midrule
+    Correlación & Label & Ordinal + Spearman & Cramér's V \\
+    Regresión lineal & Label & \color{codeOrange}Ordinal (cuidado) & One-Hot \\
+    Árboles de decisión & Label & Ordinal & One-Hot \\
+    Cualquier modelo & Label & Ordinal / One-Hot & One-Hot \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{8pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    \textbf{Regla de oro}: si tienes duda entre ordinal y nominal,
+    usa \textbf{One-Hot}. Funciona siempre, aunque crea más columnas.}
+
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+    \faExclamationTriangle\hspace{4pt}
+    Si la variable tiene \textbf{muchas categorías} ($>$\,20),
+    One-Hot crea demasiadas columnas. Existen otros encodings
+    avanzados (Target, Frequency) que veremos más adelante.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{\texttt{drop\_first}: Evitar Redundancia}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Si no es C ni Q, necesariamente es S. Una columna sobra.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+dummies = pd.get_dummies(df["embarked"],
+                         prefix="emb",
+                         drop_first=True)
+print(dummies.head())
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+   emb_Q  emb_S
+0  False   True
+1  False  False
+2  False   True
+3  False  False
+4  False   True
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{drop\_first=True} elimina la primera categoría (C).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Si \texttt{emb\_Q}=0 y \texttt{emb\_S}=0, sabemos que es C.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Ejercicio 1: Encoding \hfill {\normalsize\faLaptopCode}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Aplica el encoding correcto a cada variable.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+# 1. alive: "yes"/"no" -> que tipo es? que encoding?
+df["alive_encoded"] = ___
+
+# 2. who: "man"/"woman"/"child" -> que tipo? encoding?
+who_dummies = ___
+
+# 3. class: "First"/"Second"/"Third" -> tipo? encoding?
+df["class_encoded"] = ___
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faClock}] 5 minutos.
+    \item[{\color{codeOrange}\scriptsize\faLightbulb}]
+      Pregúntate: ¿hay orden natural entre las categorías?
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 5: CORRELACIÓN CON CATEGÓRICAS
+% =============================================================================
+\sectionframe{Correlación Categórica}{¿Qué correlación usar con cada tipo de variable?}
+
+\begin{frame}[shrink=8]{¿Puedo Hacer \texttt{.corr()} Después del Encoding?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Depende del tipo de variable y del encoding que usaste.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    \textbf{Combinación} & \textbf{¿Pearson?} & \textbf{¿Qué usar?} &
+    \textbf{Ejemplo} \\
+    \midrule
+    Binaria vs Numérica & \color{codeGreen}\faCheckCircle\color{textDark}\hspace{2pt} Sí &
+      Point-Biserial (= Pearson) & sex vs fare \\
+    Binaria vs Binaria & \color{codeGreen}\faCheckCircle\color{textDark}\hspace{2pt} Sí &
+      Phi $\varphi$ (= Pearson) & sex vs survived \\
+    Ordinal vs Numérica & \color{codeOrange}\faExclamationTriangle\color{textDark}\hspace{2pt} No ideal &
+      Spearman & class vs fare \\
+    Ordinal vs Ordinal & \color{codeOrange}\faExclamationTriangle\color{textDark}\hspace{2pt} No ideal &
+      Spearman & class vs deck \\
+    Nominal vs cualquiera & \color{arcaRed}\faTimesCircle\color{textDark}\hspace{2pt} No &
+      Cramér's V & embarked vs survived \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    Pearson asume que los números tienen \textbf{distancias iguales}.
+    Solo las variables binarias (0/1) cumplen esto.}
+\end{frame}
+
+\begin{frame}[shrink=5]{Point-Biserial: Pearson con una Variable Binaria}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Cuando una variable es binaria (0/1) y la otra numérica,
+    Pearson funciona y se llama \textbf{Point-Biserial}.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\faArrowRight}]
+          Es \textbf{exactamente} la fórmula de Pearson.
+        \item[{\color{arcaRed}\faArrowRight}]
+          La binaria (0/1) divide los datos en dos grupos.
+        \item[{\color{arcaRed}\faArrowRight}]
+          La correlación mide si la media de los dos grupos es diferente.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{sex\_encoded} (0/1) vs \texttt{fare}: ¿las mujeres pagaron más?
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{survived} (0/1) vs \texttt{age}: ¿los jóvenes sobrevivieron más?
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Se calcula con el mismo \texttt{.corr()} de siempre.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Point-Biserial en Código}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Correlación entre variables binarias y numéricas.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+cols = ["survived", "sex_encoded", "age", "fare"]
+corr_pb = df[cols].corr()
+print(corr_pb.round(3))
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+              survived  sex_encoded    age    fare
+survived         1.000        0.543 -0.077   0.257
+sex_encoded      0.543        1.000 -0.093   0.183
+age             -0.077       -0.093  1.000   0.096
+fare             0.257        0.183  0.096   1.000
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      sex\_encoded vs survived = 0.54: ser mujer se asocia fuertemente con sobrevivir.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Spearman para Variables Ordinales}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Para ordinales, Spearman es más apropiado: solo usa el orden, no las distancias.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+cols = ["survived", "class_encoded", "fare", "age"]
+corr_sp = df[cols].corr(method="spearman")
+print(corr_sp.round(3))
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{outputblock}
+                survived  class_encoded    fare    age
+survived           1.000         0.340   0.330 -0.057
+class_encoded      0.340         1.000   0.890  0.029
+fare               0.330         0.890   1.000  0.081
+age               -0.057         0.029   0.081  1.000
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      class\_encoded vs survived = 0.34: clase más alta $\to$ más supervivencia.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      class\_encoded vs fare = 0.89: lógico, primera clase cuesta más.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{Cramér's V: Dos Categóricas sin Encoding}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Para medir asociación entre dos categóricas nominales.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\faArrowRight}]
+          Da un valor entre \textbf{0} (sin asociación) y
+          \textbf{1} (asociación perfecta).
+        \item[{\color{arcaRed}\faArrowRight}]
+          No tiene dirección (no es negativo ni positivo).
+        \item[{\color{arcaRed}\faArrowRight}]
+          Se basa internamente en \textbf{chi-cuadrado} ($\chi^2$):
+          compara las frecuencias observadas vs las esperadas.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          No necesitas encoding previo.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Funciona con cualquier número de categorías.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Interpretación: 0--0.1 débil, 0.1--0.3 moderada,
+          $>0.3$ fuerte.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=21]{Cramér's V: La Matemática}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    La idea: ¿las frecuencias observadas difieren de lo esperado por azar?}
+
+  \vspace{4pt}
+  {\scriptsize\bfseries Paso 1: Tabla de contingencia (crosstab)}
+  \vspace{2pt}
+
+  {\scriptsize
+    Con \texttt{sex} vs \texttt{survived} obtenemos las frecuencias
+    \textbf{observadas} ($O_{ij}$). Luego calculamos las
+    \textbf{esperadas} ($E_{ij}$): qué esperaríamos si no hubiera
+    relación alguna.
+  \[
+    E_{ij} = \frac{\text{total fila}_i \times \text{total columna}_j}
+                   {\text{total general}}
+  \]
+  }
+
+  \vspace{2pt}
+  {\scriptsize\bfseries Paso 2: Chi-cuadrado ($\chi^2$)}
+  \vspace{2pt}
+
+  {\scriptsize
+    Mide cuánto difieren las frecuencias observadas de las esperadas:
+  \[
+    \chi^2 = \sum_{i,j}
+      \frac{(O_{ij} - E_{ij})^2}{E_{ij}}
+  \]
+    Si $\chi^2 = 0$: perfecta independencia.
+    Mientras más grande, más asociación.
+  }
+
+  \vspace{2pt}
+  {\scriptsize\bfseries Paso 3: Normalizar $\to$ Cramér's V}
+  \vspace{2pt}
+
+  {\scriptsize
+  \[
+    V = \sqrt{\frac{\chi^2}{n \cdot (k - 1)}}
+    \qquad
+    \begin{cases}
+      n &= \text{número total de observaciones} \\
+      k &= \min(\text{filas}, \text{columnas})
+    \end{cases}
+  \]
+    Dividir entre $n \cdot (k-1)$ escala el resultado al rango $[0, 1]$.
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Cramér's V en Código}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Implementación simple con \texttt{scipy.stats}.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+from scipy.stats import chi2_contingency
+
+def cramers_v(col1, col2):
+    tabla = pd.crosstab(col1, col2)
+    chi2 = chi2_contingency(tabla)[0]
+    n = len(col1)
+    k = min(tabla.shape) - 1
+    return (chi2 / (n * k)) ** 0.5
+
+v = cramers_v(df["sex"], df["survived"].map(
+    {0: "No", 1: "Si"}))
+print(f"Cramer's V (sex vs survived): {v:.3f}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      V $\approx$ 0.54 --- asociación fuerte entre sexo y supervivencia.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Heatmap de Correlación Post-Encoding}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Con las variables codificadas, podemos hacer un heatmap completo.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+cols = ["survived", "sex_encoded", "class_encoded",
+        "age", "fare", "sibsp", "parch"]
+plt.figure(figsize=(8, 6))
+sns.heatmap(df[cols].corr(method="spearman"),
+            annot=True, fmt=".2f",
+            cmap="RdBu_r", center=0, vmin=-1, vmax=1)
+plt.title("Correlacion (Spearman) - Titanic")
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Usamos Spearman porque incluye ordinales codificadas.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{¿Qué Predice la Supervivencia?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Resumen de las correlaciones encontradas.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    \textbf{Variable} & \textbf{Tipo} & \textbf{Correlación} & \textbf{Método} \\
+    \midrule
+    sex (ser mujer) & Binaria & $\approx +0.54$ & Point-Biserial \\
+    class (1ra clase) & Ordinal & $\approx +0.34$ & Spearman \\
+    fare (tarifa alta) & Continua & $\approx +0.33$ & Spearman \\
+    embarked & Nominal & V $\approx 0.18$ & Cramér's V \\
+    age & Continua & $\approx -0.06$ & Spearman \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    Ser mujer y viajar en primera clase son los factores más asociados
+    con la supervivencia. La edad sorprendentemente tiene poca correlación.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Ejercicio 2: Correlación Categórica \hfill {\normalsize\faLaptopCode}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Encuentra las asociaciones en el Titanic.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+# 1. Calcula Cramer's V entre "embarked" y "survived"
+#    Cual puerto tiene mayor tasa de supervivencia?
+
+# 2. Calcula Spearman entre class_encoded y fare
+#    Tiene sentido el resultado?
+
+# 3. Haz un crosstab(class, survived, normalize="index")
+#    Que clase tiene mayor tasa de supervivencia?
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faClock}] 8 minutos.
+    \item[{\color{codeOrange}\scriptsize\faLightbulb}]
+      Usa la función \texttt{cramers\_v()} que definimos antes.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  RESUMEN
+% =============================================================================
+\sectionframe{Resumen}{Lo que aprendimos hoy}
+
+\begin{frame}[shrink=5]{Resumen: Herramientas de Hoy}
+  \vspace{-4pt}
+  {\small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Concepto} & \textbf{Herramienta} & \textbf{Código clave} \\
+    \midrule
+    Frecuencias & pandas & \texttt{value\_counts(normalize=True)} \\
+    Label Encoding & pandas & \texttt{.map(\{cat: num\})} \\
+    One-Hot Encoding & pandas & \texttt{pd.get\_dummies(drop\_first)} \\
+    Corr.\ binaria & pandas & \texttt{.corr()} (Point-Biserial) \\
+    Corr.\ ordinal & pandas & \texttt{.corr(method="spearman")} \\
+    Corr.\ nominal & scipy & \texttt{cramers\_v()} \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{frame}
+
+\begin{frame}{Lo que Aprendimos Hoy}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          No todo número es numérico: \texttt{pclass}, \texttt{survived}.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Tipos: nominal, ordinal, binaria.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Encoding: Label, Ordinal, One-Hot.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Elegir el encoding correcto importa.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Point-Biserial: binaria vs numérica.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Spearman: ordinales.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Cramér's V: nominal vs nominal.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Titanic: sexo y clase predicen supervivencia.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries Próxima clase:}
+  \vspace{2pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      Datos faltantes: ¿qué hacer con los NaN del Titanic?
+    \item[{\color{arcaRed}\faArrowRight}]
+      Limpieza de datos: duplicados, tipos, imputación.
+  \end{itemize}
+  }
+\end{frame}
+
+% ── QR ENCUESTA ──────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1cm}
+  \begin{center}
+    {\Huge\bfseries\color{white} ¿Cómo estuvo la clase?\par}
+    \vspace{0.6cm}
+    \includegraphics[width=4cm]{qr_encuesta.jpg}
+    \vspace{0.4cm}
+
+    {\large\color{white!80} Escanea el QR para dejarnos tu opinión.\par}
+  \end{center}
+\end{frame}
+}
+
+\end{document}

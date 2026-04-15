@@ -1,0 +1,1555 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 15: Desbalance de Clases — El Problema Real y Cómo Atacarlo
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc,
+  calc, fit, decorations.pathreplacing, backgrounds}
+\usepackage{fontawesome5}
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+\usepackage{amsmath}
+
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+\definecolor{codePurple}{HTML}{7C3AED}
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.5cm, yshift=0.15cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.3cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 15: Desbalance de Clases}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{13 de Abril, 2026}
+
+\begin{document}
+
+% ── PORTADA ──────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ── MÓDULO 3 ─────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Large\bfseries, text width=12cm,
+          align=center] at ([yshift=1cm]current page.center)
+      {Módulo 3 --- primera clase};
+    \node[anchor=center, text=white!90, font=\huge\bfseries, text width=12cm,
+          align=center] at ([yshift=-0.3cm]current page.center)
+      {Análisis y Visualización de Datos};
+  \end{tikzpicture}
+\end{frame}
+}
+
+% ── ROADMAP ─────────────────────────────────────────────────────────────────
+\begin{frame}[shrink=22]{Hoja de Ruta de Hoy}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.35cm,
+    roadstep/.style={rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!8,
+                 minimum width=11cm, minimum height=0.65cm,
+                 font=\footnotesize\bfseries\color{arcaDark}, align=left,
+                 text width=10cm, inner sep=6pt},
+    num/.style={circle, fill=arcaRed, text=white, font=\scriptsize\bfseries,
+                minimum size=0.5cm, inner sep=0pt},
+  ]
+    \node[roadstep] (s1) {\hspace{0.8cm}Personalización básica de gráficos con Seaborn};
+    \node[roadstep, below=of s1] (s2) {\hspace{0.8cm}Nuevo dataset: ¿quién va a renunciar?};
+    \node[roadstep, below=of s2] (s3) {\hspace{0.8cm}Primer modelo --- las métricas que ya conocemos};
+    \node[roadstep, below=of s3] (s4) {\hspace{0.8cm}¿Por qué falla? --- el desbalance de clases};
+    \node[roadstep, below=of s4] (s5) {\hspace{0.8cm}Solución 1: \texttt{class\_weight='balanced'}};
+    \node[roadstep, below=of s5] (s6) {\hspace{0.8cm}Soluciones 2 y 3: oversampling y SMOTE};
+    \node[roadstep, below=of s6] (s7) {\hspace{0.8cm}Comparación final};
+
+    \node[num] at ([xshift=0.45cm]s1.west) {1};
+    \node[num] at ([xshift=0.45cm]s2.west) {2};
+    \node[num] at ([xshift=0.45cm]s3.west) {3};
+    \node[num] at ([xshift=0.45cm]s4.west) {4};
+    \node[num] at ([xshift=0.45cm]s5.west) {5};
+    \node[num] at ([xshift=0.45cm]s6.west) {6};
+    \node[num] at ([xshift=0.45cm]s7.west) {7};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE A: VISUALIZACIÓN CON SEABORN
+% =============================================================================
+\sectionframe{Visualización con Seaborn}{Las herramientas que necesitan}
+
+\begin{frame}{Matplotlib vs Seaborn}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Ya usamos ambas librerías. ¿Cuál es la diferencia?}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codeBlue}\faCogs\hspace{4pt}
+        Matplotlib (bajo nivel):}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item Control total de cada detalle.
+        \item Más código para hacer lo mismo.
+        \item Es el ``motor'' de los gráficos en Python.
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      \begin{center}
+      \begin{tikzpicture}[scale=0.45]
+        \draw[arcaDark!30] (0,0) rectangle (4,3);
+        \fill[arcaDark!50] (0.5,0) rectangle (1.2,2.1);
+        \fill[arcaDark!50] (1.6,0) rectangle (2.3,1.4);
+        \fill[arcaDark!50] (2.7,0) rectangle (3.4,0.7);
+        \node[font=\tiny\color{textMuted}] at (2, -0.4) {Sin estilo};
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed}\faChartBar\hspace{4pt}
+        Seaborn (alto nivel):}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item Gráficos bonitos con poco código.
+        \item Trabaja directo con DataFrames.
+        \item Construido \textbf{encima} de Matplotlib.
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      \begin{center}
+      \begin{tikzpicture}[scale=0.45]
+        \fill[arcaGray] (0,0) rectangle (4,3);
+        \draw[arcaLightGray] (0,1) -- (4,1);
+        \draw[arcaLightGray] (0,2) -- (4,2);
+        \fill[arcaRed!80] (0.5,0) rectangle (1.2,2.1);
+        \fill[arcaRed!60] (1.6,0) rectangle (2.3,1.4);
+        \fill[arcaRed!40] (2.7,0) rectangle (3.4,0.7);
+        \node[font=\tiny\color{textMuted}] at (2, -0.4) {Con estilo};
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    Usamos Seaborn para hacer los gráficos y Matplotlib para
+    \textbf{personalizarlos} (\texttt{plt.title}, \texttt{plt.figure}\ldots).
+    Trabajan juntos.}
+\end{frame}
+
+\begin{frame}{No Necesitan Memorizar Nada}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Todo está en la documentación. La idea es que conozcan
+    las herramientas y sepan \textbf{qué buscar}.}
+
+  \vspace{8pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Son 5 cosas: \textbf{tema}, \textbf{tamaño},
+      \textbf{título/etiquetas}, \textbf{colores}
+      y \textbf{guardar}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Seaborn docs: \texttt{seaborn.pydata.org}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Matplotlib docs: \texttt{matplotlib.org}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      O simplemente: \textbf{Google} + copiar/pegar.
+      Así trabajan los profesionales.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{\texttt{sns.set\_theme()} --- El Aspecto Global}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Con una línea al inicio del notebook cambiamos el aspecto
+    de \textbf{todos} los gráficos.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+import seaborn as sns
+sns.set_theme(style="whitegrid", context="notebook")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize
+  \begin{tabular}{@{}lp{8cm}@{}}
+    \toprule
+    \textbf{Parámetro} & \textbf{Opciones} \\
+    \midrule
+    \texttt{style} & \texttt{"whitegrid"}, \texttt{"darkgrid"},
+      \texttt{"white"}, \texttt{"dark"}, \texttt{"ticks"} \\
+    \texttt{context} & \texttt{"paper"} (chico), \texttt{"notebook"}
+      (normal), \texttt{"talk"} (grande), \texttt{"poster"} \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Para presentaciones usen \texttt{context="talk"}: las letras
+      salen más grandes.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{Estilos: Cómo Se Ven}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    El \texttt{style} cambia el fondo y la grilla del gráfico.}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[scale=0.55]
+    % whitegrid
+    \begin{scope}[shift={(0,0)}]
+      \fill[arcaGray] (0,0) rectangle (3.5,2.8);
+      \draw[white] (0,0.7) -- (3.5,0.7);
+      \draw[white] (0,1.4) -- (3.5,1.4);
+      \draw[white] (0,2.1) -- (3.5,2.1);
+      \fill[codeBlue!70] (0.3,0) rectangle (0.9,2.0);
+      \fill[codeOrange!70] (1.1,0) rectangle (1.7,1.3);
+      \fill[codeGreen!70] (1.9,0) rectangle (2.5,2.5);
+      \fill[codePurple!70] (2.7,0) rectangle (3.3,0.8);
+      \node[font=\scriptsize\bfseries\color{arcaDark}] at (1.75, -0.4) {whitegrid};
+    \end{scope}
+
+    % darkgrid
+    \begin{scope}[shift={(4.5,0)}]
+      \fill[arcaDark!15] (0,0) rectangle (3.5,2.8);
+      \draw[white] (0,0.7) -- (3.5,0.7);
+      \draw[white] (0,1.4) -- (3.5,1.4);
+      \draw[white] (0,2.1) -- (3.5,2.1);
+      \fill[codeBlue!70] (0.3,0) rectangle (0.9,2.0);
+      \fill[codeOrange!70] (1.1,0) rectangle (1.7,1.3);
+      \fill[codeGreen!70] (1.9,0) rectangle (2.5,2.5);
+      \fill[codePurple!70] (2.7,0) rectangle (3.3,0.8);
+      \node[font=\scriptsize\bfseries\color{arcaDark}] at (1.75, -0.4) {darkgrid};
+    \end{scope}
+
+    % white
+    \begin{scope}[shift={(9,0)}]
+      \fill[white] (0,0) rectangle (3.5,2.8);
+      \draw[arcaDark!20] (0,0) rectangle (3.5,2.8);
+      \fill[codeBlue!70] (0.3,0) rectangle (0.9,2.0);
+      \fill[codeOrange!70] (1.1,0) rectangle (1.7,1.3);
+      \fill[codeGreen!70] (1.9,0) rectangle (2.5,2.5);
+      \fill[codePurple!70] (2.7,0) rectangle (3.3,0.8);
+      \node[font=\scriptsize\bfseries\color{arcaDark}] at (1.75, -0.4) {white};
+    \end{scope}
+
+    % ticks
+    \begin{scope}[shift={(13.5,0)}]
+      \fill[white] (0,0) rectangle (3.5,2.8);
+      \draw[arcaDark!40] (0,0) -- (0,2.8);
+      \draw[arcaDark!40] (0,0) -- (3.5,0);
+      \foreach \y in {0.7,1.4,2.1} { \draw[arcaDark!40] (-0.1,\y) -- (0.1,\y); }
+      \fill[codeBlue!70] (0.3,0) rectangle (0.9,2.0);
+      \fill[codeOrange!70] (1.1,0) rectangle (1.7,1.3);
+      \fill[codeGreen!70] (1.9,0) rectangle (2.5,2.5);
+      \fill[codePurple!70] (2.7,0) rectangle (3.3,0.8);
+      \node[font=\scriptsize\bfseries\color{arcaDark}] at (1.75, -0.4) {ticks};
+    \end{scope}
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      \texttt{"whitegrid"} es el más usado para análisis de datos.
+      La grilla ayuda a leer los valores.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{\texttt{figsize} --- El Tamaño del Gráfico}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \texttt{plt.figure(figsize=(ancho, alto))} controla el tamaño
+    en pulgadas. Se pone \textbf{antes} de Seaborn.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 4))     # ancho y bajo
+sns.countplot(data=df, x="columna")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[scale=0.4]
+    % (4,4) cuadrado
+    \draw[arcaRed, thick, rounded corners=2pt] (0,0) rectangle (3,3);
+    \node[font=\tiny\bfseries\color{arcaRed}] at (1.5, -0.5) {(4, 4)};
+    \node[font=\tiny\color{textMuted}] at (1.5, -1) {cuadrado};
+
+    % (8,4) ancho
+    \draw[codeBlue, thick, rounded corners=2pt] (5,0.5) rectangle (11,3);
+    \node[font=\tiny\bfseries\color{codeBlue}] at (8, -0.5) {(8, 4)};
+    \node[font=\tiny\color{textMuted}] at (8, -1) {ancho};
+
+    % (6,6) grande
+    \draw[codeGreen, thick, rounded corners=2pt] (13,0) rectangle (17.5,3.5);
+    \node[font=\tiny\bfseries\color{codeGreen}] at (15.25, -0.5) {(6, 6)};
+    \node[font=\tiny\color{textMuted}] at (15.25, -1) {grande};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Título y Etiquetas}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Con \texttt{plt.title()}, \texttt{plt.xlabel()} y
+    \texttt{plt.ylabel()} decoramos el gráfico.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+plt.figure(figsize=(6, 4))
+sns.countplot(data=df, x="columna")
+plt.title("Mi titulo")
+plt.xlabel("Eje X")
+plt.ylabel("Eje Y")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[scale=0.5]
+    \fill[arcaGray] (0,0) rectangle (7,4.5);
+    \draw[arcaLightGray] (0,1.1) -- (7,1.1);
+    \draw[arcaLightGray] (0,2.2) -- (7,2.2);
+    \draw[arcaLightGray] (0,3.3) -- (7,3.3);
+    \fill[arcaRed!70] (1,0) rectangle (2.5,2.8);
+    \fill[arcaRed!50] (3,0) rectangle (4.5,1.8);
+    \fill[arcaRed!30] (5,0) rectangle (6.5,3.5);
+    \node[font=\scriptsize\bfseries\color{arcaDark}] at (3.5, 5)
+      {\texttt{plt.title("...")}};
+    \draw[->, arcaRed, thick] (3.5, 4.7) -- (3.5, 4.3);
+    \node[font=\tiny\color{textMuted}, rotate=90] at (-0.7, 2.2)
+      {\texttt{plt.ylabel}};
+    \node[font=\tiny\color{textMuted}] at (3.5, -0.5)
+      {\texttt{plt.xlabel}};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Colores: \texttt{palette} y \texttt{cmap}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \texttt{palette} para barras/puntos, \texttt{cmap} para heatmaps.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+# Paleta predefinida
+sns.countplot(data=df, x="col", palette="Set2")
+
+# Colores hex personalizados
+sns.countplot(data=df, x="col",
+              palette=["#6B1525", "#C82B40"])
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[scale=0.4]
+    % Set2
+    \foreach \i/\c in {0/codeGreen!60, 1/codeOrange!50, 2/codeBlue!50, 3/codePurple!40} {
+      \fill[\c] (\i*1.3+0.2, 0) rectangle (\i*1.3+1.2, 0.6);
+    }
+    \node[font=\tiny\bfseries\color{arcaDark}] at (2.6, -0.4) {palette="Set2"};
+
+    % Reds cmap
+    \foreach \i/\op in {0/10, 1/30, 2/50, 3/70, 4/90} {
+      \fill[arcaRed!\op] (7+\i*1, 0) rectangle (7+\i*1+0.8, 0.6);
+    }
+    \node[font=\tiny\bfseries\color{arcaDark}] at (9.5, -0.4) {cmap="Reds"};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Paletas útiles: \texttt{"Set2"}, \texttt{"pastel"},
+      \texttt{"Dark2"}. Cmaps: \texttt{"Reds"}, \texttt{"Blues"},
+      \texttt{"YlOrRd"}.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Guardar: \texttt{plt.savefig()}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Para guardar un gráfico como imagen, usen \texttt{plt.savefig()}
+    \textbf{antes} de \texttt{plt.show()}.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+plt.figure(figsize=(6, 4))
+sns.countplot(data=df, x="columna")
+plt.title("Mi grafico")
+
+# Guardar como PNG (tambien: .pdf, .svg, .jpg)
+plt.savefig("mi_grafico.png", dpi=150,
+            bbox_inches="tight")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{dpi=150}: resolución (150 es buena para reportes,
+      300 para imprimir).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{bbox\_inches="tight"}: recorta el espacio en blanco.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Va \textbf{antes} de \texttt{plt.show()}, no después.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=10]{El Patrón Completo}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Siempre es el mismo orden. No hay que memorizarlo.}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.35cm,
+    step/.style={rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!8,
+                 minimum width=9cm, minimum height=0.65cm,
+                 font=\small\ttfamily\color{arcaDark}, align=center,
+                 inner sep=4pt},
+    arr/.style={->, >=Stealth, thick, arcaRed!50},
+  ]
+    \node[step] (s1) {sns.set\_theme(style="whitegrid")};
+    \node[step, below=of s1] (s2) {plt.figure(figsize=(6, 4))};
+    \node[step, below=of s2] (s3) {sns.countplot(data=df, x="col", palette=...)};
+    \node[step, below=of s3] (s4) {plt.title / plt.xlabel / plt.ylabel};
+    \node[step, below=of s4] (s5) {plt.savefig("grafico.png") \hspace{6pt}{\footnotesize\rmfamily\color{textMuted}(opcional)}};
+    \node[step, below=of s5] (s6) {plt.show()};
+
+    \draw[arr] (s1) -- (s2);
+    \draw[arr] (s2) -- (s3);
+    \draw[arr] (s3) -- (s4);
+    \draw[arr] (s4) -- (s5);
+    \draw[arr] (s5) -- (s6);
+
+    \node[font=\scriptsize\color{textMuted}, right=0.3cm of s1] {una vez};
+    \node[font=\scriptsize\color{textMuted}, right=0.3cm of s2] {tamaño};
+    \node[font=\scriptsize\color{textMuted}, right=0.3cm of s3] {el gráfico};
+    \node[font=\scriptsize\color{textMuted}, right=0.3cm of s4] {decorar};
+    \node[font=\scriptsize\color{textMuted}, right=0.3cm of s5] {guardar};
+    \node[font=\scriptsize\color{textMuted}, right=0.3cm of s6] {mostrar};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% ── EJERCICIO 1 ─────────────────────────────────────────────────────────────
+\begin{frame}[shrink=5]{Ejercicio 1: Iris con Seaborn}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \faClock\hspace{4pt} 8 minutos --- Seaborn trae datasets de
+    ejemplo. Uno famoso es \textbf{Iris}: medidas de flores.}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{4pt}
+    \item Carga: \texttt{iris = sns.load\_dataset("iris")}
+    \item Explora con \texttt{.head()} y
+      \texttt{["species"].value\_counts()}
+    \item Haz un \texttt{sns.countplot()} de \texttt{species}
+      con título, xlabel, ylabel y una paleta.
+    \item \textbf{Busca en la documentación} otro tipo de
+      gráfico y pruébalo.
+    \item Guarda tu favorito con \texttt{plt.savefig()}.
+  \end{enumerate}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{Ejercicio 2: Busca en la Documentación}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \faClock\hspace{4pt} 5 minutos --- Con el dataset iris:}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{5pt}
+    \item Busca en \texttt{seaborn.pydata.org} cómo hacer
+      un \texttt{sns.boxplot()}.
+    \item Haz un boxplot de \texttt{petal\_length} agrupado
+      por \texttt{species}.
+    \item Personaliza: título, etiquetas, paleta, figsize.
+  \end{enumerate}
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    La idea es que practiquen \textbf{buscar en la
+    documentación} --- así se trabaja en la vida real.}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE B: NUEVO DATASET
+% =============================================================================
+\sectionframe{Nuevo Dataset}{¿Quién va a renunciar?}
+
+\begin{frame}{Employee Attrition --- IBM HR Analytics}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Un departamento de Recursos Humanos quiere predecir
+    \textbf{qué empleados van a renunciar} para tomar acción
+    antes de que se vayan.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Filas} & 1{,}000 empleados \\
+    \textbf{Target} & \texttt{Attrition}: ``Yes'' (renunció) / ``No'' (se quedó) \\
+    \textbf{Features} & Edad, salario, distancia al trabajo, años en la empresa,
+      satisfacción, horas extra\ldots \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Pregunta de negocio}: ``¿A quién debemos retener
+      antes de que sea tarde?''
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Perder un empleado cuesta entre \textbf{6 y 9 meses de salario}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Si el modelo detecta a tiempo, RRHH puede intervenir.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{Ejercicio 3: Explorar el Target}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \faClock\hspace{4pt} 5 minutos --- Apliquen lo que aprendieron
+    de Seaborn al nuevo dataset:}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{5pt}
+    \item Haz un \texttt{sns.countplot()} de \texttt{Attrition}.
+    \item Ponle \texttt{figsize}, título, xlabel, ylabel.
+    \item Usa la paleta \texttt{["{\#}6B1525", "{\#}C82B40"]}.
+    \item Responde: ¿qué porcentaje renuncia? ¿Está balanceado?
+  \end{enumerate}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{Ejercicio 4: Preparar los Datos}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \faClock\hspace{4pt} 5 minutos --- Antes de entrenar, preparen
+    los datos:}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{5pt}
+    \item Conviertan el target a numérico:
+
+      \texttt{df["Attrition"] = (df["Attrition"] == "Yes").astype(int)}
+    \item Seleccionen las features relevantes (las que están
+      en el notebook).
+    \item Miren las columnas: ¿cuáles son categóricas?
+    \item Apliquen \texttt{pd.get\_dummies()} sobre esas columnas.
+    \item Verifiquen con \texttt{.head()}.
+  \end{enumerate}
+  }
+\end{frame}
+
+% =============================================================================
+%  BLOQUE C: PRIMER MODELO
+% =============================================================================
+\sectionframe{Primer Modelo}{Las métricas que ya conocemos}
+
+\begin{frame}[fragile,shrink=28]{Entrenar y Evaluar}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Mismo flujo de siempre: escalar, crear modelo, entrenar, predecir.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import (accuracy_score, precision_score,
+    recall_score, confusion_matrix)
+
+X = df_enc.drop(columns=["Attrition"])
+y = df_enc["Attrition"]
+
+scaler = StandardScaler()
+X_s = scaler.fit_transform(X)
+
+modelo = LogisticRegression(max_iter=1000)
+modelo.fit(X_s, y)
+y_pred = modelo.predict(X_s)
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{¿Qué Tan Bien Funciona?}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Veamos las métricas que aprendimos en la clase pasada.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+print(f"Accuracy:  {accuracy_score(y, y_pred):.3f}")
+print(f"Precision: {precision_score(y, y_pred):.3f}")
+print(f"Recall:    {recall_score(y, y_pred):.3f}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      Accuracy $\sim$81\,\%\ldots\ suena bien.
+    \item[{\color{arcaRed}\scriptsize\faTimesCircle}]
+      Pero \textbf{recall $\sim$10\,\%}: de cada 10 empleados
+      que van a renunciar, el modelo solo detecta \textbf{1}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Un modelo que diga ``\textbf{nadie renuncia}'' tendría
+      76\,\% de accuracy. Nuestro 81\,\% apenas lo supera.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  BLOQUE D: ¿POR QUÉ FALLA?
+% =============================================================================
+\sectionframe{¿Por Qué Falla?}{El desbalance de clases}
+
+\begin{frame}{La Analogía de la Certificación}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Imaginen que están preparando un examen de certificación
+    profesional\ldots}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Les dan un banco de \textbf{100 preguntas de práctica}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Revisan las respuestas y notan algo: en \textbf{76 preguntas}
+      la respuesta correcta es \textbf{A}. Solo en 24 es B, C o D.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      El examen es mañana y no les queda tiempo de estudiar.
+  \end{itemize}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Estrategia? Marcar \textbf{A en todo}. Resultado: 76/100.
+    Aprobado.}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      No aprendieron nada. Solo explotaron el desbalance.
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      El modelo hace \textbf{lo mismo}: aprende que
+      ``no renuncia'' es la respuesta segura.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Visualizar la Confusión: \texttt{sns.heatmap()}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Veamos la matriz de confusión como imagen.
+    \texttt{sns.heatmap()} convierte una tabla en un mapa de calor.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+cm = confusion_matrix(y, y_pred)
+
+plt.figure(figsize=(5, 4))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Reds")
+plt.ylabel("Real")
+plt.xlabel("Prediccion del modelo")
+plt.title("Matriz de Confusion - Modelo Base")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{annot=True}: muestra los números.
+      \texttt{fmt="d"}: formato entero.
+      \texttt{cmap}: paleta de colores.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{Lectura de la Matriz}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    La fila de abajo son los empleados que \textbf{realmente renuncian}.}
+
+  \vspace{8pt}
+  {\scriptsize
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    & \textbf{Predice: Se queda} & \textbf{Predice: Renuncia} \\
+    \midrule
+    \textbf{Real: Se queda} & \cellcolor{codeGreen!15}$\sim$750 (bien) &
+      pocos (falsa alarma) \\
+    \textbf{Real: Renuncia} & \cellcolor{arcaRed!15}$\sim$210 (\textbf{se escapan}) &
+      $\sim$24 (detectados) \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{arcaRed}\scriptsize\faTimesCircle}]
+      De $\sim$237 empleados que renuncian, el modelo
+      solo detecta $\sim$24. Los otros $\sim$210 se van
+      \textbf{sin que RRHH se entere}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      ¿Cómo arreglamos esto?
+  \end{itemize}
+  }
+\end{frame}
+
+% ── EJERCICIO 2 ─────────────────────────────────────────────────────────────
+% =============================================================================
+%  BLOQUE E: SOLUCIÓN 1
+% =============================================================================
+\sectionframe{Solución 1}{Decirle al modelo que la minoría importa}
+
+\begin{frame}{La Idea: Penalizar los Errores Graves}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    No cambiamos los datos. Le decimos al modelo que
+    equivocarse con la minoría \textbf{cuesta más}.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{textMuted}
+        Sin \texttt{class\_weight}:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item Cada error pesa \textbf{igual}.
+        \item Como hay 3x más ``se queda'', el modelo
+          prioriza esa clase.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed}
+        Con \texttt{class\_weight='balanced'}:}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item Equivocarse con ``renuncia'' pesa
+          \textbf{3x más}.
+        \item El modelo presta más atención a la minoría.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    Volviendo a la certificación: es como si las preguntas
+    que no son A \textbf{valieran 3 puntos} cada una.}
+\end{frame}
+
+\begin{frame}[shrink=5]{¿Qué Hace Internamente?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    sklearn calcula un \textbf{peso} por clase:
+    $w_i = \dfrac{n}{2 \times n_i}$}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, minimum width=3cm,
+                minimum height=1.2cm, draw, font=\footnotesize, align=center,
+                inner sep=4pt},
+  ]
+    \node[box, fill=arcaDark!10, draw=arcaDark] (c0) at (0, 0)
+      {\textbf{Se queda}\\\scriptsize 763 filas\\[2pt]
+       \normalsize peso = \textbf{0.66}};
+    \node[box, fill=arcaRed!15, draw=arcaRed] (c1) at (5, 0)
+      {\textbf{Renuncia}\\\scriptsize 237 filas\\[2pt]
+       \normalsize peso = \textbf{2.11}};
+
+    \draw[->, thick, arcaRed!50] (c0.east) -- (c1.west)
+      node[midway, above, font=\scriptsize\color{arcaRed}] {3.2x};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Cada error en ``renuncia'' le \textbf{duele 3x más} al modelo.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      El modelo ajusta sus coeficientes para no ignorar la minoría.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Una Línea de Diferencia}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Solo agregamos \texttt{class\_weight='balanced'}.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+modelo_bal = LogisticRegression(
+    max_iter=1000, class_weight="balanced")
+modelo_bal.fit(X_s, y)
+y_pred_bal = modelo_bal.predict(X_s)
+
+print("=== Base ===")
+print(f"  Precision: {precision_score(y, y_pred):.3f}")
+print(f"  Recall:    {recall_score(y, y_pred):.3f}")
+print()
+print("=== Balanced ===")
+print(f"  Precision: {precision_score(y, y_pred_bal):.3f}")
+print(f"  Recall:    {recall_score(y, y_pred_bal):.3f}")
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}{¿Qué Cambió?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Miremos qué pasó con las métricas.}
+
+  \vspace{8pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+      \textbf{Recall subió}: detectamos muchos más empleados
+      que van a renunciar. RRHH puede intervenir.
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      \textbf{Precision bajó}: el modelo también ``acusa''
+      a algunos que no iban a irse.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      ¿Qué cuesta más? ¿Una reunión innecesaria con un empleado,
+      o \textbf{perder a alguien valioso} sin hacer nada?
+  \end{itemize}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    La decisión entre precision y recall depende del
+    \textbf{costo del error} en el negocio.}
+\end{frame}
+
+% ── EJERCICIO 3 ─────────────────────────────────────────────────────────────
+\begin{frame}[shrink=5]{Ejercicio 5: ¿Cuántos Más Detectamos?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \faClock\hspace{4pt} 8 minutos}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{5pt}
+    \item Entrena el modelo con \texttt{class\_weight='balanced'}.
+    \item Calcula precision y recall de ambos modelos.
+    \item Genera la \texttt{confusion\_matrix} del modelo balanced.
+    \item Haz el \texttt{sns.heatmap()} del modelo balanced.
+    \item Compara con el heatmap del modelo base:
+      ¿cuántos empleados \textbf{más} detecta? (mira los VP).
+  \end{enumerate}
+  }
+\end{frame}
+
+% =============================================================================
+%  BLOQUE F: OVERSAMPLING Y SMOTE
+% =============================================================================
+\sectionframe{Soluciones 2 y 3}{Cambiar los datos, no el modelo}
+
+\begin{frame}{Oversampling: Duplicar la Minoría}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    En vez de cambiar el modelo,
+    le \textbf{damos más ejemplos} de la minoría.}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    dot/.style={circle, minimum size=0.3cm, inner sep=0pt},
+  ]
+    \node[font=\footnotesize\bfseries\color{arcaDark}] at (2, 1.8) {Antes};
+    \foreach \i in {0,...,5} { \node[dot, fill=arcaDark!35] at (\i*0.4, 1) {}; }
+    \foreach \i in {0,...,1} { \node[dot, fill=arcaRed] at (2.8+\i*0.4, 1) {}; }
+
+    \node[font=\footnotesize\bfseries\color{arcaDark}] at (7, 1.8) {Después};
+    \foreach \i in {0,...,5} { \node[dot, fill=arcaDark!35] at (5+\i*0.4, 1) {}; }
+    \foreach \i in {0,...,5} { \node[dot, fill=arcaRed] at (5+\i*0.4, 0.3) {}; }
+    \node[font=\tiny\color{textMuted}] at (7, -0.2) {(copias de los originales)};
+    \draw[->, thick, arcaRed] (3.8, 1) -- (4.6, 1);
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+      Simple: una función y listo.
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      Son \textbf{copias exactas}: el modelo puede memorizarlas.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Oversampling en Código}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Separamos clases, duplicamos la minoría y juntamos
+    con \texttt{pd.concat()}.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+from sklearn.utils import resample
+
+# Separar clases (trabajamos con el DataFrame)
+df_may = df_enc[df_enc["Attrition"] == 0]
+df_min = df_enc[df_enc["Attrition"] == 1]
+
+# Duplicar minoria hasta igualar
+df_min_up = resample(df_min, replace=True,
+    n_samples=len(df_may), random_state=42)
+
+# Juntar
+df_over = pd.concat([df_may, df_min_up])
+print(f"Antes: {len(df_enc)}, Despues: {len(df_over)}")
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}{SMOTE: Crear Datos Nuevos}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    SMOTE no copia: crea \textbf{ejemplos nuevos} interpolando
+    entre vecinos de la clase minoritaria.}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    dot/.style={circle, minimum size=0.3cm, inner sep=0pt},
+    new/.style={circle, minimum size=0.3cm, inner sep=0pt,
+                draw=codeGreen, thick, dashed},
+  ]
+    \node[dot, fill=arcaRed] (a) at (0, 0) {};
+    \node[dot, fill=arcaRed] (b) at (2.5, 1.5) {};
+    \node[dot, fill=arcaRed] (c) at (2, -0.6) {};
+    \draw[dashed, arcaRed!40, thick] (a) -- (b);
+    \draw[dashed, arcaRed!40, thick] (a) -- (c);
+    \draw[dashed, arcaRed!40, thick] (b) -- (c);
+    \node[new, fill=codeGreen!30] at (1, 0.6) {};
+    \node[new, fill=codeGreen!30] at (2.2, 0.5) {};
+    \node[new, fill=codeGreen!30] at (0.8, -0.25) {};
+
+    \node[dot, fill=arcaRed] at (5, 1) {};
+    \node[right, font=\scriptsize] at (5.2, 1) {Original};
+    \node[new, fill=codeGreen!30] at (5, 0.3) {};
+    \node[right, font=\scriptsize] at (5.2, 0.3) {Sintético (nuevo)};
+
+    \node[font=\scriptsize\color{textMuted}, text width=4cm, align=left]
+      at (6.5, -0.5) {
+        Elige un punto,\\
+        busca su vecino cercano,\\
+        crea un punto \textbf{entre ambos}.
+      };
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+      Los datos nuevos son \textbf{diferentes}: mejor que copiar.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{SMOTE en 3 Líneas}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Se instala con \texttt{pip install imbalanced-learn}.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+from imblearn.over_sampling import SMOTE
+
+smote = SMOTE(random_state=42)
+X_smote, y_smote = smote.fit_resample(X_s, y)
+
+print(f"Antes:  {len(y)} filas")
+print(f"  Se queda: {(y==0).sum()}")
+print(f"  Renuncia: {(y==1).sum()}")
+print(f"Despues: {len(y_smote)} filas")
+print(f"  Se queda: {(y_smote==0).sum()}")
+print(f"  Renuncia: {(y_smote==1).sum()}")
+  \end{pyblock}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE G: COMPARACIÓN FINAL
+% =============================================================================
+\sectionframe{Comparación Final}{¿Cuál método gana?}
+
+\begin{frame}[fragile,shrink=28]{Los 4 Modelos}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Entrenamos con cada método y comparamos precision y recall.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+modelos = {
+  "Base":       (X_s, y, None),
+  "Balanced":   (X_s, y, "balanced"),
+  "Oversample": (X_over, y_over, None),
+  "SMOTE":      (X_smote, y_smote, None),
+}
+preds = {}
+for nombre, (X_tr, y_tr, cw) in modelos.items():
+    m = LogisticRegression(max_iter=1000,
+                           class_weight=cw)
+    m.fit(X_tr, y_tr)
+    preds[nombre] = m.predict(X_s)
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Tabla de Resultados}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Precision y recall de cada método.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+print(f"{'Metodo':<12} {'Precision':>10} {'Recall':>10}"
+      f" {'VP':>5} {'FN':>5}")
+print("-" * 48)
+for nombre, pred in preds.items():
+    cm_r = confusion_matrix(y, pred)
+    prec = precision_score(y, pred)
+    rec  = recall_score(y, pred)
+    vp, fn = cm_r[1, 1], cm_r[1, 0]
+    print(f"{nombre:<12} {prec:>10.3f} {rec:>10.3f}"
+          f" {vp:>5d} {fn:>5d}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      VP = empleados que renuncian y detectamos.
+      FN = los que se nos escapan.
+  \end{itemize}
+  }
+\end{frame}
+
+% ── EJERCICIO 4 ─────────────────────────────────────────────────────────────
+\begin{frame}[shrink=5]{Ejercicio 6: Tu Propio SMOTE}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \faClock\hspace{4pt} 10 minutos}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{5pt}
+    \item Aplica SMOTE a los datos con
+      \texttt{smote.fit\_resample(X\_s, y)}.
+    \item Entrena un modelo logístico con los datos de SMOTE.
+    \item Predice sobre \texttt{X\_s} (los datos originales).
+    \item Calcula precision y recall.
+    \item Haz el \texttt{sns.heatmap()} de la matriz de confusión.
+    \item Compara con el modelo base: ¿cuántos VP ganaste?
+      ¿Cuánto subió el recall?
+  \end{enumerate}
+  }
+\end{frame}
+
+\begin{frame}{¿Cuál Método Elijo?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    No hay un ganador universal. Depende del costo del error.}
+
+  \vspace{8pt}
+  {\scriptsize
+  \begin{tabular}{@{}p{2.5cm}p{4cm}p{4cm}@{}}
+    \toprule
+    \textbf{Método} & \textbf{Cuándo usarlo} & \textbf{Limitación} \\
+    \midrule
+    \texttt{class\_weight} &
+      Siempre es un buen primer intento.
+      No modifica los datos. &
+      A veces no es suficiente. \\[6pt]
+    Oversampling &
+      Datasets pequeños.
+      No quieres perder datos. &
+      Copias exactas: riesgo de
+      que el modelo memorice. \\[6pt]
+    SMOTE &
+      Generalmente mejor que copiar.
+      Crea datos diferentes. &
+      Necesita instalar
+      \texttt{imbalanced-learn}. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+    \faLightbulb\hspace{4pt}
+    En la práctica: prueba \texttt{class\_weight} primero. Si no
+    alcanza, agrega SMOTE.}
+\end{frame}
+
+% ── EJERCICIO 7 ─────────────────────────────────────────────────────────────
+\begin{frame}[shrink=5]{Ejercicio 7: Bank Marketing de la Clase Pasada}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \faClock\hspace{4pt} 10 minutos --- En la clase pasada vimos que
+    el modelo de bank marketing tenía recall bajo. Ahora ya saben
+    por qué y cómo arreglarlo.}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{4pt}
+    \item Carguen el dataset de bank marketing.
+    \item Entrenen un modelo base y calculen precision y recall.
+    \item Entrenen un modelo con \texttt{class\_weight='balanced'}.
+    \item Comparen: ¿mejoró el recall? ¿Cuántos clientes más detecta?
+    \item Hagan el \texttt{sns.heatmap()} de ambas matrices.
+  \end{enumerate}
+  }
+\end{frame}
+
+% =============================================================================
+%  BLOQUE H: TRAIN/TEST SPLIT
+% =============================================================================
+\sectionframe{Train / Test Split}{Evaluar de verdad}
+
+\begin{frame}{¿Por Qué No Podemos Evaluar con los Mismos Datos?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Imaginen que un profesor les da el examen final para que
+    ``practiquen''\ldots\ y luego les toma \textbf{exactamente el
+    mismo examen}.}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Todos sacan 10. Pero ¿realmente aprendieron?
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Quizás solo \textbf{memorizaron las respuestas}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Si les cambian los números o el orden de las preguntas,
+      algunos fallan.
+  \end{itemize}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Eso es lo que hicimos hoy: entrenar y evaluar con los mismos datos.
+    El modelo puede estar \textbf{memorizando} en vez de aprendiendo.}
+\end{frame}
+
+\begin{frame}{La Solución: Separar los Datos}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Dividimos los datos en dos partes \textbf{antes} de entrenar.}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, minimum width=3.5cm,
+                minimum height=1cm, draw, font=\footnotesize\bfseries,
+                align=center, inner sep=4pt},
+  ]
+    \node[box, fill=arcaRed!15, draw=arcaRed] (all) at (0, 0.5) {Todos los datos};
+
+    % Train
+    \node[box, fill=codeBlue!15, draw=codeBlue, minimum width=5cm] (train)
+      at (-2.5, -1.5) {Train (80\%)};
+    \node[font=\scriptsize\color{textMuted}, below=2pt of train]
+      {Practicar con ejercicios};
+
+    % Test
+    \node[box, fill=codeGreen!15, draw=codeGreen, minimum width=3cm] (test)
+      at (3.5, -1.5) {Test (20\%)};
+    \node[font=\scriptsize\color{textMuted}, below=2pt of test]
+      {El examen final};
+
+    \draw[->, thick, arcaRed!60] (all.south west) -- (train.north);
+    \draw[->, thick, arcaRed!60] (all.south east) -- (test.north);
+
+    % Muro
+    \draw[ultra thick, arcaDark!40, dashed] (1, -0.5) -- (1, -2.5);
+    \node[font=\tiny\color{arcaDark}\bfseries, rotate=90] at (1.3, -1.5) {MURO};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      El modelo \textbf{aprende} con train (como estudiar).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Lo \textbf{evaluamos} con test (como el examen).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      El modelo \textbf{nunca} ve el test durante el entrenamiento.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{Otra Analogía: El Piloto de Avión}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Confiarían en un piloto que solo fue evaluado en las
+    \textbf{mismas} rutas donde practicó?}
+
+  \vspace{8pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{center}
+      \begin{tikzpicture}[scale=0.6]
+        \node[font=\Large] at (1.5, 2.5) {\faPlane};
+        \draw[codeBlue, thick, ->] (0, 0) -- (1, 1.5) -- (3, 2);
+        \draw[codeBlue, thick, dashed, ->] (0, 0) -- (1.5, 0.5) -- (3, 1.8);
+        \node[font=\scriptsize\bfseries\color{codeBlue}] at (1.5, -0.4)
+          {Rutas de práctica};
+        \node[font=\scriptsize\color{textMuted}] at (1.5, -0.9)
+          {(train)};
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{center}
+      \begin{tikzpicture}[scale=0.6]
+        \node[font=\Large] at (1.5, 2.5) {\faPlane};
+        \draw[codeGreen, thick, ->] (0, 1) -- (2, 0.3) -- (3, 1.5);
+        \node[font=\scriptsize\bfseries\color{codeGreen}] at (1.5, -0.4)
+          {Ruta nueva (evaluación)};
+        \node[font=\scriptsize\color{textMuted}] at (1.5, -0.9)
+          {(test)};
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Un buen piloto puede volar rutas \textbf{que nunca practicó}
+      porque aprendió los \textbf{principios}, no memorizó las rutas.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Un buen modelo predice bien datos \textbf{que nunca vio}
+      porque aprendió los \textbf{patrones}, no memorizó las filas.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Train/Test Split con Iris}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Usamos \texttt{train\_test\_split} de sklearn.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+from sklearn.model_selection import train_test_split
+
+iris = sns.load_dataset("iris")
+iris["es_setosa"] = (iris["species"] == "setosa").astype(int)
+
+X_iris = iris[["sepal_length", "sepal_width",
+               "petal_length", "petal_width"]]
+y_iris = iris["es_setosa"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X_iris, y_iris,
+    test_size=0.2,       # 20% para test
+    random_state=42)
+
+print(f"Train: {len(X_train)}, Test: {len(X_test)}")
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Entrenar con Train, Evaluar con Test}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    El modelo aprende con train y lo evaluamos con datos que
+    \textbf{nunca vio}.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+modelo_iris = LogisticRegression(max_iter=1000)
+modelo_iris.fit(X_train, y_train)      # estudiar
+y_pred_iris = modelo_iris.predict(X_test)  # examen
+
+print(f"Accuracy en test: "
+      f"{accuracy_score(y_test, y_pred_iris):.3f}")
+print(f"Recall en test:   "
+      f"{recall_score(y_test, y_pred_iris):.3f}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+      Esta evaluación es \textbf{justa}: el modelo nunca
+      vio los datos de test.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      La próxima clase aplicamos esto a nuestros modelos
+      de desbalance, con curva ROC y umbral óptimo.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que aprendimos hoy}
+
+\begin{frame}[shrink=5]{Resumen}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} Visualización:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Seaborn = alto nivel, Matplotlib = bajo nivel.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{set\_theme}, \texttt{figsize},
+          \texttt{title/xlabel/ylabel}, \texttt{savefig}.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{sns.heatmap()}: matrices de confusión.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed} Desbalance + Evaluación:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{class\_weight}, oversampling, SMOTE.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Precision vs recall: depende del costo del error.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{train\_test\_split}: evaluar de verdad.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ── QR ENCUESTA ──────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1cm}
+  \begin{center}
+    {\Huge\bfseries\color{white} ¿Cómo estuvo la clase?\par}
+    \vspace{0.6cm}
+    \includegraphics[width=4cm]{qr_encuesta.jpg}
+    \vspace{0.4cm}
+
+    {\large\color{white!80} Escanea el QR para dejarnos tu opinión.\par}
+  \end{center}
+\end{frame}
+}
+
+\end{document}

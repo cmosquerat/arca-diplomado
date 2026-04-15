@@ -1,0 +1,1511 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 11: Correlación y Análisis Categórico
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc,
+  calc, fit, decorations.pathreplacing, backgrounds}
+\usepackage{fontawesome5}
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+\usepackage{amsmath}
+
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+\definecolor{codePurple}{HTML}{7C3AED}
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.5cm, yshift=0.15cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.3cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 11: Correlación y Análisis Categórico}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{1 de Abril, 2026}
+
+\begin{document}
+
+% ── PORTADA ──────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ── MÓDULO 2 ─────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Large\bfseries, text width=12cm,
+          align=center] at ([yshift=1cm]current page.center)
+      {Módulo 2};
+    \node[anchor=center, text=white!90, font=\huge\bfseries, text width=12cm,
+          align=center] at ([yshift=-0.3cm]current page.center)
+      {Estadística Aplicada para Datos};
+  \end{tikzpicture}
+\end{frame}
+}
+
+% ── RECAPITULACIÓN ──────────────────────────────────────────────────────────
+\begin{frame}[shrink=5]{Recapitulación: Clase 10}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} Ya sabemos:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Outliers: buenos vs malos, IQR y Z-score.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Tratamiento: eliminar, winsorizar, transformar (log).
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Distribución Normal: $\mu$, $\sigma$, regla 68-95-99.7.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Verificar normalidad: histograma, Q-Q plot, Shapiro-Wilk.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed} Hoy avanzamos:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\faArrowRight}]
+          Correlación: Pearson, Spearman, heatmaps.
+        \item[{\color{arcaRed}\faArrowRight}]
+          Relaciones no lineales y regplot.
+        \item[{\color{arcaRed}\faArrowRight}]
+          Análisis por grupos: segmentar para entender.
+        \item[{\color{arcaRed}\faArrowRight}]
+          ¿Qué hace que un vino sea bueno?
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ── ROADMAP ─────────────────────────────────────────────────────────────────
+\begin{frame}{Hoja de Ruta de Hoy}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.4cm,
+    roadstep/.style={rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!8,
+                 minimum width=11cm, minimum height=0.7cm,
+                 font=\footnotesize\bfseries\color{arcaDark}, align=left,
+                 text width=10cm, inner sep=6pt},
+    num/.style={circle, fill=arcaRed, text=white, font=\scriptsize\bfseries,
+                minimum size=0.5cm, inner sep=0pt},
+  ]
+    \node[roadstep] (s1) {\hspace{0.8cm}Correlación --- ¿Qué variables se mueven juntas?};
+    \node[roadstep, below=of s1] (s2) {\hspace{0.8cm}Pearson vs Spearman --- Fórmulas y cuándo usar cada una};
+    \node[roadstep, below=of s2] (s3) {\hspace{0.8cm}Heatmaps y scatter plots --- Visualizar relaciones};
+    \node[roadstep, below=of s3] (s4) {\hspace{0.8cm}Análisis categórico --- Segmentar y comparar grupos};
+    \node[roadstep, below=of s4] (s5) {\hspace{0.8cm}¿Qué hace un buen vino? --- Conectar todo};
+    \node[roadstep, below=of s5] (s6) {\hspace{0.8cm}Ejercicio integrador};
+
+    \node[num] at ([xshift=0.45cm]s1.west) {1};
+    \node[num] at ([xshift=0.45cm]s2.west) {2};
+    \node[num] at ([xshift=0.45cm]s3.west) {3};
+    \node[num] at ([xshift=0.45cm]s4.west) {4};
+    \node[num] at ([xshift=0.45cm]s5.west) {5};
+    \node[num] at ([xshift=0.45cm]s6.west) {6};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 1: CORRELACIÓN
+% =============================================================================
+\sectionframe{Correlación}{¿Hay relación entre dos variables?}
+
+\begin{frame}[fragile,shrink=28]{Retomamos el Dataset Wine Quality}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Mismo dataset de la clase pasada --- ya lo conocemos bien.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy import stats
+
+url = ("https://archive.ics.uci.edu/ml/"
+       "machine-learning-databases/wine-quality/"
+       "winequality-red.csv")
+df = pd.read_csv(url, sep=";")
+print(f"{df.shape[0]} vinos, {df.shape[1]} variables")
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{¿Cómo Comparar Dos Variables?}
+  \vspace{-4pt}
+  {\footnotesize
+    Hasta ahora analizamos variables \textbf{una a la vez} (histograma, boxplot, estadísticas).
+    Ahora queremos responder: \textbf{¿hay relación entre dos variables?}}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=5.5cm, minimum height=1.6cm,
+                font=\scriptsize\color{textDark}, align=left, text width=5cm,
+                inner sep=6pt},
+  ]
+    \node[box=codeBlue] (q) at (0,0)
+      {\textbf{\color{codeBlue}La pregunta}\\[2pt]
+       ``Los vinos con más alcohol,
+       ¿tienden a tener mejor nota?''\\
+       ``¿Más acidez significa peor vino?''};
+    \node[box=codeGreen] (a) at (6.5,0)
+      {\textbf{\color{codeGreen}La herramienta}\\[2pt]
+       El \textbf{scatter plot} (gráfico de dispersión):
+       cada punto es un vino, un eje por variable.
+       Buscamos \textbf{patrones} en la nube de puntos.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ El scatter plot es el primer paso.
+    Después le pondremos un \textbf{número} a esa relación (la correlación).}
+\end{frame}
+
+\begin{frame}[shrink=5]{Anatomía de un Scatter Plot}
+  \vspace{-4pt}
+  {\footnotesize
+    Cada \textbf{punto} en el gráfico representa una observación (en nuestro caso, un vino):}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    step/.style={rectangle, rounded corners=3pt, draw=#1, fill=#1!8,
+                 minimum width=12cm, minimum height=0.7cm,
+                 font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                 inner sep=5pt},
+  ]
+    \node[step=codeBlue] (s1) at (0, 0)
+      {\textbf{Eje X:} una variable (ej: \texttt{alcohol}).
+       La posición horizontal del punto es su valor de alcohol.};
+    \node[step=codePurple, below=0.15cm of s1] (s2)
+      {\textbf{Eje Y:} otra variable (ej: \texttt{quality}).
+       La posición vertical del punto es su nota de calidad.};
+    \node[step=codeGreen, below=0.15cm of s2] (s3)
+      {\textbf{Un punto = un vino.} Si tiene alcohol $= 12$ y quality $= 7$,
+       el punto está en la posición $(12, 7)$.};
+    \node[step=arcaRed, below=0.15cm of s3] (s4)
+      {\textbf{El patrón:} si los puntos ``suben'' de izquierda a derecha $\to$
+       relación positiva. Si ``bajan'' $\to$ negativa. Si no hay patrón $\to$ sin relación.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Con 1599 vinos, tendremos 1599 puntos.
+    Usamos \texttt{alpha} (transparencia) para ver dónde se acumulan.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Nuestro Primer Scatter Plot}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Los vinos con más alcohol tienen mejor nota?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+sns.scatterplot(x="alcohol", y="quality",
+                data=df, alpha=0.3)
+plt.xlabel("Alcohol (% vol)")
+plt.ylabel("Quality (nota 0-10)")
+plt.title("Alcohol vs Quality")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{x=} y \texttt{y=}: las dos variables a comparar.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{alpha=0.3}: transparencia (0 = invisible, 1 = sólido).
+      Con muchos puntos encimados, ayuda a ver dónde se concentran.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Scatter Plot: Relación Negativa}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Los vinos con más ácido acético tienen peor nota?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+sns.scatterplot(x="volatile acidity", y="quality",
+                data=df, alpha=0.3, color="#C82B40")
+plt.xlabel("Acidez volatil")
+plt.ylabel("Quality (nota 0-10)")
+plt.title("Acidez volatil vs Quality")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Los puntos ``bajan'' de izquierda a derecha:
+    más acidez $\to$ peor nota. Eso es una \textbf{relación negativa}.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Scatter Plot: Sin Relación Clara}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿El azúcar residual afecta la calidad?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+sns.scatterplot(x="residual sugar", y="quality",
+                data=df, alpha=0.3, color="#6B7280")
+plt.xlabel("Azucar residual (g/L)")
+plt.ylabel("Quality (nota 0-10)")
+plt.title("Azucar residual vs Quality")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ No se ve patrón claro: los puntos no suben ni bajan.
+    El azúcar residual \textbf{no parece afectar} la calidad del vino.}
+\end{frame}
+
+\begin{frame}[shrink=5]{Del Scatter Plot a un Número: La Correlación}
+  \vspace{-4pt}
+  {\footnotesize
+    El scatter plot nos muestra el patrón \textbf{visualmente}.
+    Pero queremos un \textbf{número} que resuma esa relación:}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=3.5cm, minimum height=1.8cm,
+                font=\scriptsize\color{textDark}, align=center, text width=3.2cm},
+  ]
+    \node[box=codeGreen] (pos) at (0,0)
+      {\textbf{\color{codeGreen}Correlación positiva}\\[2pt]
+       $r \approx +1$\\
+       Puntos ``suben''\\
+       {\tiny alcohol $\uparrow$ quality $\uparrow$}};
+    \node[box=textMuted] (zero) at (4.5,0)
+      {\textbf{\color{textMuted}Sin correlación}\\[2pt]
+       $r \approx 0$\\
+       Puntos sin patrón\\
+       {\tiny azúcar vs quality}};
+    \node[box=arcaRed] (neg) at (9,0)
+      {\textbf{\color{arcaRed}Correlación negativa}\\[2pt]
+       $r \approx -1$\\
+       Puntos ``bajan''\\
+       {\tiny acidez $\uparrow$ quality $\downarrow$}};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      La \textbf{correlación} es ese número: va de $-1$ a $+1$.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Más cerca de $\pm 1$ = relación más fuerte. Cerca de $0$ = relación débil.
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      \textbf{$r \approx 0$ no significa ``no hay relación''} --- solo que no hay relación \textbf{lineal}.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 2: PEARSON Y SPEARMAN
+% =============================================================================
+\sectionframe{Pearson y Spearman}{Dos formas de medir la relación}
+
+\begin{frame}[shrink=10]{Pearson ($r$): De Dónde Sale la Fórmula}
+  \vspace{-4pt}
+  {\footnotesize
+    Queremos un número que diga: ``cuando $x$ sube, ¿$y$ también sube?''
+    Construyamos la idea paso a paso:}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    step/.style={rectangle, rounded corners=3pt, draw=#1, fill=#1!8,
+                 minimum width=12cm, minimum height=0.8cm,
+                 font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                 inner sep=5pt},
+  ]
+    \node[step=codeBlue] (s1) at (0, 0)
+      {\textbf{1. Desviación:} $(x_i - \bar{x})$ mide cuánto se aleja $x_i$
+       de su media. Igual para $y$: $(y_i - \bar{y})$.};
+    \node[step=codePurple, below=0.15cm of s1] (s2)
+      {\textbf{2. Producto:} $(x_i - \bar{x})(y_i - \bar{y})$.
+       Ambos arriba de su media $\to$ positivo.
+       Uno arriba y otro abajo $\to$ negativo.};
+    \node[step=codeGreen, below=0.15cm of s2] (s3)
+      {\textbf{3. Sumar:} $\sum(x_i - \bar{x})(y_i - \bar{y})$.
+       Mayoría positivos $\to$ relación positiva. Negativos $\to$ negativa.};
+    \node[step=arcaRed, below=0.15cm of s3] (s4)
+      {\textbf{4. Normalizar:} Dividimos entre $(n-1)\, s_x \, s_y$ para que $r$
+       quede entre $-1$ y $+1$.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}
+    \node[rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!6,
+          minimum width=6cm, minimum height=1.1cm,
+          font=\large\color{arcaDark}, align=center] {
+      $r = \dfrac{\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})}{(n-1)\, s_x \, s_y}$
+    };
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[shrink=15]{Spearman ($\rho$): Pearson Pero con Rangos}
+  \vspace{-4pt}
+  {\footnotesize
+    Spearman tiene una idea elegante: en vez de usar los \textbf{valores} originales,
+    usa sus \textbf{posiciones} (rangos) cuando los ordenas de menor a mayor.}
+
+  \vspace{4pt}
+  \begin{center}
+  {\small
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{@{}cccc@{}}
+    \toprule
+    \textbf{Dato $x$} & \textbf{Rango de $x$} & \textbf{Dato $y$} & \textbf{Rango de $y$} \\
+    \midrule
+    3.2 & 1 & 5 & 1 \\
+    4.1 & 2 & 6 & 2 \\
+    8.7 & 3 & 7 & 3 \\
+    150.0 {\tiny(outlier!)} & 4 & 8 & 4 \\
+    \bottomrule
+  \end{tabular}
+  }
+  \end{center}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=5.5cm, minimum height=1.5cm,
+                font=\scriptsize\color{textDark}, align=left, text width=5cm,
+                inner sep=6pt},
+  ]
+    \node[box=codePurple] (how) at (0,0)
+      {\textbf{\color{codePurple}¿Cómo se calcula?}\\[2pt]
+       Reemplaza cada valor por su rango
+       y aplica la \textbf{fórmula de Pearson} sobre esos rangos.};
+    \node[box=codeGreen] (why) at (6.5,0)
+      {\textbf{\color{codeGreen}¿Por qué funciona?}\\[2pt]
+       El outlier 150.0 solo tiene rango 4.
+       No ``arrastra'' el resultado.
+       Mide si el \textbf{orden} se mantiene.};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[shrink=5]{Pearson vs Spearman: Resumen}
+  \vspace{-4pt}
+  {\small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}p{3cm}p{4.5cm}p{4.5cm}@{}}
+    \toprule
+    & \textbf{Pearson ($r$)} & \textbf{Spearman ($\rho$)} \\
+    \midrule
+    \textbf{Mide} &
+      Relación \textbf{lineal} &
+      Relación \textbf{monótona} \\
+    \textbf{Usa} &
+      Los \textbf{valores} originales &
+      Los \textbf{rangos} (posiciones) \\
+    \textbf{Outliers} &
+      Sensible (un extremo lo distorsiona) &
+      Robusto (el rango no cambia mucho) \\
+    \textbf{Normalidad} &
+      Funciona mejor con datos normales &
+      No la requiere \\
+    \textbf{Cuándo usar} &
+      Datos normales, sin outliers, relación recta &
+      Datos sesgados, outliers, relación curva \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ Si Pearson y Spearman dan resultados muy diferentes,
+    probablemente hay \textbf{outliers} o una relación \textbf{no lineal}.}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \textbf{¿Qué es ``monótona''?} Una relación donde, al subir $x$, $y$ \textbf{siempre sube}
+    (o siempre baja), aunque no sea en línea recta. Ejemplo: una curva logarítmica sube
+    siempre, pero cada vez más lento. Pearson no la detecta bien; Spearman sí.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: VISUALIZAR RELACIONES
+% =============================================================================
+\sectionframe{Visualizar Relaciones}{Heatmaps, scatter plots y regplot}
+
+\begin{frame}[fragile,shrink=28]{Heatmap de Correlación (Pearson)}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \texttt{df.corr()} calcula la correlación entre todas las columnas.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+corr = df.corr(numeric_only=True)
+
+sns.heatmap(corr, annot=True, fmt=".2f",
+            cmap="RdBu_r", center=0, vmin=-1, vmax=1,
+            linewidths=0.5)
+plt.title("Correlacion Pearson - Wine Quality")
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Rojo $=$ positivo, azul $=$ negativo.
+    Busca los números más alejados de 0.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Heatmap de Correlación (Spearman)}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Ahora con Spearman: usa rangos, robusto a outliers.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+corr_sp = df.corr(method="spearman", numeric_only=True)
+
+sns.heatmap(corr_sp, annot=True, fmt=".2f",
+            cmap="RdBu_r", center=0, vmin=-1, vmax=1,
+            linewidths=0.5)
+plt.title("Correlacion Spearman - Wine Quality")
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Compara con el de Pearson:
+    donde los números cambian mucho, hay outliers o relaciones no lineales.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{¿Qué Variables Correlacionan con Quality?}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Extraemos la columna de quality y la ordenamos.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+corr_quality = corr["quality"].drop("quality")
+corr_quality = corr_quality.sort_values(ascending=False)
+print("Correlacion con quality (Pearson):")
+print(corr_quality.round(3))
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Positivas:} alcohol, sulphates, citric acid.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Negativas:} volatile acidity, total sulfur dioxide.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{Correlación $\neq$ Causalidad}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=12cm, minimum height=1.2cm,
+                font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                inner sep=6pt},
+  ]
+    \node[box=arcaRed] (myth) at (0, 0)
+      {\textbf{\color{arcaRed}\faTimesCircle\ Mito:}
+       ``El alcohol causa que el vino sea bueno'' (porque $r \approx 0.48$).\\
+       Correlación solo dice que \textbf{se mueven juntos}, no que uno \textbf{cause} al otro.};
+    \node[box=codeGreen, below=0.3cm of myth] (real)
+      {\textbf{\color{codeGreen}\faCheckCircle\ Realidad:}
+       Los vinos con más alcohol suelen ser de uvas más maduras, que también
+       producen mejor sabor. La \textbf{madurez de la uva} es la variable oculta.};
+    \node[box=codeBlue, below=0.3cm of real] (rule)
+      {\textbf{\color{codeBlue}\faLightbulb\ Regla:}
+       ``Correlación implica que \textbf{vale la pena investigar} si hay causalidad.''
+       No la prueba por sí sola.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faExternalLinkAlt\ Ejemplo clásico: el consumo de helado y los ahogamientos
+    correlacionan positivamente. No es el helado --- ambos aumentan en verano.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Pearson vs Spearman en Código}
+  \vspace{-6pt}
+  \begin{pyblock}
+cols = ["alcohol", "volatile acidity", "citric acid",
+        "sulphates", "residual sugar", "chlorides"]
+
+comparison = pd.DataFrame({
+    "Pearson": [df[c].corr(df["quality"])
+                for c in cols],
+    "Spearman": [df[c].corr(df["quality"],
+                 method="spearman") for c in cols],
+}, index=cols)
+comparison["Diferencia"] = abs(
+    comparison["Pearson"] - comparison["Spearman"])
+print(comparison.sort_values("Diferencia",
+      ascending=False).round(3))
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Donde la diferencia es grande, la relación
+    probablemente \textbf{no es lineal} o hay \textbf{outliers}.}
+\end{frame}
+
+\begin{frame}[shrink=8]{¿Por Qué Pearson Puede Fallar?}
+  \vspace{-4pt}
+  {\footnotesize
+    Pearson mide relación \textbf{lineal}. Si la relación es curva,
+    Pearson dirá ``no hay relación'' cuando \textbf{sí la hay}:}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=3.8cm, minimum height=1.8cm,
+                font=\scriptsize\color{textDark}, align=center, text width=3.5cm},
+  ]
+    \node[box=codeGreen] (lin) at (0,0)
+      {\textbf{\color{codeGreen}Lineal}\\[2pt]
+       $y = a + bx$\\
+       Pearson funciona bien\\
+       $r = 0.95$};
+    \node[box=codeOrange] (quad) at (4.8,0)
+      {\textbf{\color{codeOrange}Cuadrática}\\[2pt]
+       $y = a + bx + cx^2$\\
+       Pearson dice $r \approx 0$\\
+       ¡Pero la relación existe!};
+    \node[box=codePurple] (log) at (9.6,0)
+      {\textbf{\color{codePurple}Logarítmica}\\[2pt]
+       $y = a + b \ln(x)$\\
+       Pearson subestima\\
+       Spearman captura mejor};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+      \textbf{Moraleja:} Siempre haz el scatter plot \textbf{antes} de confiar en el número $r$.
+    \item[{\color{codeBlue}\scriptsize\faArrowRight}]
+      Spearman detecta relaciones monótonas (siempre sube o siempre baja),
+      aunque no sean lineales.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=10]{¿Qué Hace \texttt{regplot}? --- La Recta de Mejor Ajuste}
+  \vspace{-4pt}
+  {\footnotesize
+    \texttt{sns.regplot()} dibuja los puntos \textbf{y además ajusta una línea}.
+    Tiene dos modos:}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codeBlue} Modo lineal (por defecto)}
+      \vspace{4pt}
+
+      {\scriptsize
+      Busca la recta $y = a + bx$ que \textbf{minimiza}
+      la suma de errores al cuadrado:
+      }
+
+      \vspace{4pt}
+      \begin{center}
+      \begin{tikzpicture}
+        \node[rectangle, rounded corners=3pt, draw=codeBlue, fill=codeBlue!6,
+              font=\small\color{arcaDark}, inner sep=6pt] {
+          $\min \displaystyle\sum_{i=1}^{n} (y_i - a - bx_i)^2$
+        };
+      \end{tikzpicture}
+      \end{center}
+
+      \vspace{2pt}
+      {\scriptsize
+      Cada $(y_i - a - bx_i)$ es la distancia del punto a la recta.
+      La recta con \textbf{menos error} es la elegida.
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codePurple} Modo LOWESS (\texttt{lowess=True})}
+      \vspace{4pt}
+
+      {\scriptsize
+      En vez de \textbf{una} recta para todos, ajusta
+      \textbf{muchas rectas locales}:
+
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item Para cada punto, toma los vecinos cercanos.
+        \item Ajusta una recta solo con esos vecinos.
+        \item Resultado: una \textbf{curva suave}.
+      \end{itemize}
+
+      Útil cuando la relación \textbf{no es una recta}.
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ El modo lineal es el \textbf{método de mínimos cuadrados}.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{regplot en Código}
+  \vspace{-6pt}
+  \begin{pyblock}
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+sns.regplot(x="alcohol", y="quality", data=df,
+            scatter_kws={"alpha": 0.2}, ax=axes[0],
+            color="#16A34A", line_kws={"color": "#C82B40"})
+axes[0].set_title("alcohol vs quality (lineal)")
+
+sns.regplot(x="citric acid", y="volatile acidity",
+            data=df, scatter_kws={"alpha": 0.2},
+            ax=axes[1], color="#2563EB", lowess=True,
+            line_kws={"color": "#C82B40"})
+axes[1].set_title("citric acid vs vol. acidity (lowess)")
+
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \texttt{lowess=True} ajusta una curva suave en vez de una recta.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Ejercicio 1: Correlación \hfill {\normalsize\faLaptopCode}}
+  \vspace{-6pt}
+  \begin{pyblock}
+# 1. Haz el heatmap de correlacion de Spearman
+#    Pista: df.corr(method="spearman", numeric_only=True)
+#
+# 2. Compara con el heatmap de Pearson:
+#    que diferencias ves?
+#
+# 3. Elige las 2 variables mas correlacionadas
+#    con quality y haz regplot de cada una
+#
+# 4. Intenta lowess=True en una de ellas:
+#    la curva es diferente a la recta?
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faClock\ \textbf{10 minutos.}
+    Si terminas antes, prueba con \texttt{order=2} en regplot
+    (ajusta un polinomio en vez de una recta).}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 4: ANÁLISIS CATEGÓRICO
+% =============================================================================
+\sectionframe{Análisis Categórico}{Segmentar y comparar grupos}
+
+\begin{frame}[shrink=5]{De Números a Preguntas de Negocio}
+  \vspace{-4pt}
+  {\footnotesize
+    Hasta ahora hemos analizado \textbf{variables individuales} y \textbf{correlaciones entre pares}.
+    Pero la pregunta de negocio real es:}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}
+    \node[rectangle, rounded corners=6pt, draw=arcaRed, fill=arcaRed!8,
+          minimum width=10cm, minimum height=1.2cm,
+          font=\large\bfseries\color{arcaDark}, align=center] {
+      ¿Qué diferencia a un vino bueno de uno malo?
+    };
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Para responder, necesitamos \textbf{comparar grupos}: vinos buenos vs vinos malos.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Eso requiere convertir \texttt{quality} (numérica: 3-8) en \textbf{categorías}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Y luego comparar las distribuciones de cada variable \textbf{entre} esos grupos.
+  \end{itemize}
+  }
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Este tipo de análisis es fundamental en la industria:
+    ``¿qué diferencia a los clientes que compran de los que no?'',
+    ``¿qué distingue al lote bueno del defectuoso?''}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Crear Categorías con \texttt{pd.cut}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Convertimos la nota numérica en 3 grupos.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+df["quality_group"] = pd.cut(
+    df["quality"],
+    bins=[0, 4, 6, 10],
+    labels=["Bajo (3-4)", "Medio (5-6)", "Alto (7-8)"]
+)
+print(df["quality_group"].value_counts().sort_index())
+  \end{pyblock}
+
+  \vspace{4pt}
+  \begin{pyblock}
+# Distribucion visual
+df["quality_group"].value_counts().sort_index().plot(
+    kind="bar", color=["#C82B40", "#6B7280", "#16A34A"],
+    edgecolor="white")
+plt.title("Distribucion de calidad")
+plt.ylabel("Cantidad de vinos")
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{¿Qué Hace \texttt{pd.cut}?}
+  \vspace{-4pt}
+  {\footnotesize
+    \texttt{pd.cut} divide una variable \textbf{continua} (o numérica) en
+    \textbf{intervalos} que tú defines:}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    step/.style={rectangle, rounded corners=3pt, draw=#1, fill=#1!8,
+                 minimum width=12cm, minimum height=0.75cm,
+                 font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                 inner sep=5pt},
+  ]
+    \node[step=codeBlue] (s1) at (0, 0)
+      {\textbf{bins=[0, 4, 6, 10]:} Define los cortes. Crea 3 intervalos:
+       (0,4], (4,6], (6,10].};
+    \node[step=codePurple, below=0.15cm of s1] (s2)
+      {\textbf{labels=[...]:} Nombre legible para cada intervalo.
+       ``Bajo (3-4)'', ``Medio (5-6)'', ``Alto (7-8)''.};
+    \node[step=codeGreen, below=0.15cm of s2] (s3)
+      {\textbf{Resultado:} Una nueva columna categórica.
+       Cada vino tiene su grupo asignado.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Muy útil para convertir edades en rangos, precios en segmentos,
+      o notas en categorías.
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      Los cortes dependen del \textbf{contexto}. Aquí elegimos 3 grupos
+      porque el dataset tiene pocos vinos extremos.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Comparar Grupos con \texttt{groupby}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Cómo se ven las variables en cada grupo de calidad?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+cols = ["alcohol", "volatile acidity",
+        "sulphates", "citric acid"]
+
+summary = df.groupby("quality_group")[cols].agg(
+    ["mean", "median", "std"]
+)
+print(summary.round(3))
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      ¿El alcohol promedio sube con la calidad? ¿La acidez baja?
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Confirma (o no) lo que sugería la correlación.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Boxplot por Grupo de Calidad}
+  \vspace{-6pt}
+  \begin{pyblock}
+fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+cols = ["alcohol", "volatile acidity",
+        "sulphates", "citric acid"]
+colors = ["#16A34A", "#C82B40", "#2563EB", "#7C3AED"]
+
+for ax, col, c in zip(axes.flat, cols, colors):
+    sns.boxplot(x="quality_group", y=col, data=df,
+                ax=ax, palette=[c+"99"]*3, width=0.5)
+    ax.set_title(col, fontsize=12)
+    ax.set_xlabel("")
+plt.suptitle("Variables por grupo de calidad",
+             fontsize=14, y=1.01)
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[shrink=18]{¿Qué Es un Violinplot?}
+  \vspace{-4pt}
+  {\footnotesize
+    Un violinplot es un \textbf{boxplot + histograma} combinados en una sola gráfica.
+    Muestra la \textbf{forma completa} de la distribución, no solo el resumen.}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    every node/.style={font=\scriptsize},
+  ]
+    % Violin shape
+    \fill[arcaRed!15] plot[smooth, tension=0.7]
+      coordinates {(0,0) (0.6,0.5) (1.2,1) (1.0,1.5) (0.5,2)
+      (0.8,2.5) (1.3,3) (1.0,3.5) (0.4,4) (0.1,4.5) (0,5)}
+      -- plot[smooth, tension=0.7]
+      coordinates {(0,5) (-0.1,4.5) (-0.4,4) (-1.0,3.5) (-1.3,3)
+      (-0.8,2.5) (-0.5,2) (-1.0,1.5) (-1.2,1) (-0.6,0.5) (0,0)};
+    \draw[arcaRed, thick] plot[smooth, tension=0.7]
+      coordinates {(0,0) (0.6,0.5) (1.2,1) (1.0,1.5) (0.5,2)
+      (0.8,2.5) (1.3,3) (1.0,3.5) (0.4,4) (0.1,4.5) (0,5)};
+    \draw[arcaRed, thick] plot[smooth, tension=0.7]
+      coordinates {(0,0) (-0.6,0.5) (-1.2,1) (-1.0,1.5) (-0.5,2)
+      (-0.8,2.5) (-1.3,3) (-1.0,3.5) (-0.4,4) (-0.1,4.5) (0,5)};
+
+    % Quartile lines
+    \draw[thick, textDark] (-0.9,1.2) -- (0.9,1.2);
+    \draw[very thick, white] (-1.1,2.8) -- (1.1,2.8);
+    \draw[thick, textDark] (-1.1,2.8) -- (1.1,2.8);
+    \draw[thick, textDark] (-0.7,4.0) -- (0.7,4.0);
+
+    % Labels
+    \node[right, color=textMuted] at (1.5,1.2) {Q1 (25\%)};
+    \node[right, color=arcaDark, font=\scriptsize\bfseries] at (1.5,2.8) {Mediana (50\%)};
+    \node[right, color=textMuted] at (1.5,4.0) {Q3 (75\%)};
+
+    % Width annotation
+    \draw[<->, codeBlue, thick] (-1.4,3) -- (-1.4,3) node[left, text width=2.5cm, align=right]
+      {\color{codeBlue}\textbf{Más ancho}\\= más datos aquí};
+    \draw[<->, codeBlue, thick] (0,4.8) -- (0,4.8) node[above, text width=2.5cm, align=center]
+      {\color{codePurple}\textbf{Más estrecho}\\= pocos datos};
+
+    % Arrow to wide part
+    \draw[-{Stealth}, codeBlue, thick] (-3.2,3) -- (-1.4,3);
+    % Arrow to narrow part
+    \draw[-{Stealth}, codePurple, thick] (0,5.8) -- (0,5.0);
+
+    % Right side: explanation boxes
+    \node[rectangle, rounded corners=3pt, draw=codeGreen, fill=codeGreen!8,
+          minimum width=4.5cm, font=\scriptsize\color{textDark},
+          align=left, text width=4.2cm, inner sep=5pt]
+      at (6.5,3.8)
+      {\textbf{\color{codeGreen}Ventaja sobre boxplot}\\[2pt]
+       Ves la \textbf{forma} de la distribución:
+       si es simétrica, sesgada, o tiene dos picos.};
+    \node[rectangle, rounded corners=3pt, draw=arcaRed, fill=arcaRed!8,
+          minimum width=4.5cm, font=\scriptsize\color{textDark},
+          align=left, text width=4.2cm, inner sep=5pt]
+      at (6.5,1.5)
+      {\textbf{\color{arcaRed}Es como un histograma}\\[2pt]
+       Girado 90° y espejado.
+       Las 3 líneas internas son Q1, mediana y Q3
+       (la misma info del boxplot).};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Violinplot en Código}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Comparamos el alcohol entre los 3 grupos de calidad.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+sns.violinplot(x="quality_group", y="alcohol",
+               data=df, inner="quartile")
+plt.title("Alcohol por grupo de calidad")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \texttt{inner="quartile"} dibuja las líneas de Q1, mediana y Q3.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Observa cómo el violín del grupo ``Alto'' está más arriba y estrecho.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Violinplot: Acidez Volátil}
+  \vspace{-6pt}
+  \begin{pyblock}
+sns.violinplot(x="quality_group",
+               y="volatile acidity",
+               data=df, inner="quartile")
+plt.title("Acidez volatil por grupo de calidad")
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Confirma la correlación negativa: los vinos de calidad alta
+    tienen \textbf{menos} acidez volátil.
+    Además se ve que el grupo ``Bajo'' tiene la distribución más dispersa.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Countplot: Frecuencias de Categorías}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Cómo se distribuye la calidad original (sin agrupar)?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+sns.countplot(x="quality", data=df, ax=axes[0],
+              color="#C82B40")
+axes[0].set_title("Distribucion de quality")
+
+sns.countplot(x="quality", hue="quality_group",
+    data=df, ax=axes[1],
+    palette=["#C82B40", "#6B7280", "#16A34A"])
+axes[1].set_title("Quality coloreado por grupo")
+axes[1].legend(title="Grupo", fontsize=8)
+
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \texttt{hue} colorea las barras según otra variable categórica.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Tabla de Contingencia con \texttt{pd.crosstab}}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    ¿Cómo se cruzan dos variables categóricas?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+df["alcohol_group"] = pd.cut(
+    df["alcohol"], bins=3,
+    labels=["Bajo", "Medio", "Alto"]
+)
+
+tabla = pd.crosstab(
+    df["quality_group"], df["alcohol_group"],
+    margins=True
+)
+print(tabla)
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Cada celda cuenta cuántos vinos hay en esa combinación.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \texttt{margins=True} agrega totales por fila y columna.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Crosstab con Proporciones}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Los conteos absolutos engañan si los grupos tienen tamaños distintos.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+tabla_pct = pd.crosstab(
+    df["quality_group"], df["alcohol_group"],
+    normalize="index"   # porcentaje por fila
+)
+print(tabla_pct.round(3))
+
+# Visualizar como heatmap
+sns.heatmap(tabla_pct, annot=True, fmt=".1%",
+            cmap="YlOrRd", linewidths=0.5)
+plt.title("% de alcohol por grupo de calidad")
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \texttt{normalize="index"}: cada fila suma 100\%.
+    También puedes usar \texttt{"columns"} o \texttt{"all"}.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Ejercicio 2: Análisis por Grupos \hfill {\normalsize\faLaptopCode}}
+  \vspace{-6pt}
+  \begin{pyblock}
+# 1. Crea una nueva variable "acidity_group"
+#    usando pd.cut en "volatile acidity"
+#    con 3 niveles: "Baja", "Media", "Alta"
+#    Pista: bins=3 y labels=[...]
+
+# 2. Haz un crosstab de quality_group vs
+#    acidity_group (con normalize="index")
+
+# 3. Haz un boxplot de "alcohol" agrupado
+#    por acidity_group
+
+# 4. Pregunta: los vinos con acidez alta,
+#    tienden a ser buenos o malos?
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faClock\ \textbf{10 minutos.}
+    Esto conecta correlación con análisis categórico:
+    la correlación negativa acidez-quality, ¿se confirma por grupos?}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 5: ¿QUÉ HACE UN BUEN VINO?
+% =============================================================================
+\sectionframe{¿Qué Hace un Buen Vino?}{Conectando todo lo que sabemos}
+
+\begin{frame}[fragile,shrink=28]{Perfil de Cada Grupo}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Un resumen compacto de las medianas por grupo.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+cols = ["alcohol", "volatile acidity", "citric acid",
+        "sulphates", "chlorides", "residual sugar"]
+
+perfil = df.groupby("quality_group")[cols].median()
+perfil = perfil.T
+print(perfil.round(3))
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Usamos mediana (no media) porque ya sabemos que
+      varias columnas tienen outliers.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      ¿Qué columnas muestran la mayor diferencia entre grupos?
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Los Outliers de la Clase Pasada: ¿Buenos o Malos?}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    En la clase pasada encontramos outliers en chlorides. ¿Qué calidad tienen?}
+
+  \vspace{4pt}
+  \begin{pyblock}
+col = "chlorides"
+Q1 = df[col].quantile(0.25)
+Q3 = df[col].quantile(0.75)
+IQR = Q3 - Q1
+
+outliers = df[(df[col] < Q1 - 1.5*IQR) |
+              (df[col] > Q3 + 1.5*IQR)]
+normales = df[~df.index.isin(outliers.index)]
+
+print(f"Outliers: {len(outliers)} vinos")
+print(f"  Quality promedio: {outliers['quality'].mean():.2f}")
+print(f"Normales: {len(normales)} vinos")
+print(f"  Quality promedio: {normales['quality'].mean():.2f}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Si los outliers tienen quality más baja,
+    la sal excesiva \textbf{arruina} el vino --- ¡eso es información útil!}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{¿Afectan los Outliers a la Correlación?}
+  \vspace{-6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Comparamos la correlación con y sin outliers.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+col = "chlorides"
+Q1 = df[col].quantile(0.25)
+Q3 = df[col].quantile(0.75)
+IQR = Q3 - Q1
+df_clean = df[(df[col] >= Q1 - 1.5*IQR) &
+              (df[col] <= Q3 + 1.5*IQR)]
+
+r_con = df[col].corr(df["quality"])
+r_sin = df_clean[col].corr(df_clean["quality"])
+rho_con = df[col].corr(df["quality"],
+                        method="spearman")
+rho_sin = df_clean[col].corr(df_clean["quality"],
+                              method="spearman")
+print(f"Con outliers:  Pearson={r_con:.3f}, "
+      f"Spearman={rho_con:.3f}")
+print(f"Sin outliers:  Pearson={r_sin:.3f}, "
+      f"Spearman={rho_sin:.3f}")
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{Resumen: El Perfil del Buen Vino}
+  \vspace{-4pt}
+  {\footnotesize
+    Según los datos del Wine Quality (tintos), los vinos de mayor calidad tienden a tener:}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codeGreen} \faArrowUp\ Más de\ldots}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+          \textbf{Alcohol} ($r \approx 0.48$): la variable más
+          correlacionada con quality.
+        \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+          \textbf{Sulphates}: antimicrobiano que preserva el sabor.
+        \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+          \textbf{Citric acid}: aporta frescura al vino.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed} \faArrowDown\ Menos de\ldots}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\scriptsize\faTimesCircle}]
+          \textbf{Volatile acidity} ($r \approx -0.39$): ácido acético
+          en exceso da sabor a vinagre.
+        \item[{\color{arcaRed}\scriptsize\faTimesCircle}]
+          \textbf{Chlorides}: sal excesiva degrada el sabor.
+        \item[{\color{arcaRed}\scriptsize\faTimesCircle}]
+          \textbf{Total SO\textsubscript{2}}: demasiado conservante
+          afecta el aroma.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faExclamationTriangle\ Recordemos: correlación $\neq$ causalidad.
+    Estos son \textbf{patrones}, no causas confirmadas.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 6: EJERCICIO INTEGRADOR
+% =============================================================================
+\sectionframe{Ejercicio Integrador}{Análisis completo de una variable}
+
+\begin{frame}[fragile,shrink=28]{Ejercicio 3: Análisis Completo \hfill {\normalsize\faLaptopCode}}
+  \vspace{-6pt}
+  \begin{pyblock}
+# Elige UNA variable: "sulphates" o "total sulfur dioxide"
+# y haz el analisis completo:
+#
+# PARTE A: Distribucion
+# 1. Histograma + KDE. Es normal? (Shapiro-Wilk)
+# 2. Detecta outliers con IQR
+#
+# PARTE B: Correlacion
+# 3. Correlacion Pearson y Spearman con quality
+# 4. Regplot (lineal y lowess)
+#
+# PARTE C: Grupos
+# 5. Compara la mediana de tu variable
+#    por quality_group (Bajo/Medio/Alto)
+# 6. Violinplot por quality_group
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faClock\ \textbf{15 minutos.}
+    Conecta los 3 temas: ¿la distribución explica
+    la correlación? ¿Los grupos confirman el patrón?}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 7: CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que logramos hoy}
+
+\begin{frame}[shrink=5]{Resumen: Herramientas de Hoy}
+  \vspace{-4pt}
+  {\small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Concepto} & \textbf{Herramienta} & \textbf{Código clave} \\
+    \midrule
+    Correlación Pearson & pandas & \texttt{.corr()} \\
+    Correlación Spearman & pandas & \texttt{.corr(method="spearman")} \\
+    Heatmap & seaborn & \texttt{sns.heatmap()} \\
+    Scatter + regresión & seaborn & \texttt{sns.regplot(lowess=True)} \\
+    Crear categorías & pandas & \texttt{pd.cut(bins, labels)} \\
+    Agrupar y resumir & pandas & \texttt{groupby().agg()} \\
+    Tabla cruzada & pandas & \texttt{pd.crosstab(normalize)} \\
+    Boxplot por grupo & seaborn & \texttt{sns.boxplot(x=, y=)} \\
+    Violinplot & seaborn & \texttt{sns.violinplot(inner=)} \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{frame}
+
+\begin{frame}{Lo que Aprendimos Hoy}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Correlación: fuerza y dirección de la relación.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Pearson (lineal) vs Spearman (monótona, robusta).
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Correlación $\neq$ causalidad.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          regplot: mínimos cuadrados y LOWESS.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{pd.cut}: convertir numérica a categorías.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{groupby + agg}: comparar grupos.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          \texttt{pd.crosstab}: tablas de contingencia.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Violinplot: distribución completa por grupo.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries Próxima clase:}
+  \vspace{2pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      Introducción al aprendizaje automático con scikit-learn.
+    \item[{\color{arcaRed}\faArrowRight}]
+      De la exploración a la predicción.
+  \end{itemize}
+  }
+\end{frame}
+
+% ── QR ENCUESTA ──────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1cm}
+  \begin{center}
+    {\Huge\bfseries\color{white} ¿Cómo estuvo la clase?\par}
+    \vspace{0.6cm}
+    \includegraphics[width=4cm]{qr_encuesta.jpg}
+    \vspace{0.4cm}
+    {\large\color{white!80} Escaneen el QR para la encuesta rápida\par}
+  \end{center}
+\end{frame}
+}
+
+\end{document}

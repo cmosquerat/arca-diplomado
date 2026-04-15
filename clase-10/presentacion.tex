@@ -1,0 +1,1865 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 10: Outliers, Distribución Normal y Correlación
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc,
+  calc, fit, decorations.pathreplacing, backgrounds}
+\usepackage{fontawesome5}
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+\usepackage{amsmath}
+
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+\definecolor{codePurple}{HTML}{7C3AED}
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.5cm, yshift=0.15cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.3cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 10: Outliers, Distribución Normal y Correlación}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{30 de Marzo, 2026}
+
+\begin{document}
+
+% ── PORTADA ──────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ── MÓDULO 2 ─────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Large\bfseries, text width=12cm,
+          align=center] at ([yshift=1cm]current page.center)
+      {Módulo 2};
+    \node[anchor=center, text=white!90, font=\huge\bfseries, text width=12cm,
+          align=center] at ([yshift=-0.3cm]current page.center)
+      {Estadística Aplicada para Datos};
+  \end{tikzpicture}
+\end{frame}
+}
+
+% ── RECAPITULACIÓN ──────────────────────────────────────────────────────────
+\begin{frame}[shrink=5]{Recapitulación: Clase 9}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} Ya sabemos:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Distribuciones: formas, simetría, sesgo.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Tendencia central: media vs mediana.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Dispersión: varianza, std, IQR, CV.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Primer contacto con outliers y la Normal.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed} Hoy profundizamos:}
+      \vspace{4pt}
+
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{arcaRed}\faArrowRight}]
+          Outliers a fondo: buenos, malos y qué hacer.
+        \item[{\color{arcaRed}\faArrowRight}]
+          Distribución Normal: por qué importa tanto.
+        \item[{\color{arcaRed}\faArrowRight}]
+          Correlación: relación entre variables.
+        \item[{\color{arcaRed}\faArrowRight}]
+          Nuevo dataset: Wine Quality (UCI).
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ── ROADMAP ─────────────────────────────────────────────────────────────────
+\begin{frame}{Hoja de Ruta de Hoy}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.4cm,
+    roadstep/.style={rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!8,
+                 minimum width=11cm, minimum height=0.7cm,
+                 font=\footnotesize\bfseries\color{arcaDark}, align=left,
+                 text width=10cm, inner sep=6pt},
+    num/.style={circle, fill=arcaRed, text=white, font=\scriptsize\bfseries,
+                minimum size=0.5cm, inner sep=0pt},
+  ]
+    \node[roadstep] (s1) {\hspace{0.8cm}Dataset Wine Quality --- Cargar y explorar};
+    \node[roadstep, below=of s1] (s2) {\hspace{0.8cm}Outliers a fondo --- Buenos, malos, detección y tratamiento};
+    \node[roadstep, below=of s2] (s3) {\hspace{0.8cm}Distribución Normal --- Por qué importa y cómo verificar};
+    \node[roadstep, below=of s3] (s4) {\hspace{0.8cm}Correlación --- Pearson, Spearman, heatmaps};
+    \node[roadstep, below=of s4] (s5) {\hspace{0.8cm}Relaciones no lineales --- No todo es una recta};
+    \node[roadstep, below=of s5] (s6) {\hspace{0.8cm}Ejercicio integrador con Wine Quality};
+
+    \node[num] at ([xshift=0.45cm]s1.west) {1};
+    \node[num] at ([xshift=0.45cm]s2.west) {2};
+    \node[num] at ([xshift=0.45cm]s3.west) {3};
+    \node[num] at ([xshift=0.45cm]s4.west) {4};
+    \node[num] at ([xshift=0.45cm]s5.west) {5};
+    \node[num] at ([xshift=0.45cm]s6.west) {6};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 1: DATASET WINE QUALITY
+% =============================================================================
+\sectionframe{Dataset: Wine Quality}{Datos reales de control de calidad de vino (UCI)}
+
+\begin{frame}[fragile,shrink=28]{Cargar el Dataset Wine Quality}
+  \vspace{-6pt}
+  \begin{pyblock}
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+url = ("https://archive.ics.uci.edu/ml/"
+       "machine-learning-databases/wine-quality/"
+       "winequality-red.csv")
+df = pd.read_csv(url, sep=";")
+print(df.shape)
+df.head()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Dataset real de la Universidad de Minho (Portugal).
+    1599 vinos tintos con 11 propiedades fisicoquímicas + nota de calidad.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Exploración Rápida}
+  \vspace{-6pt}
+  \begin{pyblock}
+df.info()
+  \end{pyblock}
+
+  \vspace{2pt}
+  \begin{pyblock}
+df.describe().round(2)
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Observa: \texttt{residual sugar} tiene un max de 15.5 pero media 2.5.
+    \texttt{chlorides} tiene un max de 0.61 pero media 0.087.
+    ¿Outliers?}
+\end{frame}
+
+\begin{frame}[shrink=5]{¿Qué Significan las Columnas?}
+  \vspace{-4pt}
+  {\small
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{@{}p{4cm}p{8cm}@{}}
+    \toprule
+    \textbf{Variable} & \textbf{Descripción} \\
+    \midrule
+    fixed acidity & Ácidos no volátiles (tartárico) \\
+    volatile acidity & Ácidos volátiles (acético --- en exceso = sabor a vinagre) \\
+    citric acid & Ácido cítrico (frescura) \\
+    residual sugar & Azúcar residual tras la fermentación (g/L) \\
+    chlorides & Sal (cloruro de sodio, g/L) \\
+    free sulfur dioxide & SO\textsubscript{2} libre (antimicrobiano) \\
+    total sulfur dioxide & SO\textsubscript{2} total \\
+    density & Densidad del vino (g/cm\textsuperscript{3}) \\
+    pH & Acidez (escala 0--14) \\
+    sulphates & Aditivo sulfato (antimicrobiano) \\
+    alcohol & Grado alcohólico (\% vol) \\
+    quality & Nota de calidad (0--10, dada por catadores) \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faFlask\ Estas variables son \textbf{mediciones reales} de laboratorio,
+    similares al control de calidad en una planta de bebidas.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 2: OUTLIERS A FONDO
+% =============================================================================
+\sectionframe{Outliers a Fondo}{Buenos, malos, detección y tratamiento}
+
+\begin{frame}[shrink=5]{¿Qué Es un Outlier? --- Repaso}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=4.5cm, minimum height=1.6cm,
+                font=\scriptsize\color{textDark}, align=center, text width=4cm},
+  ]
+    \node[box=codeBlue] (def) at (0,0)
+      {\textbf{\color{codeBlue}\normalsize Definición}\\[4pt]
+       Un valor que se aleja\\
+       \textbf{significativamente}\\
+       del resto de los datos};
+    \node[box=arcaRed] (key) at (5.5,0)
+      {\textbf{\color{arcaRed}\normalsize Clave}\\[4pt]
+       ``Significativamente'' depende\\
+       del \textbf{contexto} y del\\
+       \textbf{método} que usemos};
+    \node[box=codeGreen] (imp) at (11,0)
+      {\textbf{\color{codeGreen}\normalsize Importante}\\[4pt]
+       Un outlier NO es\\
+       automáticamente un\\
+       \textbf{error}};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+      \textbf{Error frecuente:} detectar un outlier y eliminarlo automáticamente.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Lo correcto:} detectar, \textbf{investigar}, y luego decidir con criterio de negocio.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=10]{Outliers ``Buenos'' vs Outliers ``Malos''}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codeGreen} \faCheckCircle\ Outliers ``Buenos'' (Información)}
+      \vspace{6pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+          \textbf{Fraude:} Una transacción de \$50{,}000 cuando el promedio es \$200.
+          El outlier \textit{es} lo que quieres encontrar.
+        \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+          \textbf{Calidad excepcional:} Un vino con quality=8 cuando la media es 5.6.
+          Es un producto premium, no un error.
+        \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+          \textbf{Alerta de proceso:} Un SO\textsubscript{2} total de 289 en una línea de producción.
+          Puede indicar un problema real en el proceso.
+        \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+          \textbf{Oportunidades:} Un cliente que compra 10x más que los demás.
+          ¿Es un distribuidor? ¿Podemos replicarlo?
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed} \faTimesCircle\ Outliers ``Malos'' (Ruido)}
+      \vspace{6pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Error de medición:} Un sensor descalibrado reporta pH = 0.5.
+          Físicamente imposible para vino.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Error de captura:} Alguien escribió 1500 en vez de 15.0
+          en azúcar residual.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Datos corruptos:} Una fila duplicada con valores mezclados
+          de dos registros distintos.
+        \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+          \textbf{Muestra contaminada:} La botella se dañó y la medición
+          no refleja el producto real.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faExclamationTriangle\ La diferencia entre un outlier bueno y uno malo
+    NO la determina el algoritmo --- la determina el \textbf{conocimiento del dominio}.}
+\end{frame}
+
+\begin{frame}[shrink=8]{La Detección de Outliers Como Tarea}
+  \vspace{-4pt}
+  {\footnotesize
+    A veces, detectar outliers no es un \textbf{paso de limpieza}, sino \textbf{el objetivo del análisis}:}
+
+  \vspace{6pt}
+  {\small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}p{3cm}p{4cm}p{5cm}@{}}
+    \toprule
+    \textbf{Industria} & \textbf{Tarea} & \textbf{El outlier es\ldots} \\
+    \midrule
+    Banca &
+      Detección de fraude &
+      La transacción sospechosa \\
+    Manufactura &
+      Control de calidad &
+      El producto defectuoso \\
+    Salud &
+      Diagnóstico temprano &
+      El paciente con valores anómalos \\
+    Ciberseguridad &
+      Intrusiones &
+      El tráfico de red inusual \\
+    Bebidas &
+      QC en planta &
+      El lote fuera de especificación \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codePurple}\scriptsize\faArrowRight}]
+      En estos casos, \textbf{eliminar} el outlier sería destruir la información más valiosa.
+    \item[{\color{codePurple}\scriptsize\faArrowRight}]
+      Se usan técnicas de \textit{anomaly detection} (Isolation Forest, LOF, Autoencoders)
+      --- las veremos más adelante.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{Métodos de Detección: IQR vs Z-Score}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codeBlue} Método IQR}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item Límite inferior: $Q1 - 1.5 \times IQR$
+        \item Límite superior: $Q3 + 1.5 \times IQR$
+        \item \textbf{Ventaja:} Robusto --- no le afectan los propios outliers.
+        \item \textbf{Cuándo:} Datos sesgados, distribuciones no normales.
+        \item \textbf{En Wine Quality:} \texttt{residual\_sugar}, \texttt{chlorides}.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codePurple} Método Z-Score}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item Outlier si $|z| > 3$ (o 2.5, depende del criterio).
+        \item $z = \frac{x - \mu}{\sigma}$
+        \item \textbf{Ventaja:} Intuitivo --- ``cuántas desviaciones del centro''.
+        \item \textbf{Cuándo:} Datos aproximadamente normales.
+        \item \textbf{En Wine Quality:} \texttt{pH}, \texttt{density}.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{8pt}
+  \begin{center}
+  \begin{tikzpicture}
+    \node[rectangle, rounded corners=4pt, draw=codeOrange, fill=codeOrange!8,
+          minimum width=12cm, minimum height=0.8cm,
+          font=\scriptsize\bfseries\color{codeOrange}, align=center] {
+      \faExclamationTriangle\ Ambos métodos son heurísticas.
+      No existe un método ``perfecto'' --- siempre requieren criterio humano.
+    };
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Detectar Outliers con IQR en Wine Quality}
+  \vspace{-6pt}
+  \begin{pyblock}
+col = "residual sugar"
+Q1 = df[col].quantile(0.25)
+Q3 = df[col].quantile(0.75)
+IQR = Q3 - Q1
+
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+
+outliers_iqr = df[(df[col] < lower) | (df[col] > upper)]
+print(f"Limites: [{lower:.2f}, {upper:.2f}]")
+print(f"Outliers encontrados: {len(outliers_iqr)} "
+      f"de {len(df)} ({len(outliers_iqr)/len(df)*100:.1f}%)")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ El azúcar residual tiene una distribución muy sesgada a la derecha.
+    La mayoría de los vinos tienen poca azúcar ($\sim$2 g/L),
+    pero algunos llegan a 15.5 g/L.}
+\end{frame}
+
+\begin{frame}[shrink=10]{Z-Score: Desglosando la Fórmula}
+  \vspace{-4pt}
+  {\footnotesize
+    El Z-score responde una pregunta simple:
+    \textbf{``¿A cuántas desviaciones estándar está este dato del centro?''}}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}
+    \node[rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!6,
+          minimum width=5cm, minimum height=1.5cm,
+          font=\Large\color{arcaDark}, align=center] (formula) {
+      $z = \dfrac{x - \mu}{\sigma}$
+    };
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{@{}clp{7.5cm}@{}}
+    \toprule
+    \textbf{Símbolo} & \textbf{Nombre} & \textbf{Significado} \\
+    \midrule
+    $x$ & El dato & El valor individual que estamos evaluando. \\
+    $\mu$ & Media ($\bar{x}$) & El ``centro'' de todos los datos. \\
+    $\sigma$ & Desviación estándar & La ``unidad de dispersión'' --- qué tan lejos se esparcen los datos
+      típicamente alrededor de $\mu$. \\
+    $x - \mu$ & Desviación & Qué tan lejos está $x$ del centro (en unidades originales). \\
+    $z$ & Z-score & Esa misma distancia, pero expresada en \textbf{unidades de $\sigma$}.
+      Es un número \textbf{sin unidades}. \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{frame}
+
+\begin{frame}[shrink=10]{Z-Score: Ejemplo Numérico Paso a Paso}
+  \vspace{-4pt}
+  {\footnotesize
+    Supongamos que el \textbf{pH} del vino tiene $\mu = 3.31$ y $\sigma = 0.15$.
+    Un vino tiene pH $= 3.90$. ¿Es un outlier?}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    step/.style={rectangle, rounded corners=3pt, draw=#1, fill=#1!8,
+                 minimum width=12cm, minimum height=0.9cm,
+                 font=\small\color{textDark}, align=left, text width=11.5cm,
+                 inner sep=6pt},
+  ]
+    \node[step=codeBlue] (s1) at (0, 0)
+      {\textbf{Paso 1:} Calcular la desviación: $x - \mu = 3.90 - 3.31 = 0.59$};
+    \node[step=codePurple, below=0.3cm of s1] (s2)
+      {\textbf{Paso 2:} Dividir por $\sigma$: $z = \frac{0.59}{0.15} = 3.93$};
+    \node[step=arcaRed, below=0.3cm of s2] (s3)
+      {\textbf{Paso 3:} Interpretar: $|z| = 3.93 > 3$ $\to$ \textbf{es outlier}};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{codeBlue}\scriptsize\faArrowRight}]
+      $z = 1$: el dato está a 1 desviación del centro. \textbf{Normal} (68\% de datos están aquí).
+    \item[{\color{codeOrange}\scriptsize\faArrowRight}]
+      $z = 2$: está a 2 desviaciones. \textbf{Poco común} (solo 5\% están más lejos).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      $z = 3$: está a 3 desviaciones. \textbf{Muy raro} (solo 0.3\% están más lejos).
+    \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+      $z = 3.93$: está a casi 4 desviaciones. Este pH \textbf{no es típico} --- hay que investigar.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=5]{¿Qué Es una Heurística?}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=12cm, minimum height=1.3cm,
+                font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                inner sep=6pt},
+  ]
+    \node[box=codeBlue] (def) at (0, 0)
+      {\textbf{\color{codeBlue}\normalsize Definición}\\[2pt]
+       Una \textbf{heurística} es una regla práctica que funciona ``suficientemente bien''
+       en la mayoría de los casos, pero \textbf{no garantiza} el resultado correcto siempre.
+       Es un atajo útil, no una verdad matemática.};
+    \node[box=codeGreen, below=0.4cm of def] (ej)
+      {\textbf{\color{codeGreen}\normalsize Ejemplos de heurísticas}\\[2pt]
+       ``Si $|z| > 3$, es outlier'' $\to$ funciona bien con datos normales, pero no con datos sesgados.\\
+       ``Si $Q < Q1 - 1.5 \times IQR$, es outlier'' $\to$ el 1.5 es una convención, no una ley.\\
+       ``Si $|skew| > 1$, usar mediana'' $\to$ buen criterio general, pero hay excepciones.};
+    \node[box=arcaRed, below=0.4cm of ej] (imp)
+      {\textbf{\color{arcaRed}\normalsize ¿Por qué importa saber esto?}\\[2pt]
+       Para no aplicar reglas ciegamente.
+       La heurística te da un \textbf{punto de partida}; el \textbf{criterio de negocio} te da la decisión final.
+       ``El algoritmo me dijo que es outlier'' no es justificación suficiente para eliminar un dato.};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Detectar Outliers con Z-Score en Código}
+  \vspace{-6pt}
+  \begin{pyblock}
+from scipy import stats
+
+col = "pH"
+# Calcular Z-score de cada dato
+z_scores = stats.zscore(df[col])
+
+# Ver algunos ejemplos
+print("Primeros 5 z-scores:")
+for i in range(5):
+    print(f"  pH={df[col].iloc[i]:.2f}  ->  "
+          f"z={z_scores[i]:.2f}")
+
+# Detectar outliers
+threshold = 3
+outliers_z = df[np.abs(z_scores) > threshold]
+print(f"\nOutliers con |z| > {threshold}: {len(outliers_z)}")
+print(f"Valores de pH extremos: {outliers_z[col].values}")
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ El pH tiene distribución casi normal,
+    así que el Z-score funciona bien aquí.
+    Para \texttt{residual sugar} (sesgada), prefiere IQR.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Visualizar Outliers: Boxplot por Variable}
+  \vspace{-6pt}
+  \begin{pyblock}
+fig, axes = plt.subplots(2, 3, figsize=(14, 7))
+cols = ["residual sugar", "chlorides", "volatile acidity",
+        "sulphates", "total sulfur dioxide", "alcohol"]
+
+for ax, col in zip(axes.flat, cols):
+    sns.boxplot(y=df[col], ax=ax, color="#C82B40", width=0.4)
+    ax.set_title(col, fontsize=11)
+plt.suptitle("Outliers por variable", fontsize=14, y=1.02)
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Los puntos fuera de los ``bigotes'' del boxplot son outliers por IQR.
+    Nota cómo \texttt{chlorides} y \texttt{residual sugar} tienen muchos.}
+\end{frame}
+
+\begin{frame}[shrink=10]{¿Qué Hacer con los Outliers? --- Árbol de Decisión}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.6cm and 1.2cm,
+    decision/.style={diamond, draw=arcaRed, fill=arcaRed!8, aspect=2.5,
+                     font=\scriptsize\bfseries\color{arcaDark}, align=center,
+                     inner sep=2pt, text width=2.8cm},
+    action/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                   font=\scriptsize\bfseries\color{textDark}, align=center,
+                   minimum width=2.2cm, minimum height=0.8cm, text width=2cm},
+    arr/.style={-{Stealth[length=5pt]}, thick, color=textMuted},
+    lbl/.style={font=\tiny\color{textMuted}},
+  ]
+    \node[decision] (q1) {¿Es un error de\\ medición o captura?};
+    \node[action=arcaRed, right=1.5cm of q1] (a1) {\color{arcaRed}Corregir\\ o eliminar};
+    \node[decision, below=0.8cm of q1] (q2) {¿Es el objetivo\\ del análisis?};
+    \node[action=codeGreen, right=1.5cm of q2] (a2) {\color{codeGreen}Mantener\\ y estudiar};
+    \node[decision, below=0.8cm of q2] (q3) {¿Afecta al\\ modelo/análisis?};
+    \node[action=codeBlue, right=1.5cm of q3] (a3) {\color{codeBlue}Transformar\\ (winsorizar, log)};
+    \node[action=codeOrange, below=0.8cm of q3] (a4) {\color{codeOrange}Mantener\\ sin cambios};
+
+    \draw[arr] (q1) -- node[lbl, above] {Sí} (a1);
+    \draw[arr] (q1) -- node[lbl, left] {No} (q2);
+    \draw[arr] (q2) -- node[lbl, above] {Sí} (a2);
+    \draw[arr] (q2) -- node[lbl, left] {No} (q3);
+    \draw[arr] (q3) -- node[lbl, above] {Sí} (a3);
+    \draw[arr] (q3) -- node[lbl, left] {No} (a4);
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faExclamationTriangle\ Siempre documenta \textbf{qué hiciste} y \textbf{por qué}.
+    ``Eliminé 47 filas'' sin explicación es una mala práctica.}
+\end{frame}
+
+\begin{frame}[shrink=10]{Técnicas de Tratamiento de Outliers}
+  \vspace{-4pt}
+  {\small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}p{2.8cm}p{4.5cm}p{4.5cm}@{}}
+    \toprule
+    \textbf{Técnica} & \textbf{Qué hace} & \textbf{Cuándo usarla} \\
+    \midrule
+    \textbf{Eliminar} &
+      Quita las filas con outliers &
+      Error confirmado. Pocas filas. \\
+    \textbf{Winsorizar} &
+      Recorta los extremos al percentil 5/95 &
+      Quieres mantener la fila pero limitar el impacto. \\
+    \textbf{Capping (IQR)} &
+      Reemplaza por el límite IQR &
+      Similar a winsorizar, basado en cuartiles. \\
+    \textbf{Transformar (log)} &
+      Aplica $\log(x)$ para comprimir la escala &
+      Distribución muy sesgada a la derecha. \\
+    \textbf{Imputar} &
+      Reemplaza por mediana o media &
+      Si tratas el outlier como ``dato faltante''. \\
+    \textbf{Mantener} &
+      No hacer nada &
+      El outlier es información real y valiosa. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ No hay una técnica ``correcta''. Depende del problema, los datos y el modelo.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Ejemplo: Winsorización y Transformación Log}
+  \vspace{-6pt}
+  \begin{pyblock}
+from scipy.stats.mstats import winsorize
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+col = "residual sugar"
+
+# Original
+sns.histplot(df[col], kde=True, ax=axes[0], color="#C82B40")
+axes[0].set_title("Original")
+
+# Winsorizado (5% en cada cola)
+winsorized = winsorize(df[col], limits=[0.05, 0.05])
+sns.histplot(winsorized, kde=True, ax=axes[1], color="#2563EB")
+axes[1].set_title("Winsorizado (5%)")
+
+# Transformacion log
+sns.histplot(np.log1p(df[col]), kde=True, ax=axes[2],
+             color="#16A34A")
+axes[2].set_title("log(1 + x)")
+
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \texttt{np.log1p(x)} = $\ln(1+x)$, evita problemas con valores 0.
+    Observa cómo el log ``comprime'' la cola derecha.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Ejercicio 1: Detecta y Analiza Outliers \hfill
+    {\normalsize\faLaptopCode}}
+  \vspace{-6pt}
+  \begin{pyblock}
+# 1. Elige una columna: "chlorides" o "sulphates"
+# 2. Calcula limites IQR
+# 3. Cuenta cuantos outliers hay
+# 4. Haz un boxplot + stripplot
+# 5. Mira la calidad (quality) de los outliers:
+#    son vinos buenos o malos?
+#
+# Pista:
+# outliers = df[(df[col] < lower) | (df[col] > upper)]
+# outliers["quality"].describe()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      Si los outliers de \texttt{chlorides} tienen quality baja,
+      eso sugiere que la sal excesiva arruina el vino --- ¡es información!
+    \item[{\color{arcaRed}\scriptsize\faLightbulb}]
+      ¿Deberías eliminar estos outliers o conservarlos? Justifica.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 3: DISTRIBUCIÓN NORMAL
+% =============================================================================
+\sectionframe{La Distribución Normal}{¿Por qué importa tanto y cómo verificarla?}
+
+\begin{frame}[shrink=5]{¿Qué Es la Distribución Normal?}
+  \vspace{-4pt}
+  {\footnotesize
+    La distribución Normal (o \textbf{Gaussiana}) es la distribución más importante de la estadística.
+    Es la famosa ``campana'' --- simétrica, con la mayoría de datos cerca del centro y pocos en los extremos.}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}
+    \node[rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!6,
+          minimum width=6cm, minimum height=1.5cm,
+          font=\large\color{arcaDark}, align=center] (formula) {
+      $X \sim N(\mu, \sigma^2)$
+    };
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize Se lee: ``$X$ sigue una distribución Normal con media $\mu$ y varianza $\sigma^2$''.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{¿Por qué ``Normal''?} Porque aparece en una cantidad enorme de fenómenos naturales:
+      estaturas, errores de medición, presión arterial, temperaturas, pesos de productos.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{¿Por qué es tan común?} Por el \textbf{Teorema del Límite Central}: cuando muchos
+      factores pequeños e independientes se suman, el resultado tiende a ser Normal.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Ejemplo:} La estatura depende de genética, nutrición, salud, etc.
+      Ningún factor domina $\to$ la suma tiende a Normal.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=10]{Los Dos Parámetros: $\mu$ y $\sigma$}
+  \vspace{-4pt}
+  {\footnotesize
+    La distribución Normal se define \textbf{completamente} con solo dos números:}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{center}
+      \begin{tikzpicture}[
+        box/.style={rectangle, rounded corners=4pt, draw=codeBlue, fill=codeBlue!8,
+                    minimum width=5.5cm, minimum height=2.8cm,
+                    font=\scriptsize\color{textDark}, align=left, text width=5cm,
+                    inner sep=6pt},
+      ]
+        \node[box] {
+          {\normalsize\bfseries\color{codeBlue} $\mu$ (mu) --- La Media}\\[4pt]
+          Es el \textbf{centro} de la campana.\\[2pt]
+          Determina \textbf{dónde} se ubica la distribución en el eje X.\\[2pt]
+          Si $\mu$ cambia, la campana se \textbf{desplaza} a la izquierda o derecha,
+          pero no cambia su forma.\\[2pt]
+          {\color{textMuted}Ej: pH con $\mu = 3.31$ está centrado en 3.31.}
+        };
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \begin{center}
+      \begin{tikzpicture}[
+        box/.style={rectangle, rounded corners=4pt, draw=codePurple, fill=codePurple!8,
+                    minimum width=5.5cm, minimum height=2.8cm,
+                    font=\scriptsize\color{textDark}, align=left, text width=5cm,
+                    inner sep=6pt},
+      ]
+        \node[box] {
+          {\normalsize\bfseries\color{codePurple} $\sigma$ (sigma) --- La Desv. Estándar}\\[4pt]
+          Es el \textbf{ancho} de la campana.\\[2pt]
+          Determina qué tan \textbf{dispersos} están los datos alrededor de $\mu$.\\[2pt]
+          $\sigma$ pequeño $\to$ campana alta y estrecha (datos muy concentrados).\\
+          $\sigma$ grande $\to$ campana baja y ancha (datos dispersos).\\[2pt]
+          {\color{textMuted}Ej: pH con $\sigma = 0.15$ es bastante concentrado.}
+        };
+      \end{tikzpicture}
+      \end{center}
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ Con solo $\mu$ y $\sigma$, puedes saber \textbf{todo} sobre una distribución Normal:
+    dónde está el centro, qué tan dispersa es, y qué porcentaje de datos cae en cualquier rango.}
+\end{frame}
+
+\begin{frame}[shrink=5]{Propiedades Clave de la Normal}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    prop/.style={rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!6,
+                 minimum width=5.5cm, minimum height=1.3cm,
+                 font=\scriptsize\color{textDark}, align=center, text width=5cm},
+  ]
+    \node[prop] (p1) at (0, 0)
+      {\textbf{\color{arcaRed}Perfectamente simétrica}\\[2pt]
+       $\text{media} = \text{mediana} = \text{moda}$\\
+       Skewness $= 0$, Kurtosis $= 3$};
+    \node[prop] (p2) at (6.5, 0)
+      {\textbf{\color{arcaRed}Regla 68--95--99.7}\\[2pt]
+       68\% dentro de $\mu \pm 1\sigma$\\
+       95\% dentro de $\mu \pm 2\sigma$\\
+       99.7\% dentro de $\mu \pm 3\sigma$};
+    \node[prop] (p3) at (0, -2.2)
+      {\textbf{\color{arcaRed}Colas infinitas}\\[2pt]
+       Teóricamente va de $-\infty$ a $+\infty$\\
+       pero en la práctica casi todo\\
+       está dentro de $\pm 3\sigma$};
+    \node[prop] (p4) at (6.5, -2.2)
+      {\textbf{\color{arcaRed}La estandarización}\\[2pt]
+       Cualquier Normal se convierte\\
+       en $N(0, 1)$ con el Z-score:\\
+       $z = (x - \mu) / \sigma$};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faArrowRight\ La \textbf{Normal estándar} $N(0, 1)$ tiene $\mu = 0$ y $\sigma = 1$.
+    Es la ``versión universal'' --- permite comparar datos de cualquier escala.}
+\end{frame}
+
+\begin{frame}[shrink=10]{¿Por Qué Importa Saber si los Datos Son Normales?}
+  \vspace{-4pt}
+  {\footnotesize
+    Varias herramientas que ya conocemos \textbf{asumen} que los datos son normales.
+    Si no lo verificas, tus conclusiones pueden ser \textbf{incorrectas}:}
+
+  \vspace{6pt}
+  {\small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}p{4.2cm}p{3.5cm}p{4.2cm}@{}}
+    \toprule
+    \textbf{Herramienta} & \textbf{Asume normalidad} & \textbf{Si no es Normal\ldots} \\
+    \midrule
+    Z-score para outliers &
+      Sí &
+      Detecta de más o de menos \\
+    Regla 68--95--99.7 &
+      Sí &
+      Los porcentajes no aplican \\
+    $\mu \pm 2\sigma$ como rango &
+      Sí &
+      Rango incorrecto \\
+    Correlación de Pearson &
+      Funciona mejor &
+      Puede subestimar la relación \\
+    Media como resumen &
+      Más útil si Normal &
+      Mediana es mejor opción \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faExclamationTriangle\ No es ``bonito'' que los datos sean normales.
+    Es un \textbf{requisito} para que ciertas herramientas funcionen correctamente.}
+\end{frame}
+
+\begin{frame}[shrink=5]{¿Qué Pasa Si Asumes Normalidad y No Lo Es?}
+  \vspace{-4pt}
+  {\footnotesize
+    Ya vimos que herramientas como el Z-score o la regla 68-95-99.7 \textbf{asumen}
+    que los datos son normales. Veamos qué pasa con nuestro dataset si no lo verificamos:}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaRed} \faTimesCircle\ Sin verificar}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item Calculas $\mu \pm 2\sigma$ en \texttt{residual sugar}
+          y dices ``el 95\% de los vinos tienen entre 0 y 5 g/L de azúcar''.
+        \item Usas Z-score en \texttt{chlorides} y concluyes que
+          ``casi no hay outliers''.
+        \item Usas Pearson en datos con outliers extremos
+          y la correlación sale distorsionada.
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      {\scriptsize\color{arcaRed}\bfseries
+        Todas estas conclusiones son incorrectas.}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codeGreen} \faCheckCircle\ Verificando primero}
+      \vspace{4pt}
+
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{5pt}
+        \item Ves que \texttt{residual sugar} tiene skew $= 1.9$,
+          \textbf{no es normal}. Usas percentiles en vez de $\mu \pm 2\sigma$.
+        \item Ves que \texttt{chlorides} es sesgada.
+          Usas \textbf{IQR} en vez de Z-score y encuentras el 5\% real de outliers.
+        \item Ves outliers $\to$ usas \textbf{Spearman}
+          en vez de Pearson para la correlación.
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      {\scriptsize\color{codeGreen}\bfseries
+        Herramienta correcta = conclusión correcta.}
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ Un solo paso --- verificar normalidad --- te dice
+    \textbf{qué herramienta usar} en cada caso.}
+\end{frame}
+
+\begin{frame}[shrink=5]{Tres Herramientas para Verificar Normalidad}
+  \vspace{-4pt}
+  {\footnotesize
+    Antes de usar herramientas que asumen normalidad, \textbf{verifica}.
+    Tenemos 3 métodos complementarios:}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=3.8cm, minimum height=2.3cm,
+                font=\scriptsize\color{textDark}, align=center, text width=3.5cm},
+  ]
+    \node[box=codeBlue] (v1) at (0,0)
+      {\textbf{\color{codeBlue}\faChartBar\ Visual rápida}\\[4pt]
+       Histograma + KDE\\[2pt]
+       ¿Forma de campana?\\
+       ¿Simétrica?\\
+       \texttt{skew()} $\approx$ 0?\\[4pt]
+       {\tiny\color{textMuted}Nivel: Exploratorio}};
+    \node[box=codePurple] (v2) at (4.7,0)
+      {\textbf{\color{codePurple}\faChartLine\ Q-Q Plot}\\[4pt]
+       Compara datos reales\\
+       vs una Normal perfecta\\[2pt]
+       Si es Normal: puntos\\
+       sobre la línea recta\\[4pt]
+       {\tiny\color{textMuted}Nivel: Detallado}};
+    \node[box=codeGreen] (v3) at (9.4,0)
+      {\textbf{\color{codeGreen}\faCalculator\ Shapiro-Wilk}\\[4pt]
+       Responde sí/no\\
+       con un número\\[2pt]
+       Resultado cercano a 1\\
+       $\to$ parece Normal\\[4pt]
+       {\tiny\color{textMuted}Nivel: Cuantitativo}};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ Usa las 3 juntas. Ninguna es suficiente por sí sola.
+    Veamos cada una en detalle\ldots}
+\end{frame}
+
+% ── Q-Q Plot en detalle ──
+\begin{frame}[shrink=10]{Q-Q Plot: ¿Qué Es y Cómo Leerlo?}
+  \vspace{-4pt}
+  {\footnotesize
+    Q-Q = \textbf{Quantile-Quantile}. Compara los cuantiles de \textbf{tus datos reales}
+    con los cuantiles que \textbf{tendrían si fueran perfectamente normales}.}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    step/.style={rectangle, rounded corners=3pt, draw=#1, fill=#1!8,
+                 minimum width=12cm, minimum height=0.85cm,
+                 font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                 inner sep=6pt},
+  ]
+    \node[step=codeBlue] (s1) at (0, 0)
+      {\textbf{Paso 1:} Ordena tus $n$ datos de menor a mayor.
+       El más pequeño es el cuantil 1/$n$, el siguiente 2/$n$, etc.};
+    \node[step=codePurple, below=0.25cm of s1] (s2)
+      {\textbf{Paso 2:} Calcula los cuantiles teóricos: ``si estos datos fueran
+       perfectamente normales, ¿qué valor tendría el cuantil 1/$n$, 2/$n$, etc.?''};
+    \node[step=codeGreen, below=0.25cm of s2] (s3)
+      {\textbf{Paso 3:} Dibuja un punto por cada dato: eje X $=$ cuantil teórico,
+       eje Y $=$ dato real. Si los datos son normales, los puntos caen sobre la diagonal.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+      \textbf{Puntos sobre la línea:} los datos son normales --- cada cuantil real
+      coincide con el teórico.
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      \textbf{Puntos se curvan arriba en los extremos:} cola derecha más pesada
+      (más valores extremos altos de los esperados).
+    \item[{\color{arcaRed}\scriptsize\faTimesCircle}]
+      \textbf{Forma de S:} distribución sesgada --- los datos \textbf{no son normales}.
+  \end{itemize}
+  }
+\end{frame}
+
+% ── Shapiro-Wilk en detalle ──
+\begin{frame}[shrink=10]{Shapiro-Wilk: El ``Detector de Normalidad''}
+  \vspace{-4pt}
+  {\footnotesize
+    El test de Shapiro-Wilk responde una pregunta directa:
+    \textbf{``¿Estos datos podrían venir de una distribución Normal?''}}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=12cm, minimum height=1.3cm,
+                font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                inner sep=6pt},
+  ]
+    \node[box=codeBlue] (idea) at (0, 0)
+      {\textbf{\color{codeBlue}\faLightbulb\ La idea intuitiva:}\\
+       Shapiro-Wilk ordena los datos y compara las distancias entre ellos con las
+       distancias que \textbf{esperaríamos} si fueran normales. Si coinciden bien,
+       el resultado (llamado \textbf{estadístico $W$}) es cercano a \textbf{1}.};
+    \node[box=codeGreen, below=0.3cm of idea] (si)
+      {\textbf{\color{codeGreen}\faCheckCircle\ $W$ cercano a 1} (ej: $W = 0.997$)\\
+       Los datos se comportan como una Normal. Las distancias entre valores
+       consecutivos coinciden con lo esperado. \textbf{Conclusión: parece Normal.}};
+    \node[box=arcaRed, below=0.3cm of si] (no)
+      {\textbf{\color{arcaRed}\faTimesCircle\ $W$ lejos de 1} (ej: $W = 0.85$)\\
+       Las distancias entre datos no coinciden con una Normal. Hay
+       asimetría, colas pesadas u otra forma distinta. \textbf{Conclusión: NO es Normal.}};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codePurple}\scriptsize\faArrowRight}]
+      En Python: \texttt{stat, p = stats.shapiro(datos)}.
+      El valor \texttt{stat} es $W$.
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      \textbf{Limitación:} con datasets muy grandes ($n > 5000$), Shapiro casi siempre
+      dice ``no es Normal'' porque detecta desviaciones mínimas. Combínalo con el Q-Q plot.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Normalidad en Wine Quality: pH vs Residual Sugar}
+  \vspace{-6pt}
+  \begin{pyblock}
+fig, axes = plt.subplots(2, 3, figsize=(15, 8))
+
+for i, col in enumerate(["pH", "residual sugar"]):
+    # Histograma + KDE
+    sns.histplot(df[col], kde=True, ax=axes[i, 0],
+                 color="#C82B40")
+    axes[i, 0].set_title(f"{col}: Histograma + KDE")
+
+    # Q-Q Plot
+    stats.probplot(df[col], plot=axes[i, 1])
+    axes[i, 1].set_title(f"{col}: Q-Q Plot")
+
+    # Info de Shapiro
+    stat, p = stats.shapiro(df[col].sample(500,
+                            random_state=42))
+    axes[i, 2].text(0.5, 0.5,
+        f"Shapiro-Wilk\nstat={stat:.4f}\np={p:.4f}\n"
+        f"{'Normal' if p > 0.05 else 'NO Normal'}",
+        ha="center", va="center", fontsize=14,
+        transform=axes[i, 2].transAxes)
+    axes[i, 2].set_title(f"{col}: Shapiro-Wilk")
+
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Simular una Normal en Python}
+  \vspace{-6pt}
+  \begin{pyblock}
+# Generar datos normales artificiales
+np.random.seed(42)
+mu, sigma = 3.31, 0.15  # mismos parametros que pH
+datos_simulados = np.random.normal(mu, sigma, size=1599)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# Normal simulada (perfecta)
+sns.histplot(datos_simulados, kde=True, ax=axes[0],
+             color="#2563EB", bins=30)
+axes[0].set_title(f"Normal simulada (mu={mu}, sigma={sigma})")
+axes[0].axvline(mu, color="#C82B40", ls="--", label="mu")
+axes[0].legend()
+
+# pH real (casi normal)
+sns.histplot(df["pH"], kde=True, ax=axes[1],
+             color="#16A34A", bins=30)
+axes[1].set_title("pH real del dataset")
+axes[1].axvline(df["pH"].mean(), color="#C82B40", ls="--",
+                label="media")
+axes[1].legend()
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \texttt{np.random.normal(mu, sigma, n)} genera $n$ valores
+    de una distribución $N(\mu, \sigma^2)$.
+    Compara la simulada (perfecta) con la real (aproximada).}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Cambiar $\mu$ y $\sigma$: ¿Qué Pasa con la Campana?}
+  \vspace{-6pt}
+  \begin{pyblock}
+np.random.seed(42)
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# Cambiar mu (el centro se mueve)
+for mu_val in [2.0, 3.31, 4.5]:
+    data = np.random.normal(mu_val, 0.15, 5000)
+    sns.kdeplot(data, ax=axes[0], label=f"mu={mu_val}")
+axes[0].set_title("Mismo sigma, diferente mu")
+axes[0].legend()
+
+# Cambiar sigma (el ancho cambia)
+for sig_val in [0.05, 0.15, 0.40]:
+    data = np.random.normal(3.31, sig_val, 5000)
+    sns.kdeplot(data, ax=axes[1], label=f"sigma={sig_val}")
+axes[1].set_title("Mismo mu, diferente sigma")
+axes[1].legend()
+
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ $\mu$ desplaza la campana. $\sigma$ la ensancha o estrecha.
+    Son los únicos dos ``controles'' de una Normal.}
+\end{frame}
+
+\begin{frame}[shrink=5]{¿Y Si No Es Normal?}
+  \vspace{-4pt}
+  {\footnotesize
+    No todos los datos son normales, y \textbf{no necesitan serlo}.
+    Lo importante es \textbf{saber} si lo son para elegir las herramientas correctas:}
+
+  \vspace{6pt}
+  {\small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}p{4cm}p{4cm}p{4cm}@{}}
+    \toprule
+    \textbf{Si es Normal\ldots} & \textbf{Si NO es Normal\ldots} & \textbf{Ejemplo} \\
+    \midrule
+    Usa la \textbf{media} &
+      Usa la \textbf{mediana} &
+      Resumen de tendencia central \\
+    Usa \textbf{std} &
+      Usa \textbf{IQR} &
+      Medida de dispersión \\
+    Usa \textbf{Z-score} &
+      Usa \textbf{método IQR} &
+      Detección de outliers \\
+    Regla 68-95-99.7 \textbf{aplica} &
+      \textbf{No aplica} &
+      Estimar rangos ``normales'' \\
+    Correlación \textbf{Pearson} &
+      Correlación \textbf{Spearman} &
+      Relación entre variables \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ Verificar normalidad no es un capricho académico.
+    Es lo que te permite \textbf{elegir la herramienta correcta} para cada situación.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 4: CORRELACIÓN
+% =============================================================================
+\sectionframe{Correlación}{¿Hay relación entre dos variables?}
+
+\begin{frame}[shrink=5]{¿Qué Es Correlación?}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=3.5cm, minimum height=1.8cm,
+                font=\scriptsize\color{textDark}, align=center, text width=3.2cm},
+  ]
+    \node[box=codeGreen] (pos) at (0,0)
+      {\textbf{\color{codeGreen}Correlación positiva}\\[2pt]
+       $r \approx +1$\\
+       Una sube $\to$ la otra sube\\
+       {\tiny Ej: alcohol $\uparrow$ quality $\uparrow$}};
+    \node[box=textMuted] (zero) at (4.5,0)
+      {\textbf{\color{textMuted}Sin correlación lineal}\\[2pt]
+       $r \approx 0$\\
+       No hay relación \textbf{lineal}\\
+       {\tiny ¡Puede haber otra relación!}};
+    \node[box=arcaRed] (neg) at (9,0)
+      {\textbf{\color{arcaRed}Correlación negativa}\\[2pt]
+       $r \approx -1$\\
+       Una sube $\to$ la otra baja\\
+       {\tiny Ej: pH $\uparrow$ acidez $\downarrow$}};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      La correlación mide la \textbf{fuerza y dirección} de una relación \textbf{lineal} entre dos variables.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Rango: de $-1$ (perfecta negativa) a $+1$ (perfecta positiva).
+    \item[{\color{codeOrange}\scriptsize\faExclamationTriangle}]
+      \textbf{$r \approx 0$ no significa ``no hay relación''} --- significa que no hay relación \textbf{lineal}.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=10]{Pearson ($r$): De Dónde Sale la Fórmula}
+  \vspace{-4pt}
+  {\footnotesize
+    Queremos un número que diga: ``cuando $x$ sube, ¿$y$ también sube?''
+    Construyamos la idea paso a paso:}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    step/.style={rectangle, rounded corners=3pt, draw=#1, fill=#1!8,
+                 minimum width=12cm, minimum height=0.85cm,
+                 font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                 inner sep=6pt},
+  ]
+    \node[step=codeBlue] (s1) at (0, 0)
+      {\textbf{1. Desviación de cada dato:} $(x_i - \bar{x})$ mide cuánto se aleja $x_i$
+       de su media. Igual para $y$: $(y_i - \bar{y})$.};
+    \node[step=codePurple, below=0.2cm of s1] (s2)
+      {\textbf{2. Producto de desviaciones:} $(x_i - \bar{x})(y_i - \bar{y})$.
+       Si ambos están \textbf{arriba} de su media $\to$ producto \textbf{positivo}.
+       Si uno arriba y otro abajo $\to$ producto \textbf{negativo}.};
+    \node[step=codeGreen, below=0.2cm of s2] (s3)
+      {\textbf{3. Sumar todos los productos:} $\sum(x_i - \bar{x})(y_i - \bar{y})$.
+       Si la mayoría son positivos $\to$ relación positiva. Si negativos $\to$ negativa.};
+    \node[step=arcaRed, below=0.2cm of s3] (s4)
+      {\textbf{4. Normalizar:} Dividimos entre $(n-1)\, s_x \, s_y$ para que $r$
+       quede entre $-1$ y $+1$, sin importar las unidades originales.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}
+    \node[rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!6,
+          minimum width=6cm, minimum height=1.2cm,
+          font=\large\color{arcaDark}, align=center] {
+      $r = \dfrac{\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})}{(n-1)\, s_x \, s_y}$
+    };
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[shrink=10]{Spearman ($\rho$): Pearson Pero con Rangos}
+  \vspace{-4pt}
+  {\footnotesize
+    Spearman tiene una idea elegante: en vez de usar los \textbf{valores} originales,
+    usa sus \textbf{posiciones} (rangos) cuando los ordenas de menor a mayor.}
+
+  \vspace{4pt}
+  \begin{center}
+  {\small
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{@{}cccc@{}}
+    \toprule
+    \textbf{Dato $x$} & \textbf{Rango de $x$} & \textbf{Dato $y$} & \textbf{Rango de $y$} \\
+    \midrule
+    3.2 & 1 & 5 & 1 \\
+    4.1 & 2 & 6 & 2 \\
+    8.7 & 3 & 7 & 3 \\
+    150.0 {\tiny(outlier!)} & 4 & 8 & 4 \\
+    \bottomrule
+  \end{tabular}
+  }
+  \end{center}
+
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=5.5cm, minimum height=1.6cm,
+                font=\scriptsize\color{textDark}, align=left, text width=5cm,
+                inner sep=6pt},
+  ]
+    \node[box=codePurple] (how) at (0,0)
+      {\textbf{\color{codePurple}¿Cómo se calcula?}\\[2pt]
+       Reemplaza cada valor por su rango (posición al ordenar)
+       y luego aplica la \textbf{fórmula de Pearson} sobre esos rangos.};
+    \node[box=codeGreen] (why) at (6.5,0)
+      {\textbf{\color{codeGreen}¿Por qué funciona?}\\[2pt]
+       El outlier 150.0 solo tiene rango 4. No ``arrastra'' el resultado.
+       Spearman mide si el \textbf{orden} se mantiene, no las magnitudes.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ Tip: si Pearson y Spearman dan resultados muy diferentes,
+    probablemente hay \textbf{outliers} o una relación \textbf{no lineal}.}
+\end{frame}
+
+\begin{frame}[shrink=5]{Pearson vs Spearman: Resumen}
+  \vspace{-4pt}
+  {\small
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{@{}p{3cm}p{4.5cm}p{4.5cm}@{}}
+    \toprule
+    & \textbf{Pearson ($r$)} & \textbf{Spearman ($\rho$)} \\
+    \midrule
+    \textbf{Mide} &
+      Relación \textbf{lineal} &
+      Relación \textbf{monótona} \\
+    \textbf{Usa} &
+      Los \textbf{valores} originales &
+      Los \textbf{rangos} (posiciones) \\
+    \textbf{Outliers} &
+      Sensible (un extremo lo distorsiona) &
+      Robusto (el rango no cambia mucho) \\
+    \textbf{Normalidad} &
+      Funciona mejor con datos normales &
+      No la requiere \\
+    \textbf{Cuándo usar} &
+      Datos normales, sin outliers, relación recta &
+      Datos sesgados, outliers, relación curva \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{codeBlue}\scriptsize\faArrowRight}]
+      En Python: \texttt{df["x"].corr(df["y"])} usa Pearson por defecto.
+    \item[{\color{codePurple}\scriptsize\faArrowRight}]
+      Para Spearman: \texttt{df["x"].corr(df["y"], method="spearman")}.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Heatmap de Correlación}
+  \vspace{-6pt}
+  \begin{pyblock}
+plt.figure(figsize=(10, 8))
+corr = df.corr(numeric_only=True)
+mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
+
+sns.heatmap(corr, mask=mask, annot=True, fmt=".2f",
+            cmap="RdBu_r", center=0, vmin=-1, vmax=1,
+            square=True, linewidths=0.5)
+plt.title("Matriz de Correlacion (Pearson) - Wine Quality",
+          fontsize=13)
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \texttt{mask=np.triu(..., k=1)} oculta la mitad superior pero preserva la diagonal.
+    \texttt{cmap="RdBu\_r"}: rojo = positivo, azul = negativo.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Scatter Plots: Confirmar Visualmente}
+  \vspace{-6pt}
+  \begin{pyblock}
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# Correlacion positiva
+sns.scatterplot(x="alcohol", y="quality", data=df,
+                alpha=0.3, ax=axes[0], color="#16A34A")
+axes[0].set_title(f'alcohol vs quality\n'
+    f'r={df["alcohol"].corr(df["quality"]):.2f}')
+
+# Correlacion negativa
+sns.scatterplot(x="volatile acidity", y="quality",
+                data=df, alpha=0.3, ax=axes[1],
+                color="#C82B40")
+axes[1].set_title(f'volatile acidity vs quality\n'
+    f'r={df["volatile acidity"].corr(df["quality"]):.2f}')
+
+# Sin correlacion lineal
+sns.scatterplot(x="residual sugar", y="quality",
+                data=df, alpha=0.3, ax=axes[2],
+                color="#6B7280")
+axes[2].set_title(f'residual sugar vs quality\n'
+    f'r={df["residual sugar"].corr(df["quality"]):.2f}')
+
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{Correlación $\neq$ Causalidad}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=12cm, minimum height=1.3cm,
+                font=\scriptsize\color{textDark}, align=left, text width=11.5cm,
+                inner sep=6pt},
+  ]
+    \node[box=arcaRed] (myth) at (0, 0)
+      {\textbf{\color{arcaRed}\faTimesCircle\ Mito:}
+       ``El alcohol causa que el vino sea bueno'' (porque $r \approx 0.48$).\\
+       Correlación solo dice que \textbf{se mueven juntos}, no que uno \textbf{cause} al otro.};
+    \node[box=codeGreen, below=0.4cm of myth] (real) at (0, 0)
+      {\textbf{\color{codeGreen}\faCheckCircle\ Realidad:}
+       Los vinos con más alcohol suelen ser de uvas más maduras, que también
+       producen mejor sabor. La \textbf{madurez de la uva} es la variable oculta.};
+    \node[box=codeBlue, below=0.4cm of real] (rule) at (0, 0)
+      {\textbf{\color{codeBlue}\faLightbulb\ Regla:}
+       ``Correlación implica que \textbf{vale la pena investigar} si hay causalidad.''\\
+       Para probar causalidad necesitas: experimentos controlados, análisis causal, o dominio experto.};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faExternalLinkAlt\ Ejemplo clásico: el consumo de helado y los ahogamientos
+    correlacionan positivamente. ¿El helado causa ahogamientos?
+    No --- ambos aumentan en verano (variable oculta: temperatura).}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 5: RELACIONES NO LINEALES
+% =============================================================================
+\sectionframe{No Todo Es una Recta}{Relaciones no lineales entre variables}
+
+\begin{frame}[shrink=8]{¿Por Qué Pearson Puede Fallar?}
+  \vspace{-4pt}
+  {\footnotesize
+    Pearson mide relación \textbf{lineal}. Si la relación es curva,
+    Pearson dirá ``no hay relación'' cuando \textbf{sí la hay}:}
+
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
+                minimum width=3.8cm, minimum height=2cm,
+                font=\scriptsize\color{textDark}, align=center, text width=3.5cm},
+  ]
+    \node[box=codeGreen] (lin) at (0,0)
+      {\textbf{\color{codeGreen}Lineal}\\[2pt]
+       $y = a + bx$\\
+       Pearson funciona bien\\
+       $r = 0.95$};
+    \node[box=codeOrange] (quad) at (4.8,0)
+      {\textbf{\color{codeOrange}Cuadrática}\\[2pt]
+       $y = a + bx + cx^2$\\
+       Pearson dice $r \approx 0$\\
+       ¡Pero la relación existe!};
+    \node[box=codePurple] (log) at (9.6,0)
+      {\textbf{\color{codePurple}Logarítmica}\\[2pt]
+       $y = a + b \ln(x)$\\
+       Pearson subestima\\
+       Spearman captura mejor};
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faExclamationTriangle}]
+      \textbf{Moraleja:} Siempre haz el scatter plot \textbf{antes} de confiar en el número $r$.
+    \item[{\color{codeBlue}\scriptsize\faArrowRight}]
+      Spearman detecta relaciones monótonas (siempre sube o siempre baja),
+      aunque no sean lineales.
+    \item[{\color{codePurple}\scriptsize\faArrowRight}]
+      Para relaciones complejas (U, olas), se necesitan técnicas más avanzadas.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Ejemplo: Pearson vs Spearman en Wine Quality}
+  \vspace{-6pt}
+  \begin{pyblock}
+# Comparar Pearson vs Spearman
+cols = ["alcohol", "volatile acidity", "citric acid",
+        "sulphates", "residual sugar"]
+
+comparison = pd.DataFrame({
+    "Pearson": [df[c].corr(df["quality"]) for c in cols],
+    "Spearman": [df[c].corr(df["quality"],
+                 method="spearman") for c in cols],
+}, index=cols)
+comparison["Diferencia"] = abs(
+    comparison["Pearson"] - comparison["Spearman"])
+print(comparison.round(3))
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Donde Pearson y Spearman difieren mucho,
+    la relación probablemente \textbf{no es lineal} o hay \textbf{outliers influyentes}.}
+\end{frame}
+
+\begin{frame}[shrink=10]{¿Qué Hace \texttt{regplot}? --- La Matemática Detrás}
+  \vspace{-4pt}
+  {\footnotesize
+    \texttt{sns.regplot()} dibuja los puntos \textbf{y además ajusta una línea}.
+    ¿De dónde sale esa línea? Tiene dos modos:}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codeBlue} Modo lineal (por defecto)}
+      \vspace{4pt}
+
+      {\scriptsize
+      Busca la recta $y = a + bx$ que \textbf{minimiza} la suma de errores al cuadrado:
+      }
+
+      \vspace{4pt}
+      \begin{center}
+      \begin{tikzpicture}
+        \node[rectangle, rounded corners=3pt, draw=codeBlue, fill=codeBlue!6,
+              font=\small\color{arcaDark}, inner sep=6pt] {
+          $\min \displaystyle\sum_{i=1}^{n} (y_i - a - bx_i)^2$
+        };
+      \end{tikzpicture}
+      \end{center}
+
+      \vspace{4pt}
+      {\scriptsize
+      Cada $(y_i - a - bx_i)$ es la distancia vertical del punto a la recta.
+      Al elevar al cuadrado y sumar, se penalizan los puntos lejanos.
+      La recta que \textbf{menos error total} tenga es la elegida.
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{codePurple} Modo LOWESS (\texttt{lowess=True})}
+      \vspace{4pt}
+
+      {\scriptsize
+      En vez de \textbf{una} recta para todos los datos, ajusta \textbf{muchas rectas locales}:
+      }
+
+      \vspace{4pt}
+      {\scriptsize
+      \begin{itemize}\setlength{\itemsep}{3pt}
+        \item Para cada punto, toma los vecinos cercanos.
+        \item Ajusta una recta solo con esos vecinos.
+        \item El resultado: una \textbf{curva suave} que sigue la tendencia local.
+      \end{itemize}
+      }
+
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      Útil cuando la relación \textbf{no es una recta}.
+      No asume ninguna forma específica.
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\scriptsize\color{arcaDark}\bfseries
+    \faArrowRight\ El modo lineal es el \textbf{método de mínimos cuadrados},
+    una de las técnicas más fundamentales de la estadística.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=28]{Visualizar Relaciones con regplot en Código}
+  \vspace{-6pt}
+  \begin{pyblock}
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Lineal: alcohol vs quality
+sns.regplot(x="alcohol", y="quality", data=df,
+            scatter_kws={"alpha": 0.2}, ax=axes[0],
+            color="#16A34A", line_kws={"color": "#C82B40"})
+axes[0].set_title("alcohol vs quality (lineal)")
+
+# No lineal: citric acid vs volatile acidity
+sns.regplot(x="citric acid", y="volatile acidity",
+            data=df, scatter_kws={"alpha": 0.2},
+            ax=axes[1], color="#2563EB",
+            lowess=True,
+            line_kws={"color": "#C82B40"})
+axes[1].set_title("citric acid vs volatile acidity (lowess)")
+
+plt.tight_layout()
+plt.show()
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ \texttt{lowess=True} ajusta una curva suave en vez de una recta.
+    Útil para explorar relaciones no lineales.}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 6: EJERCICIO INTEGRADOR
+% =============================================================================
+\sectionframe{Ejercicio Integrador}{Aplicando todo al Wine Quality dataset}
+
+\begin{frame}[fragile,shrink=28]{Ejercicio 2: Análisis Completo \hfill
+    {\normalsize\faLaptopCode}}
+  \vspace{-6pt}
+  \begin{pyblock}
+# PARTE A: Outliers
+# 1. Detecta outliers en "total sulfur dioxide" con IQR
+# 2. Visualiza con boxplot
+# 3. Que calidad tienen los vinos con SO2 extremo?
+
+# PARTE B: Normalidad
+# 4. Verifica normalidad de "alcohol" (hist, Q-Q, Shapiro)
+# 5. Si no es normal, intenta transformar con log
+
+# PARTE C: Correlacion
+# 6. Calcula la correlacion (Pearson y Spearman)
+#    de "alcohol" con "quality"
+# 7. Haz un scatter plot con linea de regresion
+# 8. Identifica las 3 variables mas correlacionadas
+#    con quality (positiva o negativamente)
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\ Intenta conectar los 3 temas: ¿los outliers de SO\textsubscript{2}
+    afectan la correlación? ¿Qué pasa si los quitas?}
+\end{frame}
+
+% =============================================================================
+%  SECCIÓN 7: CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que logramos hoy}
+
+\begin{frame}[shrink=10]{Resumen: Herramientas de Hoy}
+  \vspace{-4pt}
+  {\small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Concepto} & \textbf{Herramienta} & \textbf{Código clave} \\
+    \midrule
+    Outliers (IQR) & Boxplot + cálculo manual & \texttt{Q1 - 1.5*IQR} \\
+    Outliers (Z-score) & scipy & \texttt{stats.zscore()} \\
+    Winsorización & scipy & \texttt{winsorize(limits=...)} \\
+    Normalidad visual & Histograma + Q-Q & \texttt{stats.probplot()} \\
+    Normalidad numérica & Shapiro-Wilk & \texttt{stats.shapiro()} \\
+    Transformación & numpy & \texttt{np.log1p()}, \texttt{np.sqrt()} \\
+    Correlación & pandas & \texttt{.corr()}, \texttt{method="spearman"} \\
+    Heatmap & seaborn & \texttt{sns.heatmap()} \\
+    Scatter + regresión & seaborn & \texttt{sns.regplot(lowess=True)} \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{frame}
+
+\begin{frame}{Lo que Aprendimos Hoy}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Outliers buenos vs malos: criterio de negocio.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Detección: IQR (robusto) y Z-score (normal).
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Tratamiento: eliminar, winsorizar, transformar.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          La detección de outliers puede ser el objetivo.
+      \end{itemize}
+      }
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength{\itemsep}{4pt}
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Normalidad: por qué importa y cómo verificar.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Transformaciones: log, sqrt, Box-Cox.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          Correlación: Pearson vs Spearman.
+        \item[{\color{codeGreen}\faCheckCircle}]
+          No todas las relaciones son lineales.
+      \end{itemize}
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{6pt}
+  {\small\color{arcaDark}\bfseries Próxima clase:}
+  \vspace{2pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\faArrowRight}]
+      Visualización avanzada con matplotlib y seaborn.
+    \item[{\color{arcaRed}\faArrowRight}]
+      Gráficos para comunicar resultados.
+  \end{itemize}
+  }
+\end{frame}
+
+% ── QR ENCUESTA ──────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1cm}
+  \begin{center}
+    {\Huge\bfseries\color{white} ¿Cómo estuvo la clase?\par}
+    \vspace{0.6cm}
+    \includegraphics[width=4cm]{qr_encuesta.jpg}
+    \vspace{0.4cm}
+    {\large\color{white!80} Escaneen el QR para la encuesta rápida\par}
+  \end{center}
+\end{frame}
+}
+
+\end{document}
