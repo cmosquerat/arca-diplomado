@@ -1197,6 +1197,83 @@ y_pred_estricto = (probs >= 0.7).astype(int)   # mas confianza
   }
 \end{frame}
 
+\begin{frame}{Cómo Se Calcula CADA Punto de la ROC}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Receta para \textbf{un} punto de la curva:}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{3pt}
+    \item Fijar un umbral $u$ (por ejemplo 0.20, 0.45, 0.70\ldots).
+    \item Convertir probabilidades en predicciones: \texttt{y\_pred = (proba >= u)}.
+    \item Contar VP, FN, FP, VN en la matriz de confusión.
+    \item Calcular:
+      $\text{TPR} = \dfrac{VP}{VP + FN}$, \quad
+      $\text{FPR} = \dfrac{FP}{FP + VN}$
+    \item Graficar el punto $(\text{FPR}, \text{TPR})$.
+  \end{enumerate}
+  }
+
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faArrowRight\hspace{4pt}\textbf{Repetir} para \textbf{todos} los umbrales posibles
+    (sklearn lo hace automáticamente, usando los scores únicos como umbrales).
+    Los puntos conectados forman la curva.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink=42]{3 Umbrales = 3 Puntos en la Curva}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.82\textwidth]{fig_roc_puntos.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Mismo modelo, mismos datos. Cambiando el
+    umbral obtenemos puntos \textbf{distintos}. La curva es el lugar
+    geométrico de TODOS los umbrales.}
+\end{frame}
+
+\begin{frame}[shrink=20]{¿Cómo Se Calcula el AUC?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    AUC = \textbf{Área Bajo la Curva}. No es ``sumar y dividir''
+    --- es una integral numérica.}
+
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \includegraphics[width=\textwidth]{fig_auc_trapecios.png}
+    \end{column}
+    \begin{column}{0.40\textwidth}
+      {\scriptsize\color{arcaDark}
+      \textbf{Regla del trapecio:}
+      \vspace{4pt}
+
+      Entre dos puntos consecutivos $(x_i, y_i)$ y $(x_{i+1}, y_{i+1})$:
+      $$\text{área}_i = (x_{i+1} - x_i) \cdot \frac{y_i + y_{i+1}}{2}$$
+
+      \vspace{4pt}
+      AUC total:
+      $$\text{AUC} = \sum_i \text{área}_i$$
+
+      \vspace{4pt}
+      \texttt{sklearn.metrics.auc} hace exactamente esto.}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faArrowRight\hspace{4pt} \textbf{Interpretación probabilística:} el AUC
+    es la probabilidad de que el modelo dé un score más alto a un enfermo
+    aleatorio que a un sano aleatorio. AUC = 0.84 → 84\% de las veces
+    acierta el orden.}
+\end{frame}
+
 \begin{frame}[shrink=26]{Cómo Se Lee la Curva ROC}
   \vspace{-4pt}
   \begin{center}
@@ -1283,6 +1360,78 @@ fig.show()
     \textbf{Precision} = VP / (VP + FP): de los que marqué, ¿cuántos son reales?
     \quad\textbf{Recall} = VP / (VP + FN): de los reales, ¿cuántos marqué?
     \quad\textbf{Trade-off}: subir uno baja el otro.}
+\end{frame}
+
+\begin{frame}{Cómo Se Calcula CADA Punto de la PR}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Misma receta que ROC, \textbf{cambia solo el eje}:}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{3pt}
+    \item Fijar un umbral $u$.
+    \item \texttt{y\_pred = (proba >= u)}.
+    \item Contar VP, FN, FP, VN.
+    \item Calcular:
+      $\text{Precision} = \dfrac{VP}{VP + FP}$, \quad
+      $\text{Recall} = \dfrac{VP}{VP + FN}$
+    \item Graficar el punto $(\text{Recall}, \text{Precision})$.
+  \end{enumerate}
+  }
+
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Diferencia con ROC:} el eje X ahora es el mismo
+    (Recall = TPR), pero el Y es \textbf{Precision} (no FPR). La precisión
+    \textit{ignora los verdaderos negativos} → se concentra en la clase positiva.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink=42]{3 Umbrales = 3 Puntos en la Curva PR}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.82\textwidth]{fig_pr_puntos.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Con \textbf{umbral alto} (verde) la precisión
+    sube pero el recall cae → detectamos pocos pero acertamos. Con
+    \textbf{umbral bajo} (naranja) es al revés.}
+\end{frame}
+
+\begin{frame}[shrink=15]{¿Cómo Se Calcula el AP (Average Precision)?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    AP = área bajo la curva PR. Pero sklearn lo calcula \textbf{distinto} al AUC.}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Promedio ponderado} de la precisión en cada punto, pesado por
+      cuánto subió el recall:
+      $$\text{AP} = \sum_n (R_n - R_{n-1}) \cdot P_n$$
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Es una \textbf{suma de rectángulos} (no trapecios como AUC) --- esto
+      evita sobrestimar la curva, que es ``escalonada'' en PR.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Un modelo \textbf{aleatorio} tiene AP = proporción de positivos
+      (en stroke, AP aleatorio $\approx$ 0.05).
+  \end{itemize}
+  }
+
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faLightbulb\hspace{4pt} Lee: un AP de 0.30 en datos con 5\% de positivos
+    significa que el modelo es \textbf{6x mejor que el azar} al rankear
+    los positivos arriba.}
+  \end{tcolorbox}
 \end{frame}
 
 \begin{frame}[fragile,shrink=18]{Calcular y Graficar la Curva PR}
