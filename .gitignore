@@ -77,3 +77,14 @@ env/
 
 # ── Documentos administrativos (no versionar) ──
 CRONOGRAMA*.pdf
+_minted/
+*.aux
+*.log
+*.out
+*.listing
+*.nav
+*.snm
+*.toc
+*.vrb
+*.data.minted
+*.config.minted
