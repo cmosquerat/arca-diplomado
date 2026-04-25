@@ -955,7 +955,73 @@ print(perfil)
   \end{tcolorbox}
 \end{frame}
 
-\begin{frame}[shrink=22]{Ejemplo: D\'igitos Escritos a Mano (64 Dimensiones)}
+\begin{frame}{El Dataset: D\'igitos Escritos a Mano}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \texttt{load\_digits()} de sklearn: 1797 im\'agenes de n\'umeros
+    escritos a mano, cada una de $8 \times 8$ pixeles.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}llp{7cm}@{}}
+    \toprule
+    \textbf{Propiedad} & \textbf{Valor} & \textbf{Significado} \\
+    \midrule
+    Observaciones & 1\,797 & Im\'agenes de d\'igitos 0--9. \\
+    Variables & 64 & Cada pixel es una variable (intensidad 0--16). \\
+    Clases & 10 & Los d\'igitos 0, 1, 2, \ldots, 9. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Cada fila del dataset es una imagen \textbf{aplanada}:
+      8$\times$8 = 64 n\'umeros. No son variables ``normales''
+      como edad o ingreso --- son \textbf{pixeles}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      El objetivo: ver si podemos distinguir los 10 d\'igitos
+      en un scatter 2D, sin usar las etiquetas.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=18]{As\'i Se Ven los D\'igitos}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.9\textwidth]{fig_digits_ejemplos.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Cada imagen es de $8 \times 8$ pixeles.
+    Cada pixel tiene una intensidad de 0 (blanco) a 16 (negro).
+    Esos 64 n\'umeros son las \textbf{64 variables} del dataset.
+    Un ``5'' activa pixeles distintos que un ``0'' --- pero la relaci\'on
+    entre pixeles es \textbf{compleja y no lineal}.}
+\end{frame}
+
+\begin{frame}[shrink=18]{?`Por Qu\'e No Es Lineal?}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.88\textwidth]{fig_digits_nolineal.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Izquierda:} dos pixeles cualesquiera
+    no alcanzan para separar d\'igitos --- se solapan completamente.
+    No hay ninguna l\'inea recta que los separe.
+    \textbf{Derecha:} la matriz de correlaci\'on entre los 64 pixeles
+    muestra una estructura compleja, con bloques y patrones ---
+    no es una simple correlaci\'on lineal.
+    Por eso \textbf{PCA (lineal) pierde estructura} y
+    \textbf{t-SNE (no lineal) la captura}.}
+\end{frame}
+
+\begin{frame}[shrink=22]{PCA vs t-SNE en los D\'igitos}
   \vspace{-4pt}
   \begin{center}
     \includegraphics[width=0.92\textwidth]{fig_tsne_digits.png}
