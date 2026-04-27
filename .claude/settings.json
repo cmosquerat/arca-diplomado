@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew list:*)",
+      "Bash(pip3 list:*)",
+      "Bash(brew install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(pipx ensurepath:*)",
+      "Bash(pipx install:*)",
+      "Bash(python3 -c \" import json with open\\('/Users/enriqueto/Documents/GitHub/arca-diplomado/clase-16/Clase_16_Evaluacion_Modelos.ipynb'\\) as f: nb = json.load\\(f\\) for i, cell in enumerate\\(nb['cells']\\): src = ''.join\\(cell['source'][:2]\\) print\\(f'Cell {i} [{cell[\\\\\"cell_type\\\\\"]}]: {src[:120]}'\\) \")",
+      "Bash(python3 -c ':*)",
+      "Bash(ls /Users/enriqueto/Documents/GitHub/arca-diplomado/clase-16/*.png)",
+      "Bash(mkdir -p /Users/enriqueto/Documents/GitHub/arca-diplomado/clase-17)",
+      "Bash(cp /Users/enriqueto/Documents/GitHub/arca-diplomado/clase-16/qr_encuesta.jpg /Users/enriqueto/Documents/GitHub/arca-diplomado/clase-17/)",
+      "Bash(cp /Users/enriqueto/Documents/GitHub/arca-diplomado/clase-16/stroke.csv /Users/enriqueto/Documents/GitHub/arca-diplomado/clase-17/)",
+      "Bash(python3 gen_figs.py)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

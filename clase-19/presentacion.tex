@@ -711,6 +711,68 @@ repetir hasta que nada cambie:
     entre una iteraci\'on y la siguiente.}
 \end{frame}
 
+\begin{frame}{?`Qu\'e Asume K-Means de los Datos?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Como todo algoritmo, K-Means funciona bien bajo ciertas condiciones
+    y mal bajo otras:}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}p{3.5cm}p{4.5cm}p{4.5cm}@{}}
+    \toprule
+    \textbf{Supuesto} & \textbf{Qu\'e espera} & \textbf{Qu\'e pasa si no se cumple} \\
+    \midrule
+    \textbf{Clusters esf\'ericos} & Los grupos tienen forma ``redonda'' (similar en todas las direcciones). & Si los grupos son alargados o irregulares, K-Means los corta mal. \\
+    \textbf{Clusters de tama\~no similar} & Los grupos tienen cant. parecida de puntos. & Grupos peque\~nos pueden ser ``absorbidos'' por vecinos grandes. \\
+    \textbf{Variables num\'ericas} & Todas las features son n\'umeros. & No funciona directamente con categ\'oricas (necesitan encoding). \\
+    \textbf{Escalas comparables} & Las variables est\'an en la misma escala. & Si no, las de mayor rango dominan la distancia. \texttt{StandardScaler} resuelve esto. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, boxrule=0.5pt, arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{En la pr\'actica:} para datos tabulares de
+    negocio (clientes, pacientes, productos), estos supuestos suelen
+    cumplirse razonablemente. K-Means es un buen primer intento. Si no
+    funciona, existen alternativas como DBSCAN o clustering jer\'arquico.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}{La Distancia Euclidiana}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    K-Means decide a qu\'e cluster pertenece cada punto midiendo la
+    \textbf{distancia} al centroide m\'as cercano. Esa distancia es la
+    \textbf{euclidiana}: la l\'inea recta entre dos puntos.}
+
+  \vspace{8pt}
+  {\footnotesize
+  \textbf{Con 2 variables} (ingreso $x_1$, gasto $x_2$):
+  $$d = \sqrt{(x_1 - c_1)^2 + (x_2 - c_2)^2}$$
+
+  Es el teorema de Pit\'agoras: la diagonal del rect\'angulo entre
+  el punto $(x_1, x_2)$ y el centroide $(c_1, c_2)$.
+
+  \vspace{6pt}
+  \textbf{Con $p$ variables} (ingreso, gasto, edad, \ldots):
+  $$d = \sqrt{\sum_{i=1}^{p} (x_i - c_i)^2}$$
+
+  La misma idea pero sumando las diferencias al cuadrado de
+  \textbf{todas} las variables. No la podemos dibujar en m\'as de 3D,
+  pero el c\'alculo es id\'entico.
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Si una variable va de 0 a 1000 y otra de 0 a 1,
+    la primera domina la suma. Por eso \textbf{escalar} es obligatorio:
+    \texttt{StandardScaler} pone todas en media 0 y desviaci\'on 1.}
+\end{frame}
+
 \begin{frame}[shrink=22]{K-Means Paso a Paso --- Visual}
   \vspace{-4pt}
   \begin{center}
@@ -848,6 +910,38 @@ print(f"Inercia:    {km.inertia_:.1f}")
   \end{tcolorbox}
 \end{frame}
 
+\begin{frame}[shrink=18]{?`Qu\'e Es la Inercia?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    La \textbf{inercia} es la m\'etrica interna de K-Means.
+    Mide qu\'e tan \textbf{compactos} son los clusters.}
+
+  \vspace{4pt}
+  {\footnotesize
+  $$\text{Inercia} = \sum_{i=1}^{N} \| x_i - c_{k(i)} \|^2$$
+
+  Donde $x_i$ es cada punto, $c_{k(i)}$ es el centroide de su cluster,
+  y $\| \cdot \|^2$ es la distancia al cuadrado.
+
+  \vspace{4pt}
+  En palabras: \textbf{la suma de las distancias al cuadrado de cada
+  punto a su centroide}. Es lo que K-Means intenta \textbf{minimizar}.
+  }
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{fig_inercia.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Izquierda:} K=5, l\'ineas cortas,
+    inercia baja $\to$ clusters compactos.
+    \textbf{Derecha:} K=2, l\'ineas largas, inercia alta $\to$ puntos
+    lejos de su centroide. M\'as K siempre reduce la inercia, pero
+    hay un punto donde ya no vale la pena (el codo).}
+\end{frame}
+
 % =============================================================================
 %  BLOQUE E: ELEGIR K
 % =============================================================================
@@ -932,33 +1026,58 @@ fig.show()
     M\'as clusters no siempre es mejor.}
 \end{frame}
 
-\begin{frame}{Silhouette Score --- ?`Qu\'e Tan Buenos Son los Clusters?}
+\begin{frame}{Silhouette Score --- La Idea}
   \vspace{-4pt}
   {\footnotesize\color{arcaDark}\bfseries
-    El codo nos dice cu\'antos clusters usar, pero no nos dice
-    \textbf{qu\'e tan bien separados} est\'an. Para eso existe
-    el Silhouette Score.}
+    Para cada punto, el Silhouette Score compara dos distancias:}
 
   \vspace{6pt}
   {\footnotesize
   \begin{itemize}\setlength{\itemsep}{5pt}
-    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
-      Para cada punto, mide: ?`est\'a \textbf{m\'as cerca} de su propio
-      cluster o del cluster vecino m\'as pr\'oximo?
-    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
-      Rango: \textbf{$-1$} a \textbf{$+1$}.
-      $+1$ = perfecto (muy dentro de su cluster).
-      $0$ = en la frontera. $-1$ = probablemente en el cluster equivocado.
-    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
-      El promedio de todos los puntos da un score global.
-      Mayor de 0.5 se considera bueno. Mayor de 0.7, excelente.
+    \item[{\color{codeBlue}\bfseries $a$}]
+      Distancia promedio a los \textbf{otros puntos de su mismo cluster}.
+      Si $a$ es peque\~no, el punto est\'a bien integrado en su grupo.
+    \item[{\color{arcaRed}\bfseries $b$}]
+      Distancia promedio al \textbf{cluster vecino m\'as cercano}
+      (el siguiente cluster m\'as pr\'oximo, no el suyo).
+      Si $b$ es grande, el punto est\'a lejos del grupo equivocado.
   \end{itemize}
   }
 
   \vspace{4pt}
+  {\footnotesize
+  $$s = \frac{b - a}{\max(a, b)}$$
+  }
+
+  \vspace{2pt}
+  {\scriptsize
+  \begin{tabular}{@{}lp{9cm}@{}}
+    \toprule
+    \textbf{Valor} & \textbf{Significado} \\
+    \midrule
+    $s \approx +1$ & $b \gg a$: el punto est\'a \textbf{muy lejos} del cluster vecino y \textbf{muy cerca} de su cluster. Asignaci\'on perfecta. \\
+    $s \approx 0$ & $b \approx a$: el punto est\'a en la \textbf{frontera} entre dos clusters. Podr\'ia pertenecer a cualquiera. \\
+    $s < 0$ & $a > b$: el punto est\'a \textbf{m\'as cerca} del cluster vecino que del suyo. Probablemente mal asignado. \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{frame}
+
+\begin{frame}[shrink=22]{Silhouette --- Visualizado}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_silhouette.png}
+  \end{center}
+
+  \vspace{-2pt}
   {\scriptsize\color{textMuted}
-    \faLightbulb\hspace{4pt} Podemos graficar Silhouette para cada $K$
-    (igual que el codo) y elegir el $K$ con el score m\'as alto.}
+    \faLightbulb\hspace{4pt} \textbf{Izquierda:} cada barra horizontal
+    es un cliente. Barras largas hacia la derecha = bien asignado. Barras
+    cortas o negativas = en la frontera o mal asignado. La l\'inea punteada
+    es el promedio.
+    \textbf{Derecha:} el mismo scatter de siempre, pero coloreado por
+    Silhouette (verde = bien, rojo = mal). Los puntos rojos est\'an en las
+    \textbf{fronteras} entre clusters.}
 \end{frame}
 
 \begin{frame}[fragile,shrink=10]{C\'odigo: Silhouette Score}
@@ -968,8 +1087,8 @@ from sklearn.metrics import silhouette_score
 
 for k in range(2, 8):
     km = KMeans(n_clusters=k, random_state=42, n_init=10)
-    labels = km.fit_predict(X_scaled)
-    sil = silhouette_score(X_scaled, labels)
+    labels = km.fit_predict(X_km)
+    sil = silhouette_score(X_km, labels)
     print(f"K={k}: Silhouette = {sil:.3f}")
   \end{pyblock}
 
@@ -977,13 +1096,12 @@ for k in range(2, 8):
   {\scriptsize\color{arcaDark}
   \begin{itemize}\setlength{\itemsep}{3pt}
     \item[{\color{arcaRed}\scriptsize\faArrowRight}]
-      \texttt{silhouette\_score} necesita m\'inimo $K=2$ (con 1 cluster
-      no hay nada que comparar).
+      El promedio global dice qu\'e tan buenos son los clusters \textbf{en conjunto}.
     \item[{\color{arcaRed}\scriptsize\faArrowRight}]
-      Elegir el $K$ que tenga el \textbf{Silhouette m\'as alto}.
+      Elegir el $K$ con Silhouette m\'as alto.
     \item[{\color{codeGreen}\scriptsize\faArrowRight}]
-      Usar el codo \textbf{y} el Silhouette juntos: si ambos apuntan
-      al mismo $K$, la elecci\'on es robusta.
+      Usar \textbf{codo + Silhouette} juntos: si ambos apuntan al mismo $K$,
+      la elecci\'on es robusta.
   \end{itemize}
   }
 \end{frame}

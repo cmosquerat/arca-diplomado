@@ -210,4 +210,108 @@ fig.savefig("fig_segmentos_mall.png", dpi=200, bbox_inches="tight")
 plt.close()
 print("✓ fig_segmentos_mall.png")
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Fig 6: Inercia visual — líneas de cada punto a su centroide
+# ─────────────────────────────────────────────────────────────────────────────
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Panel 1: Inercia baja (K=5, buen clustering)
+km_good = KMeans(n_clusters=5, random_state=42, n_init=10)
+km_good.fit(X_mall)
+ax = axes[0]
+for k in range(5):
+    mask = km_good.labels_ == k
+    pts = df.loc[mask, ["income", "spending"]].values
+    cx, cy = km_good.cluster_centers_[k]
+    ax.scatter(pts[:, 0], pts[:, 1], c=COLORS_K[k], s=20,
+               edgecolors="white", linewidths=0.3, alpha=0.8)
+    # Líneas de cada punto a su centroide
+    for p in pts:
+        ax.plot([p[0], cx], [p[1], cy], color=COLORS_K[k], alpha=0.15, lw=0.6)
+    ax.scatter(cx, cy, c=COLORS_K[k], s=200, marker="X",
+               edgecolors="black", linewidths=1.5, zorder=5)
+ax.set_xlabel("Ingreso (k$)"); ax.set_ylabel("Gasto (1-100)")
+ax.set_title(f"K=5 — Inercia: {km_good.inertia_:,.0f}\n(líneas cortas = clusters compactos)",
+             fontweight="bold", color=GREEN, fontsize=10)
+
+# Panel 2: Inercia alta (K=2, mal clustering)
+km_bad = KMeans(n_clusters=2, random_state=42, n_init=10)
+km_bad.fit(X_mall)
+ax = axes[1]
+for k in range(2):
+    mask = km_bad.labels_ == k
+    pts = df.loc[mask, ["income", "spending"]].values
+    cx, cy = km_bad.cluster_centers_[k]
+    ax.scatter(pts[:, 0], pts[:, 1], c=COLORS_K[k], s=20,
+               edgecolors="white", linewidths=0.3, alpha=0.8)
+    for p in pts:
+        ax.plot([p[0], cx], [p[1], cy], color=COLORS_K[k], alpha=0.15, lw=0.6)
+    ax.scatter(cx, cy, c=COLORS_K[k], s=200, marker="X",
+               edgecolors="black", linewidths=1.5, zorder=5)
+ax.set_xlabel("Ingreso (k$)"); ax.set_ylabel("Gasto (1-100)")
+ax.set_title(f"K=2 — Inercia: {km_bad.inertia_:,.0f}\n(líneas largas = clusters dispersos)",
+             fontweight="bold", color=ARCA_RED, fontsize=10)
+
+fig.suptitle("Inercia = suma de todas las líneas al cuadrado. Menor inercia = clusters más compactos.",
+             fontweight="bold", color=ARCA_DARK, fontsize=12)
+plt.tight_layout()
+fig.savefig("fig_inercia.png", dpi=200, bbox_inches="tight")
+plt.close()
+print("✓ fig_inercia.png")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Fig 7: Silhouette visual — qué significa para cada punto
+# ─────────────────────────────────────────────────────────────────────────────
+from sklearn.metrics import silhouette_samples, silhouette_score
+
+km5_sil = KMeans(n_clusters=5, random_state=42, n_init=10)
+labels_sil = km5_sil.fit_predict(X_mall)
+sil_vals = silhouette_samples(X_mall, labels_sil)
+sil_avg = silhouette_score(X_mall, labels_sil)
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+# Panel 1: Silhouette por punto (barras horizontales agrupadas por cluster)
+ax = axes[0]
+y_lower = 0
+for k in range(5):
+    cluster_sil = np.sort(sil_vals[labels_sil == k])
+    size_k = len(cluster_sil)
+    y_upper = y_lower + size_k
+    ax.fill_betweenx(np.arange(y_lower, y_upper), 0, cluster_sil,
+                      facecolor=COLORS_K[k], alpha=0.8, edgecolor="none")
+    ax.text(-0.05, y_lower + size_k / 2, f"C{k}", fontsize=9,
+            fontweight="bold", color=COLORS_K[k], va="center")
+    y_lower = y_upper + 2
+
+ax.axvline(sil_avg, color=ARCA_DARK, linestyle="--", lw=2,
+           label=f"Promedio: {sil_avg:.2f}")
+ax.set_xlabel("Silhouette Score", fontsize=10)
+ax.set_ylabel("Puntos (ordenados por cluster)", fontsize=10)
+ax.set_title("Silhouette por punto\n(cada barra = un cliente)",
+             fontweight="bold", color=ARCA_DARK)
+ax.legend(fontsize=9)
+ax.set_yticks([])
+
+# Panel 2: Scatter coloreado por silhouette score (bueno vs malo)
+ax = axes[1]
+scatter = ax.scatter(df["income"], df["spending"], c=sil_vals,
+                     cmap="RdYlGn", s=30, edgecolors="white", linewidths=0.4,
+                     vmin=-0.2, vmax=0.8)
+for i, c in enumerate(km5_sil.cluster_centers_):
+    ax.scatter(c[0], c[1], c="black", s=200, marker="X",
+               edgecolors="white", linewidths=2, zorder=5)
+plt.colorbar(scatter, ax=ax, label="Silhouette Score")
+ax.set_xlabel("Ingreso (k$)", fontsize=10)
+ax.set_ylabel("Gasto (1-100)", fontsize=10)
+ax.set_title("Mapa: verde = bien asignado\nrojo = cerca de otro cluster",
+             fontweight="bold", color=ARCA_DARK)
+
+fig.suptitle("Silhouette Score: mide si cada punto está en el cluster correcto",
+             fontweight="bold", color=ARCA_DARK, fontsize=13)
+plt.tight_layout()
+fig.savefig("fig_silhouette.png", dpi=200, bbox_inches="tight")
+plt.close()
+print("✓ fig_silhouette.png")
+
 print("\n¡Todas las figuras generadas!")
