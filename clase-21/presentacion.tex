@@ -955,11 +955,101 @@ print(perfil)
   \end{tcolorbox}
 \end{frame}
 
+\begin{frame}{?`C\'omo Ve una Computadora una Imagen?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Una imagen \textbf{no es una foto} para la m\'aquina. Es una
+    \textbf{matriz de n\'umeros}, donde cada n\'umero es la intensidad
+    de un \textbf{pixel}.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}lll p{4.6cm}@{}}
+    \toprule
+    \textbf{Tipo} & \textbf{Forma} & \textbf{Rango} & \textbf{Ejemplo} \\
+    \midrule
+    Grises  & $H \times W$           & 0 (negro) -- 255 (blanco) & Foto 100$\times$100 = 10\,000 n\'umeros \\
+    RGB     & $H \times W \times 3$  & 0--255 por canal           & Foto 100$\times$100 = 30\,000 n\'umeros \\
+    RGBA    & $H \times W \times 4$  & + canal de transparencia   & PNG con fondo transparente \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_imagen_rgb.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Una imagen RGB es \textbf{tres matrices apiladas}.
+    El color de cada pixel = mezcla de R, G y B. La m\'aquina solo ve n\'umeros.}
+\end{frame}
+
+\begin{frame}[shrink=10]{De Imagen a Vector: \texttt{.flatten()}}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Para usar una imagen en ML la \textbf{aplanamos}: la matriz 2D se
+    convierte en un \textbf{vector 1D} --- una fila del DataFrame con
+    tantas columnas como pixeles.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_imagen_a_vector.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} 1797 d\'igitos $\times$ 64 pixeles =
+    DataFrame de \textbf{1797 filas $\times$ 64 columnas}. Las columnas
+    no son ``edad'' ni ``ingreso'' --- son posiciones de pixel.
+    Cualquier modelo (PCA, K-Means, Random Forest) trabaja exactamente
+    igual que con datos tabulares.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=12]{Cargar una Imagen Real en Python}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \texttt{matplotlib.pyplot.imread()} lee cualquier imagen
+    (PNG, JPG) y devuelve un array de NumPy listo para usar.}
+
+  \vspace{4pt}
+  \begin{pyblock}
+import matplotlib.pyplot as plt
+import numpy as np
+
+img = plt.imread("foto.jpg")     # array NumPy
+print(img.shape)                  # (alto, ancho, 3) si es RGB
+print(img.dtype, img.min(), img.max())   # uint8 0..255
+
+plt.imshow(img); plt.axis("off"); plt.show()  # mostrar
+
+gris = img.mean(axis=2)           # promedio R,G,B -> grises (alto, ancho)
+vector = gris.flatten()           # 1 fila para ML: alto*ancho numeros
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{\texttt{plt.imread}} \emph{(matplotlib)}: r\'apido, sin
+      instalar nada extra. Devuelve \texttt{float} (PNG) o \texttt{uint8} (JPG).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{\texttt{PIL.Image.open}} \emph{(Pillow)}: m\'as opciones
+      (resize, convert a grises con \texttt{.convert("L")}, rotar).
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Para meter \textbf{N im\'agenes} en un dataset:
+      \texttt{np.stack([plt.imread(f).flatten() for f in files])}.
+  \end{itemize}
+  }
+\end{frame}
+
 \begin{frame}{El Dataset: D\'igitos Escritos a Mano}
   \vspace{-4pt}
   {\footnotesize\color{arcaDark}\bfseries
     \texttt{load\_digits()} de sklearn: 1797 im\'agenes de n\'umeros
-    escritos a mano, cada una de $8 \times 8$ pixeles.}
+    escritos a mano, cada una de $8 \times 8$ pixeles. Versi\'on reducida
+    del cl\'asico \textbf{MNIST} (28$\times$28, 70\,000 im\'agenes, desde 1998).}
 
   \vspace{6pt}
   {\scriptsize
@@ -1003,22 +1093,41 @@ print(perfil)
     entre pixeles es \textbf{compleja y no lineal}.}
 \end{frame}
 
-\begin{frame}[shrink=18]{?`Por Qu\'e No Es Lineal?}
+\begin{frame}[shrink=20]{?`Por Qu\'e las Im\'agenes No Son Lineales?}
   \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    La identidad de un d\'igito no est\'a en \textbf{un} pixel sino en la
+    \textbf{forma} --- una relaci\'on geom\'etrica entre muchos pixeles.}
+
+  \vspace{4pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Un ``0'' y un ``8'' pueden tener la \textbf{misma cantidad de tinta}
+      (suma de pixeles parecida): un modelo lineal sobre la suma no los distingue.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Mover el d\'igito 1 pixel a la derecha cambia \emph{todos} los valores
+      de columna, pero es el \textbf{mismo n\'umero}: no hay relaci\'on
+      lineal simple entre ``pixel (3,4) brillante'' y ``es un 8''.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Lo que importa es \textbf{si hay un c\'irculo cerrado, una l\'inea recta,
+      una curva en cierta zona} --- conceptos que requieren combinar pixeles
+      de forma no lineal (curvas, bordes, esquinas).
+  \end{itemize}
+  }
+
+  \vspace{4pt}
   \begin{center}
-    \includegraphics[width=0.88\textwidth]{fig_digits_nolineal.png}
+    \includegraphics[width=0.78\textwidth]{fig_digits_nolineal.png}
   \end{center}
 
   \vspace{-2pt}
   {\scriptsize\color{textMuted}
-    \faLightbulb\hspace{4pt} \textbf{Izquierda:} dos pixeles cualesquiera
-    no alcanzan para separar d\'igitos --- se solapan completamente.
-    No hay ninguna l\'inea recta que los separe.
-    \textbf{Derecha:} la matriz de correlaci\'on entre los 64 pixeles
-    muestra una estructura compleja, con bloques y patrones ---
-    no es una simple correlaci\'on lineal.
-    Por eso \textbf{PCA (lineal) pierde estructura} y
-    \textbf{t-SNE (no lineal) la captura}.}
+    \faLightbulb\hspace{4pt} \textbf{Izquierda:} 2 pixeles cualesquiera no
+    separan d\'igitos --- se solapan, ninguna recta los divide.
+    \textbf{Derecha:} la matriz de correlaci\'on tiene bloques complejos,
+    no la diagonal limpia que pedir\'ia un m\'etodo lineal.
+    Por eso \textbf{PCA pierde estructura} y \textbf{t-SNE la captura}.}
 \end{frame}
 
 \begin{frame}[shrink=22]{PCA vs t-SNE en los D\'igitos}

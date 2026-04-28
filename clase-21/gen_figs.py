@@ -442,4 +442,121 @@ fig.savefig("fig_tsne_digits.png", dpi=200, bbox_inches="tight")
 plt.close()
 print("✓ fig_tsne_digits.png")
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Fig 12: How a computer sees an image — image -> matrix -> vector
+# ─────────────────────────────────────────────────────────────────────────────
+digits_fig = load_digits()
+idx_demo = np.where(digits_fig.target == 3)[0][0]
+img_demo = digits_fig.images[idx_demo]   # 8x8 matrix
+vec_demo = digits_fig.data[idx_demo]      # 64-vector
+
+fig = plt.figure(figsize=(15, 5))
+gs = fig.add_gridspec(1, 3, width_ratios=[1, 1.4, 1.6], wspace=0.35)
+
+# Panel A: the image
+ax = fig.add_subplot(gs[0])
+ax.imshow(img_demo, cmap="gray_r", interpolation="nearest")
+ax.set_title("1. Lo que vemos\n(imagen 8x8)", fontweight="bold",
+             color=ARCA_DARK, fontsize=12)
+ax.set_xticks([]); ax.set_yticks([])
+for spine in ax.spines.values():
+    spine.set_edgecolor(ARCA_DARK); spine.set_linewidth(1.5)
+
+# Panel B: the matrix of numbers
+ax = fig.add_subplot(gs[1])
+ax.imshow(img_demo, cmap="gray_r", interpolation="nearest", alpha=0.25)
+for i in range(8):
+    for j in range(8):
+        v = int(img_demo[i, j])
+        color = "white" if v > 8 else ARCA_DARK
+        ax.text(j, i, str(v), ha="center", va="center",
+                fontsize=10, fontweight="bold", color=color)
+ax.set_title("2. Lo que ve la computadora\n(matriz 8x8 de intensidades 0-16)",
+             fontweight="bold", color=ARCA_DARK, fontsize=12)
+ax.set_xticks(range(8)); ax.set_yticks(range(8))
+ax.set_xticklabels(range(8), fontsize=8)
+ax.set_yticklabels(range(8), fontsize=8)
+ax.set_xlabel("columna (j)", fontsize=9); ax.set_ylabel("fila (i)", fontsize=9)
+ax.tick_params(length=0)
+
+# Panel C: the flattened vector
+ax = fig.add_subplot(gs[2])
+ax.imshow(vec_demo.reshape(1, -1), cmap="gray_r", aspect="auto",
+          interpolation="nearest")
+for k in range(64):
+    v = int(vec_demo[k])
+    color = "white" if v > 8 else ARCA_DARK
+    ax.text(k, 0, str(v), ha="center", va="center",
+            fontsize=6.5, fontweight="bold", color=color)
+ax.set_title("3. Lo que entra al modelo\n(vector aplanado de 64 numeros = 1 fila)",
+             fontweight="bold", color=ARCA_DARK, fontsize=12)
+ax.set_yticks([]); ax.set_xticks([0, 15, 31, 47, 63])
+ax.set_xticklabels(["pixel 0", "15", "31", "47", "63"], fontsize=8)
+
+# Arrows between panels
+fig.text(0.345, 0.5, "→", ha="center", va="center",
+         fontsize=28, color=ARCA_RED, fontweight="bold")
+fig.text(0.66, 0.5, "→\n.flatten()", ha="center", va="center",
+         fontsize=14, color=ARCA_RED, fontweight="bold")
+
+fig.suptitle("Una imagen es una matriz de numeros. Para ML la aplanamos a un vector.",
+             fontweight="bold", color=ARCA_DARK, fontsize=13, y=1.02)
+fig.savefig("fig_imagen_a_vector.png", dpi=200, bbox_inches="tight")
+plt.close()
+print("✓ fig_imagen_a_vector.png")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Fig 13: Grayscale vs RGB — what a color image looks like to a computer
+# ─────────────────────────────────────────────────────────────────────────────
+np.random.seed(7)
+H, W = 12, 12
+# Build a simple synthetic "object on background" image (RGB)
+img_rgb = np.zeros((H, W, 3), dtype=np.uint8)
+img_rgb[..., 0] = 30   # background dark
+img_rgb[..., 1] = 60
+img_rgb[..., 2] = 120
+# A red-orange "blob"
+for i in range(H):
+    for j in range(W):
+        d = np.sqrt((i - 5)**2 + (j - 6)**2)
+        if d < 4:
+            img_rgb[i, j] = [220 - int(d*15), 110 - int(d*8), 40]
+
+img_gray = (0.299*img_rgb[..., 0] + 0.587*img_rgb[..., 1]
+            + 0.114*img_rgb[..., 2]).astype(np.uint8)
+
+fig, axes = plt.subplots(1, 5, figsize=(15, 3.3),
+                         gridspec_kw={"width_ratios": [1.1, 0.15, 1, 1, 1]})
+
+# Grayscale
+ax = axes[0]
+ax.imshow(img_gray, cmap="gray", vmin=0, vmax=255, interpolation="nearest")
+ax.set_title(f"Escala de grises\n1 matriz {H}x{W} = {H*W} numeros",
+             fontweight="bold", color=ARCA_DARK, fontsize=10)
+ax.set_xticks([]); ax.set_yticks([])
+
+# Separator
+axes[1].axis("off")
+axes[1].text(0.5, 0.5, "RGB:\n3 canales", ha="center", va="center",
+             fontweight="bold", color=ARCA_RED, fontsize=11,
+             transform=axes[1].transAxes)
+
+# R, G, B channels
+for ax, ch, name, cmap in zip(
+    axes[2:], [0, 1, 2],
+    ["Rojo (R)", "Verde (G)", "Azul (B)"],
+    ["Reds", "Greens", "Blues"]):
+    ax.imshow(img_rgb[..., ch], cmap=cmap, vmin=0, vmax=255,
+              interpolation="nearest")
+    ax.set_title(f"{name}\nmatriz {H}x{W}", fontweight="bold",
+                 color=ARCA_DARK, fontsize=10)
+    ax.set_xticks([]); ax.set_yticks([])
+
+fig.suptitle(f"Una foto RGB de {H}x{W} = 3 matrices apiladas = {H*W*3} numeros (vs {H*W} en grises)",
+             fontweight="bold", color=ARCA_DARK, fontsize=12, y=1.03)
+plt.tight_layout()
+fig.savefig("fig_imagen_rgb.png", dpi=200, bbox_inches="tight")
+plt.close()
+print("✓ fig_imagen_rgb.png")
+
 print("\n¡Todas las figuras generadas!")
