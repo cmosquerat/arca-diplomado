@@ -578,6 +578,9 @@ from PIL import Image
 
 def predecir_digito(imagen):
     # Convertir a escala de grises, redimensionar a 28x28
+    # Sketchpad devuelve dict en Gradio reciente
+    if isinstance(imagen, dict):
+        imagen = imagen.get("composite", imagen)
     img = Image.fromarray(imagen).convert("L").resize((28, 28))
     pixels = np.array(img).flatten() / 255.0
     pixels = 1 - pixels   # invertir (Gradio usa fondo blanco)
