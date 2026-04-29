@@ -717,6 +717,69 @@ demo.launch()
 % =============================================================================
 %  CIERRE
 % =============================================================================
+\sectionframe{Actividad Final}{Crear nuestro propio dataset}
+
+\begin{frame}{Ahora Ustedes Son la Fuente de Datos}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Vamos a crear un dataset de \textbf{vocales escritas a mano}
+    entre todos. Cada estudiante dibuja A, E, I, O, U --- 5 veces
+    cada una = 25 dibujos por persona.}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      El profesor comparte un \textbf{link p\'ublico de Gradio}.
+    \item[{\color{arcaRed}\bfseries 2.}]
+      Cada estudiante abre el link en su celular o laptop.
+    \item[{\color{arcaRed}\bfseries 3.}]
+      Selecciona la vocal, escribe su nombre, dibuja, y env\'ia.
+    \item[{\color{arcaRed}\bfseries 4.}]
+      Repite 5 veces por vocal = \textbf{25 dibujos} por persona.
+    \item[{\color{codeGreen}\bfseries 5.}]
+      Todo se guarda autom\'aticamente en un CSV en la m\'aquina
+      del profesor.
+  \end{enumerate}
+  }
+
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt, arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faLightbulb\hspace{4pt}\textbf{El ciclo completo:} ustedes dibujan
+    $\to$ recopilamos $\to$ EDA $\to$ PCA + t-SNE $\to$ entrenamos modelos
+    $\to$ desplegamos con Gradio. De principio a fin, con datos propios.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}{Despu\'es de Recopilar: El Flujo Completo}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Con el CSV de vocales aplicamos todo lo que sabemos:}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{EDA:} visualizar las vocales, promedio por clase,
+      varianza por pixel, distribuci\'on de muestras por estudiante.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{PCA + t-SNE:} visualizar las 5 vocales en 2D.
+      ?`Se separan? ?`Cu\'ales se confunden?
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Modelos:} log\'istica + RF. Confusion matrix.
+      ?`O se confunde con U? ?`A con E?
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Gradio final:} predictor de vocales entrenado con
+      \textbf{nuestros propios datos}. Dibujan y el modelo predice.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
 \sectionframe{Cierre}{Lo que aprendimos hoy}
 
 \begin{frame}[shrink=10]{Resumen}
