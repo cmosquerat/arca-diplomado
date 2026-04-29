@@ -778,6 +778,145 @@ demo.launch()
 \end{frame}
 
 % =============================================================================
+%  BLOQUE I: DATA AUGMENTATION
+% =============================================================================
+\sectionframe{Data Augmentation}{M\'as datos sin recopilar m\'as datos}
+
+\begin{frame}{El Problema: Pocas Muestras}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Entre toda la clase recopilamos quiz\'as 200--500 vocales.
+    Para entrenar un modelo robusto necesitar\'iamos miles.
+    ?`C\'omo conseguimos m\'as datos sin dibujar m\'as?}
+
+  \vspace{8pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Data Augmentation} = generar datos \textbf{sint\'eticos}
+      a partir de los que ya tenemos, aplicando transformaciones que
+      \textbf{preservan la clase}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Una ``A'' rotada 10 grados sigue siendo una ``A''.
+      Una ``A'' desplazada 3 pixeles sigue siendo una ``A''.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      De 1 imagen podemos generar 5--10 variaciones.
+      De 200 muestras pasamos a 1000--2000.
+  \end{itemize}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, boxrule=0.5pt, arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Clave:} la transformaci\'on debe ser
+    \textit{realista}. Rotar una ``A'' 10 grados es v\'alido.
+    Rotar 180 grados la convierte en otra cosa. Elegir bien las
+    transformaciones requiere conocer el dominio.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink=5]{T\'ecnicas de Augmentation M\'as Usadas}
+  \vspace{-4pt}
+  {\scriptsize
+  \begin{tabular}{@{}p{3cm}p{4.5cm}p{5cm}@{}}
+    \toprule
+    \textbf{T\'ecnica} & \textbf{Qu\'e hace} & \textbf{Cu\'ando usarla} \\
+    \midrule
+    \textbf{Rotaci\'on} & Gira la imagen $\pm$10--15 grados. & Siempre. La escritura natural var\'ia en \'angulo. \\
+    \textbf{Desplazamiento} & Mueve la imagen 2--4 pixeles en cualquier direcci\'on. & Cuando la posici\'on no importa (casi siempre). \\
+    \textbf{Zoom} & Agranda o achica 10--20\%. & Cuando el tama\~no var\'ia naturalmente. \\
+    \textbf{Ruido gaussiano} & Agrega ruido aleatorio a cada pixel. & Simula variaciones de iluminaci\'on o calidad. \\
+    \textbf{Espejo horizontal} & Refleja izquierda-derecha. & \textbf{Cuidado:} en letras NO siempre es v\'alido (una ``b'' espejada es ``d''). \\
+    \textbf{Variaci\'on de brillo} & Multiplica los pixeles por un factor. & Simula escr\'aneres o c\'amaras distintas. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faExclamationTriangle\hspace{4pt}\textbf{Espejo horizontal} no es v\'alido
+    para todas las tareas. En vocales: ``A'' espejada sigue siendo ``A'',
+    pero en d\'igitos ``6'' espejado podr\'ia parecer ``6'' invertido.
+    Conocer el dominio es fundamental.}
+\end{frame}
+
+\begin{frame}[shrink=18]{Augmentation --- Visual}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_augmentation.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} De 1 sola imagen generamos 7 variaciones.
+    Todas son ``A'' v\'alidas. El modelo ve m\'as diversidad de escritura
+    sin necesitar m\'as personas dibujando.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=22]{C\'odigo: Augmentation con scipy}
+  \vspace{-6pt}
+  \begin{pyblock}
+from scipy.ndimage import rotate, shift, zoom
+import numpy as np
+
+def augmentar(img_28x28, n=5):
+    """Genera n variaciones de una imagen 28x28."""
+    aumentadas = []
+    for _ in range(n):
+        aug = img_28x28.copy().astype(float)
+        # Rotacion aleatoria
+        angulo = np.random.uniform(-15, 15)
+        aug = rotate(aug, angulo, reshape=False, mode="constant")
+        # Desplazamiento aleatorio
+        dx, dy = np.random.randint(-3, 4, 2)
+        aug = shift(aug, [dy, dx], mode="constant")
+        # Ruido
+        aug += np.random.normal(0, 10, aug.shape)
+        aumentadas.append(aug.clip(0, 255).astype(np.uint8))
+    return aumentadas
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt} Cada llamada genera \texttt{n} im\'agenes nuevas
+    con rotaci\'on, desplazamiento y ruido aleatorios. De 200 muestras
+    con \texttt{n=5} obtenemos 1200 (200 originales + 1000 sint\'eticas).}
+\end{frame}
+
+\begin{frame}{?`Cu\'anto Mejora? --- Depende}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Data augmentation no es magia. Funciona bien cuando:}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+      \textbf{Pocos datos} (menos de 500 por clase). M\'as impacto.
+    \item[{\color{codeGreen}\scriptsize\faCheckCircle}]
+      \textbf{Transformaciones realistas}: las variaciones se parecen
+      a lo que ocurrir\'ia en la realidad.
+    \item[{\color{arcaRed}\scriptsize\faTimesCircle}]
+      \textbf{Muchos datos}: si ya tienes 10\,000 por clase, el impacto
+      es marginal.
+    \item[{\color{arcaRed}\scriptsize\faTimesCircle}]
+      \textbf{Transformaciones no realistas}: rotar una foto de un auto
+      180 grados no es un auto real.
+  \end{itemize}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt, arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faLightbulb\hspace{4pt}\textbf{En la industria:} data augmentation
+    es est\'andar en visi\'on por computadora. Todas las CNN modernas
+    lo usan durante el entrenamiento. Es gratis y casi siempre ayuda.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
 %  CIERRE
 % =============================================================================
 \sectionframe{Cierre}{Lo que aprendimos hoy}
