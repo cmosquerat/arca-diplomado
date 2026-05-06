@@ -1,0 +1,1108 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 24: CNN --- De MLP a Convoluciones (procesar imagenes en serio)
+%  Arca Continental Ecuador | UDLA
+%
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc,
+  calc, fit, decorations.pathreplacing, backgrounds}
+\usepackage{fontawesome5}
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+\usepackage{amsmath}
+
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+\definecolor{codePurple}{HTML}{7C3AED}
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title alerted}{fg=white, bg=codeOrange}
+\setbeamercolor{block body alerted}{fg=textDark, bg=arcaGray}
+\setbeamercolor{block title example}{fg=white, bg=codeGreen}
+\setbeamercolor{block body example}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.5cm, yshift=0.15cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.3cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newtcblisting{outputblock}[1][]{%
+  listing engine=minted, minted language=text, minted style=bw,
+  minted options={fontsize=\small, breaklines=true},
+  colback=white, colframe=arcaLightGray, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0.5pt, arc=2pt, listing only,
+  title={\small\faTerminal\hspace{6pt}Output}, coltitle=textMuted,
+  fonttitle=\small\ttfamily, colbacktitle=white, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 24: CNN --- De MLP a Convoluciones}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{20 de Mayo, 2026}
+
+\begin{document}
+
+% ── PORTADA ──────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ── M\'ODULO 5 ─────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Large\bfseries, text width=12cm,
+          align=center] at ([yshift=1cm]current page.center)
+      {M\'odulo 5};
+    \node[anchor=center, text=white!90, font=\huge\bfseries, text width=12cm,
+          align=center] at ([yshift=-0.3cm]current page.center)
+      {Redes Neuronales Convolucionales};
+  \end{tikzpicture}
+\end{frame}
+}
+
+% ── ROADMAP ─────────────────────────────────────────────────────────────────
+\begin{frame}[shrink=10]{Hoja de Ruta de Hoy}
+  \vspace{-4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.4cm,
+    roadstep/.style={rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!8,
+                 minimum width=11cm, minimum height=0.7cm,
+                 font=\footnotesize\bfseries\color{arcaDark}, align=left,
+                 text width=10cm, inner sep=6pt},
+    num/.style={circle, fill=arcaRed, text=white, font=\scriptsize\bfseries,
+                minimum size=0.5cm, inner sep=0pt},
+  ]
+    \node[roadstep] (s0) {\hspace{0.8cm}TF Playground en vivo: lo que dej\'o pendiente la clase pasada};
+    \node[roadstep, below=of s0] (s1) {\hspace{0.8cm}Limitaciones del MLP en im\'agenes (cats vs dogs como caso real)};
+    \node[roadstep, below=of s1] (s2) {\hspace{0.8cm}De MLP a CNN: filtros, parameter sharing, invariancia espacial};
+    \node[roadstep, below=of s2] (s3) {\hspace{0.8cm}Keras: nuestra herramienta y por qu\'e (vs PyTorch puro)};
+    \node[roadstep, below=of s3] (s4) {\hspace{0.8cm}CNN paso a paso: Conv2D, MaxPooling, Flatten, Dense};
+    \node[roadstep, below=of s4] (s5) {\hspace{0.8cm}CNN en cats vs dogs: el payoff (de 60\% a 80\%+)};
+    \node[roadstep, below=of s5] (s6) {\hspace{0.8cm}Limitaciones, transfer learning y cu\'ando \emph{no} usar CNN};
+
+    \node[num] at ([xshift=0.45cm]s0.west) {1};
+    \node[num] at ([xshift=0.45cm]s1.west) {2};
+    \node[num] at ([xshift=0.45cm]s2.west) {3};
+    \node[num] at ([xshift=0.45cm]s3.west) {4};
+    \node[num] at ([xshift=0.45cm]s4.west) {5};
+    \node[num] at ([xshift=0.45cm]s5.west) {6};
+    \node[num] at ([xshift=0.45cm]s6.west) {7};
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 1: TF PLAYGROUND
+% =============================================================================
+\sectionframe{TF Playground}{Pendiente de la clase pasada: ver una red en acci\'on}
+
+\begin{frame}{?`Qu\'e Es TensorFlow Playground?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Herramienta web de Google donde se puede \textbf{construir y entrenar
+    una red neuronal en el navegador}, ver pesos, fronteras y curva de
+    loss en \textbf{tiempo real}.}
+
+  \vspace{6pt}
+  \begin{center}
+    \includegraphics[width=0.92\textwidth]{fig_playground.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \item[{\color{arcaRed}\scriptsize\faGlobe}]
+      \texttt{playground.tensorflow.org} --- gratis, sin instalar nada.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Cuatro datasets (c\'irculos, lunas, espiral, Gaussiano), 7 features
+      de entrada, hasta 8 capas con 8 neuronas cada una.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Lo importante: \textbf{ver los pesos cambiar}. La frontera no es
+      m\'agica; es la composici\'on de las activaciones individuales.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{4 Experimentos para Hacer en Vivo (5 min cada uno)}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Abramos el navegador. Vayamos paso a paso.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{enumerate}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      \textbf{C\'irculos con solo $x_1, x_2$.} 1 capa de 4 neuronas.
+      Activaci\'on \textbf{Tanh}. ?`La log\'istica resuelve esto?
+      Conclusi\'on: \emph{una capa con activaci\'on no lineal ya curva la frontera}.
+    \item[{\color{arcaRed}\bfseries 2.}]
+      \textbf{Espiral.} Dataset cl\'asicamente dif\'icil. Probar primero
+      con \textbf{1 capa de 8}. Falla. Subir a \textbf{3 capas de 8}.
+      Funciona. \emph{La profundidad importa cuando la frontera es muy compleja}.
+    \item[{\color{arcaRed}\bfseries 3.}]
+      \textbf{Activaciones:} cambiar entre ReLU, Tanh, Sigmoid en la
+      espiral. \emph{Sigmoid satura, Tanh OK, ReLU r\'apida y limpia}.
+    \item[{\color{codeGreen}\bfseries 4.}]
+      \textbf{Feature engineering:} en c\'irculos, ?`qu\'e pasa si solo
+      activan $x_1^2$ y $x_2^2$? Una sola neurona basta. \emph{Si las
+      features son las correctas, no hace falta una red profunda}.
+  \end{enumerate}
+  }
+
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Lecci\'on:} las redes \emph{aprenden features}
+    autom\'aticamente. La profundidad sirve para que cada capa aprenda algo
+    \emph{m\'as abstracto} que la anterior. Vamos a verlo concretamente con
+    im\'agenes y CNN.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 2: LIMITACIONES DEL MLP
+% =============================================================================
+\sectionframe{Limitaciones del MLP}{Por qu\'e nuestras herramientas no alcanzan en im\'agenes}
+
+\begin{frame}{Recordemos: Cats vs Dogs en la Clase 22}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Aplicamos los mismos modelos a CIFAR-10 (cats vs dogs, 32$\times$32 RGB).
+    El resultado fue una \textbf{pared}, no un techo:}
+
+  \vspace{8pt}
+  \begin{center}
+  {\footnotesize
+  \begin{tabular}{@{}l c c c@{}}
+    \toprule
+    & \textbf{MNIST (28$\times$28 grises)} & \textbf{Fashion MNIST} & \textbf{Cats vs Dogs (32$\times$32 RGB)} \\
+    \midrule
+    Logistic       & 92\% & 84\% & \textbf{\color{arcaRed}55\%} (~azar) \\
+    Random Forest  & 95\% & 87\% & \textbf{\color{arcaRed}62\%} \\
+    MLP (128, 64)  & 97\% & 88\% & \textbf{\color{arcaRed}60\%} \\
+    \bottomrule
+  \end{tabular}
+  }
+  \end{center}
+
+  \vspace{8pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Aumentar capacidad (de 1 capa a 3, de 64 a 256 neuronas) \textbf{no rompe la pared}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      No es un bug del c\'odigo. Es un \textbf{l\'imite estructural} del MLP.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Hoy entendemos exactamente por qu\'e --- y c\'omo lo arregla la CNN.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{Problema 1: El MLP No Es Invariante a Traslaci\'on}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Mover un d\'igito \textbf{1 pixel a la derecha} cambia el vector
+    aplanado \emph{completamente}. Para el MLP, son entradas distintas.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.92\textwidth]{fig_mlp_traslacion.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} La distancia euclidiana entre el vector
+    original y el desplazado crece r\'apido. El MLP tiene que
+    aprender ``ese 3'' para \textbf{cada posici\'on posible} ---
+    multiplicando la cantidad de datos necesarios.
+    Para nosotros es el mismo 3.}
+\end{frame}
+
+\begin{frame}{Problema 2: Explosi\'on de Par\'ametros}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Cada pixel se conecta con \textbf{cada} neurona oculta. Con im\'agenes
+    grandes, el conteo de pesos se vuelve absurdo:}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.92\textwidth]{fig_mlp_parametros.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Una sola capa oculta de 128 neuronas para
+    una foto $224\times224\times3$ requiere \textbf{19 millones} de
+    par\'ametros. Aprender esos pesos pide muchos m\'as datos de los
+    que normalmente tenemos --- y la mayor\'ia no son \'utiles.}
+\end{frame}
+
+\begin{frame}{Problema 3: Ignora la Estructura Espacial}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    El MLP \texttt{.flatten()} convierte la imagen en un vector. As\'i
+    pierde algo cr\'itico: \textbf{los pixeles vecinos est\'an
+    relacionados}.}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Pixel 100 y pixel 101 est\'an \emph{lado a lado} en la imagen
+      pero para el MLP son ``columna 100'' y ``columna 101'' ---
+      sin relaci\'on especial.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Lo que define un \textbf{borde}, una \textbf{textura} o una
+      \textbf{forma} es una relaci\'on \emph{local} entre pocos
+      pixeles vecinos. El MLP no la modela directamente.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Para un MLP, una imagen rotada 90$^\circ$ es \emph{otra} imagen ---
+      no una transformaci\'on conocida del mismo objeto.
+  \end{itemize}
+  }
+
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faExclamationTriangle\hspace{4pt}\textbf{Resumen:} el MLP es
+    \emph{ciego} a la geometr\'ia. No hay forma de arreglar eso
+    cambiando el optimizador, agregando capas o m\'as datos.
+    Necesitamos un \textbf{modelo distinto}.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}{?`Para Qu\'e Sirve el MLP Entonces (Hoy en D\'ia)?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Sigue siendo \'util, pero su nicho \textbf{se hizo angosto}.
+    Cuando NO usar MLP en producci\'on:}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}p{6.5cm}p{6.5cm}@{}}
+    \toprule
+    \textbf{\color{codeGreen}MLP est\'a OK cuando\ldots} & \textbf{\color{arcaRed}NO usar MLP cuando\ldots} \\
+    \midrule
+    Datos tabulares con muchas filas y poca estructura espacial.
+    & Im\'agenes (usar CNN o ViT). \\
+    Componente de un sistema mayor (cabezal final de una CNN, embeddings).
+    & Audio / espectrogramas (usar CNN 1D o 2D). \\
+    Prototipado r\'apido para validar que vale la pena ML.
+    & Texto (usar Transformers / LLMs). \\
+    Datos de baja dimensi\'on $<$ 100 features, sin imagen.
+    & Series temporales largas (usar RNN / Transformers). \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Realidad de 2026:} en la industria casi nadie
+    entrena un MLP \emph{puro} a gran escala. Sigue vivo como
+    \textbf{cabezal} de modelos m\'as grandes (CNN, Transformer)
+    --- la \'ultima capa que decide la clase. La pieza importante hoy
+    son las arquitecturas que vienen \emph{antes} de \'el.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 3: DE MLP A CNN
+% =============================================================================
+\sectionframe{De MLP a CNN}{La idea de filtros, parameter sharing e invariancia}
+
+\begin{frame}{La Idea Central: ?`Y Si Reusamos los Pesos?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Si lo que define un borde son \textbf{3 pixeles vecinos cualesquiera},
+    no necesitamos un peso por posici\'on: necesitamos los mismos 3 pesos
+    \emph{moviendose} por la imagen.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_parameter_sharing.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Izquierda} (MLP): 5 pixeles $\to$ 5 pesos.
+    \textbf{Derecha} (CNN): 5 pixeles $\to$ \textbf{solo 3 pesos compartidos}
+    aplicados en cada ventana. Menos par\'ametros, autom\'aticamente
+    invariante a posici\'on.}
+\end{frame}
+
+\begin{frame}{Un Filtro 3$\times$3 ya Hace Magia}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Antes de las CNN, los ingenieros dise\~naban filtros \textbf{a mano}
+    (Sobel, Laplaciano, Gabor). La CNN simplemente los \textbf{aprende}
+    de los datos.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_filtro_edge.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} El filtro Sobel \textbf{no fue entrenado}:
+    es una matriz $3\times3$ a mano. Igual detecta bordes nitidamente.
+    Una CNN tiene cientos de estos filtros, optimizados por descenso de
+    gradiente para tu problema.}
+\end{frame}
+
+\begin{frame}[shrink=10]{Operaci\'on Convoluci\'on, Paso a Paso}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_conv_paso.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize
+  \begin{enumerate}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      Tomar una ventana 3$\times$3 de la imagen.
+    \item[{\color{arcaRed}\bfseries 2.}]
+      Multiplicar elemento a elemento con el filtro 3$\times$3.
+    \item[{\color{arcaRed}\bfseries 3.}]
+      Sumar todos los productos $\to$ un solo n\'umero.
+    \item[{\color{codeGreen}\bfseries 4.}]
+      Mover la ventana 1 posici\'on (\texttt{stride=1}). Repetir hasta cubrir
+      toda la imagen. Resultado: una nueva imagen ``mapa de caracter\'isticas''.
+  \end{enumerate}
+  }
+\end{frame}
+
+\begin{frame}{Muchos Filtros = Muchos Mapas}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Una capa Conv2D no aplica \emph{un} filtro: aplica \textbf{decenas}.
+    Cada uno se especializa en algo distinto.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_feature_maps.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Si la capa tiene \textbf{32 filtros}, la salida
+    tiene 32 canales. La siguiente capa Conv2D ve esos 32 canales como
+    su entrada y aprende \textbf{combinaciones} de ellos. As\'i van
+    surgiendo conceptos: bordes $\to$ texturas $\to$ partes (orejas, ojos)
+    $\to$ objetos completos.}
+\end{frame}
+
+\begin{frame}{MaxPooling: Reducir y Resumir}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Despu\'es de una capa convolucional, normalmente \textbf{reducimos a la
+    mitad} cada dimensi\'on con \texttt{MaxPooling}. Toma el m\'aximo de
+    cada bloque 2$\times$2.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{fig_pooling.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Por qu\'e:} compresi\'on espacial $\Rightarrow$ menos
+      c\'omputo, m\'as receptivo (cada neurona ``ve'' una zona m\'as grande).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Sin par\'ametros:} es una operaci\'on fija, no se entrena.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Tambi\'en existe} \texttt{AvgPooling} (promedio) y modernamente
+      \texttt{GlobalAvgPooling} al final, en vez de \texttt{Flatten + Dense}.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{Anatom\'ia de una CNN T\'ipica}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_cnn_arquitectura.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Bloque convolucional:} \texttt{Conv2D}
+    + ReLU + \texttt{MaxPool}. Se repite 2--5 veces, con cada vez m\'as
+    filtros y menos resoluci\'on.
+    Al final \texttt{Flatten} convierte el tensor 3D a vector y un MLP
+    peque\~no clasifica. \textbf{La parte ``inteligente'' ocurre antes del Flatten}.}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 4: KERAS — POR QU\'E
+% =============================================================================
+\sectionframe{Keras}{Por qu\'e esta es nuestra herramienta}
+
+\begin{frame}{?`Qu\'e Es Keras y D\'onde Vive?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Keras es una \textbf{API de alto nivel} para construir y entrenar redes
+    neuronales. No hace los c\'alculos directamente: pide ayuda a un
+    \emph{backend} (TensorFlow, JAX, PyTorch).}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{fig_keras_stack.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Origen (2015):} Fran\c{c}ois Chollet (Google) la creo para
+      facilitar usar TensorFlow. Hoy es la API oficial de TF (\texttt{tf.keras}).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Keras 3 (2024+):} multi-backend. El mismo c\'odigo corre sobre
+      TensorFlow, JAX o PyTorch.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{?`Por Qu\'e Keras y No PyTorch Puro?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Las dos opciones est\'an bien. Pero para esta clase y para empezar,
+    Keras gana por raz\'on pedag\'ogica:}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}p{6.0cm} p{6.5cm}@{}}
+    \toprule
+    \textbf{\color{codeBlue}Keras (TF / sklearn-like)} & \textbf{\color{codePurple}PyTorch puro} \\
+    \midrule
+    \texttt{model.fit(X, y)} ---
+    misma API que \texttt{LogisticRegression}, \texttt{RandomForest},
+    \texttt{MLPClassifier}.
+    & Tienes que escribir el loop de entrenamiento a mano:
+      \texttt{for epoch}, \texttt{loss.backward()}, \texttt{optimizer.step()}\ldots \\
+    \rowcolor{arcaGray}
+    Bater\'ias incluidas: m\'etricas, callbacks, EarlyStopping,
+    guardar/cargar.
+    & M\'as control de bajo nivel pero requiere m\'as l\'ineas para lo b\'asico. \\
+    Excelente para \textbf{prototipar r\'apido} y \textbf{ense\~nar}.
+    & Estandar en \textbf{investigaci\'on} y modelos custom complejos. \\
+    \rowcolor{arcaGray}
+    Compatible con todo el stack scikit-learn (Pipeline, GridSearch).
+    & Ecosistema separado. Hay que adaptar. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Conclusi\'on:} aprenden Keras hoy
+    --- transfieren a PyTorch ma\~nana sin problema (los conceptos son los mismos:
+    capas, optimizer, loss, gradient). PyTorch es el \emph{siguiente paso} natural
+    despu\'es de dominar la idea.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile,shrink=15]{La Misma API Que Ya Conocen}
+  \vspace{-6pt}
+  \begin{pyblock}
+# La API es identica a sklearn:
+from tensorflow import keras
+from tensorflow.keras import layers
+
+model = keras.Sequential([
+    layers.Conv2D(32, 3, activation="relu", input_shape=(32, 32, 3)),
+    layers.MaxPooling2D(),
+    layers.Conv2D(64, 3, activation="relu"),
+    layers.MaxPooling2D(),
+    layers.Flatten(),
+    layers.Dense(64, activation="relu"),
+    layers.Dense(2, activation="softmax"),
+])
+
+model.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
+              metrics=["accuracy"])
+
+model.fit(X_train, y_train, epochs=10, validation_split=0.2)
+acc = model.evaluate(X_test, y_test)[1]
+preds = model.predict(X_test)
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}
+  \faLightbulb\hspace{4pt} \texttt{model.fit / .evaluate / .predict} ---
+  igual que \texttt{LogisticRegression}. Lo \'unico nuevo es \texttt{compile()}:
+  decir qu\'e \textbf{optimizador}, qu\'e \textbf{loss} y qu\'e \textbf{m\'etricas}
+  monitorear.}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 5: CNN PASO A PASO
+% =============================================================================
+\sectionframe{CNN Paso a Paso}{Conv2D, MaxPooling, Flatten, Dense}
+
+\begin{frame}{Las 4 Capas Fundamentales}
+  \vspace{-4pt}
+  {\scriptsize
+  \begin{tabular}{@{}p{2.6cm} p{4.6cm} p{5.5cm}@{}}
+    \toprule
+    \textbf{Capa} & \textbf{Qu\'e hace} & \textbf{Par\'ametros importantes} \\
+    \midrule
+    \rowcolor{arcaGray}
+    \texttt{Conv2D} & Aplica $N$ filtros que se aprenden, devuelve $N$ mapas.
+    & \texttt{filters} (cu\'antos), \texttt{kernel\_size} (tama\~no, usar 3),
+      \texttt{padding="same"} para conservar tama\~no. \\
+    \texttt{MaxPooling2D} & Reduce a la mitad cada dimensi\'on.
+    & \texttt{pool\_size=2}. Sin par\'ametros entrenables. \\
+    \rowcolor{arcaGray}
+    \texttt{Flatten} & Convierte el tensor 3D en vector 1D.
+    & Sin par\'ametros. Solo cambia la forma. \\
+    \texttt{Dense} & Capa totalmente conectada (MLP cl\'asico).
+    & \texttt{units} (neuronas), \texttt{activation} ("relu" o "softmax"). \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Receta segura para empezar: 2 bloques (Conv + Pool), Flatten, 1 Dense
+    oculta + 1 Dense de salida.}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Cada bloque conv-pool} dobla los filtros y
+    halve la resoluci\'on. Patr\'on cl\'asico: $32 \to 64 \to 128$ filtros,
+    $32^2 \to 16^2 \to 8^2$ p\'ixeles.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile,shrink=18]{C\'odigo: CNN M\'inima en MNIST}
+  \vspace{-6pt}
+  \begin{pyblock}
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras import Sequential, layers
+
+(X_tr, y_tr), (X_te, y_te) = mnist.load_data()
+X_tr = X_tr[..., None] / 255.0    # (60000, 28, 28) -> (60000, 28, 28, 1)
+X_te = X_te[..., None] / 255.0
+
+cnn = Sequential([
+    layers.Conv2D(32, 3, activation="relu", input_shape=(28, 28, 1)),
+    layers.MaxPooling2D(),
+    layers.Conv2D(64, 3, activation="relu"),
+    layers.MaxPooling2D(),
+    layers.Flatten(),
+    layers.Dense(64, activation="relu"),
+    layers.Dense(10, activation="softmax"),
+])
+
+cnn.compile(optimizer="adam",
+            loss="sparse_categorical_crossentropy",
+            metrics=["accuracy"])
+
+cnn.fit(X_tr, y_tr, epochs=5, batch_size=128, validation_split=0.1)
+print(cnn.evaluate(X_te, y_te)[1])   # ~ 0.99
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[fragile]{model.summary(): Lo Que Realmente Construye Keras}
+  \vspace{-4pt}
+  \begin{outputblock}
+Layer (type)              Output Shape           Param #
+=========================================================
+conv2d  (Conv2D)          (None, 26, 26, 32)         320
+max_pooling2d             (None, 13, 13, 32)           0
+conv2d_1 (Conv2D)         (None, 11, 11, 64)      18,496
+max_pooling2d_1           (None, 5, 5, 64)             0
+flatten   (Flatten)       (None, 1600)                 0
+dense   (Dense)           (None, 64)             102,464
+dense_1 (Dense)           (None, 10)                 650
+=========================================================
+Total params: 121,930
+Trainable params: 121,930
+  \end{outputblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Conv2D 32 filtros 3$\times$3:} solo 320 par\'ametros.
+      $32 \times (3 \times 3 \times 1 + 1) = 320$. \emph{Eso} es parameter sharing.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      MaxPooling reduce 28$\to$13$\to$5 sin par\'ametros.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Comparen:} un MLP equivalente sobre 28$\times$28 con una
+      capa de 128 ten\'ia $\sim$100K par\'ametros \emph{solo en la primera capa}.
+      La CNN tiene 122K \emph{en total} y obtiene mejor accuracy.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 6: CNN EN CATS VS DOGS
+% =============================================================================
+\sectionframe{CNN en Cats vs Dogs}{El payoff: de 60\% a 80\%+}
+
+\begin{frame}[fragile,shrink=18]{El Mismo Notebook, Reemplazando el Modelo}
+  \vspace{-6pt}
+  \begin{pyblock}
+import urllib.request, io
+URL = "https://raw.githubusercontent.com/cmosquerat/arca-diplomado/main/clase-22/cifar_cats_dogs_4k.npz"
+data = np.load(io.BytesIO(urllib.request.urlopen(URL).read()))
+X_cd, y_cd = data["X"], data["y"]    # (4000, 32, 32, 3) uint8
+
+# Escalar [0, 1]
+X_cd = X_cd.astype("float32") / 255.0
+
+X_tr, X_te, y_tr, y_te = train_test_split(X_cd, y_cd, test_size=0.2,
+                                          random_state=42, stratify=y_cd)
+
+cnn = Sequential([
+    layers.Conv2D(32, 3, activation="relu", padding="same",
+                  input_shape=(32, 32, 3)),
+    layers.MaxPooling2D(),
+    layers.Conv2D(64, 3, activation="relu", padding="same"),
+    layers.MaxPooling2D(),
+    layers.Conv2D(128, 3, activation="relu", padding="same"),
+    layers.MaxPooling2D(),
+    layers.Flatten(),
+    layers.Dropout(0.3),
+    layers.Dense(64, activation="relu"),
+    layers.Dense(2, activation="softmax"),
+])
+cnn.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
+            metrics=["accuracy"])
+cnn.fit(X_tr, y_tr, epochs=15, batch_size=64, validation_split=0.1)
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}{Resultados: La Pared se Convierte en Camino}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_resultados_cnn.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{MNIST:} CNN llega a $\sim$99\%
+    (humano $\approx$ 99.7\%). \textbf{Cats vs Dogs:} con la misma data
+    de la clase 22, la CNN salta de $\sim$60\% a $\sim$85\%. Sin tocar
+    los datos. La diferencia es \emph{toda} arquitectural.}
+\end{frame}
+
+\begin{frame}{Data Augmentation: M\'as Datos Sin Recolectar M\'as Datos}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Truco esencial cuando hay pocos datos: generar variaciones
+    (rotaci\'on, flip, brillo) y usar todas en entrenamiento.
+    Keras lo hace en una l\'inea.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_data_aug.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} El mismo gato visto de muchas formas
+    multiplica el tama\~no efectivo del dataset.
+    \texttt{layers.RandomFlip}, \texttt{RandomRotation}, \texttt{RandomZoom}
+    se agregan al inicio del modelo. En cats vs dogs sube otros 5--7
+    puntos de accuracy.}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 7: LIMITACIONES Y CONSIDERACIONES
+% =============================================================================
+\sectionframe{Limitaciones y Consideraciones}{Cu\'ando NO entrenar una CNN desde cero}
+
+\begin{frame}{Las CNN No Son Gratis: 4 Costos Reales}
+  \vspace{-4pt}
+  {\footnotesize
+  \begin{tabular}{@{}p{3.5cm} p{9.5cm}@{}}
+    \toprule
+    \textbf{Costo} & \textbf{C\'omo se manifiesta} \\
+    \midrule
+    \rowcolor{arcaGray}
+    \textbf{Datos} & Una CNN seria pide \textbf{decenas de miles} de
+      im\'agenes etiquetadas. ImageNet tiene 1.4M, COCO 330K. Si tienen
+      500 fotos, una CNN desde cero \emph{no funciona}. \\
+    \textbf{C\'omputo} & Entrenar 15 epochs en cats vs dogs en CPU $\approx$
+      10 min. En una foto $224\times224$ con 50K imagenes y 50 epochs,
+      sin GPU son \textbf{horas o d\'ias}. Una GPU es pr\'acticamente obligatoria. \\
+    \rowcolor{arcaGray}
+    \textbf{Hiperpar\'ametros} & N\'umero de filtros, profundidad, learning
+      rate, batch size, dropout, weight decay, scheduler\ldots Mucho m\'as
+      tuning que sklearn. \\
+    \textbf{Interpretabilidad} & Es muy dif\'icil decir ``por qu\'e''
+      el modelo predijo perro. Hay t\'ecnicas (Grad-CAM, SHAP) pero ninguna
+      tan limpia como los ``feature importances'' de Random Forest. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=codeOrange!8, colframe=codeOrange, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faExclamationTriangle\hspace{4pt}\textbf{Antes de entrenar una CNN
+    desde cero:} pregunten si pueden usar \textbf{transfer learning}.
+    Casi siempre la respuesta es s\'i.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}{Transfer Learning: La Soluci\'on a la Falta de Datos}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Idea: tomar una CNN \textbf{ya entrenada} en ImageNet (millones de
+    fotos), congelar sus capas convolucionales, y entrenar solo un
+    cabezal nuevo con \emph{tus} datos.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_transfer_learning.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Los filtros de las primeras capas
+    (bordes, texturas) son \textbf{universales}. Lo \'unico ``de tu
+    problema'' es la \'ultima decisi\'on: ?`gato o perro? ?`pieza buena
+    o defectuosa? ?`producto A, B o C? Eso s\'i requiere tus datos ---
+    pero no millones.}
+\end{frame}
+
+\begin{frame}[fragile,shrink=15]{Transfer Learning en 10 L\'ineas (Keras)}
+  \vspace{-6pt}
+  \begin{pyblock}
+from tensorflow.keras.applications import MobileNetV2
+
+# 1. Cargar la CNN preentrenada (sin cabezal)
+base = MobileNetV2(input_shape=(96, 96, 3), include_top=False,
+                   weights="imagenet")
+base.trainable = False     # Congelar pesos
+
+# 2. Construir tu modelo: base + tu cabezal
+modelo = Sequential([
+    base,
+    layers.GlobalAveragePooling2D(),
+    layers.Dense(32, activation="relu"),
+    layers.Dense(2, activation="softmax"),
+])
+
+modelo.compile(optimizer="adam",
+               loss="sparse_categorical_crossentropy",
+               metrics=["accuracy"])
+modelo.fit(X_tr, y_tr, epochs=5)   # Solo 5 epochs, usa MUY poca data
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}
+  \faLightbulb\hspace{4pt} Con 1\,000 fotos y 5 epochs en CPU, transfer learning
+  llega a $\sim$95\% en cats vs dogs. \textbf{Mejor que la CNN desde cero
+  con 4\,000 fotos.}}
+\end{frame}
+
+\begin{frame}[shrink=10]{?`Cu\'ando Usar (y NO Usar) una CNN?}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_cuando_cnn.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{codeGreen}\scriptsize\faCheck}]
+      \textbf{S\'i} CNN: imagenes, espectrogramas de audio, mapas de calor,
+      datos en cuadricula 2D/3D.
+    \item[{\color{arcaRed}\scriptsize\faTimes}]
+      \textbf{No} CNN para tabular (RF/XGBoost), texto (Transformers/LLMs),
+      series temporales no espaciales (Transformers).
+    \item[{\color{arcaRed}\scriptsize\faTimes}]
+      \textbf{No} CNN \emph{desde cero} si tienen $<$ 10K im\'agenes ---
+      transfer learning casi siempre es mejor.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{Las CNN No Son el Final --- Vision Transformers}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Desde 2020 las \textbf{Vision Transformers (ViT)} compiten y a veces
+    superan a las CNN en visi\'on. Importante saberlo, no es lo que
+    usaremos hoy.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{ViT (2020):} dividen la imagen en parches 16$\times$16 y los
+      tratan como ``palabras'' --- mismo mecanismo de atenci\'on que GPT.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Modelos de hoy} (CLIP, DINOv2, SAM, Stable Diffusion) son
+      todos a base de transformers / h\'ibridos.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Pero las CNN siguen siendo el caballo de batalla} cuando
+      hay poca data, pocos recursos o restricciones de latencia
+      (m\'oviles, IoT, l\'inea de producci\'on).
+  \end{itemize}
+  }
+
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=codeBlue!8, colframe=codeBlue, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Mi recomendaci\'on pr\'actica para Arca:}
+    transfer learning sobre MobileNetV2/V3 o EfficientNet. Con eso
+    cubren el 90\% de los casos de visi\'on industrial: control de
+    calidad, lectura de etiquetas, detecci\'on de productos.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que aprendimos hoy y qu\'e viene}
+
+\begin{frame}[shrink=10]{Resumen}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} El problema:}
+      \vspace{4pt}
+
+      {\scriptsize\setlength{\parskip}{4pt}
+      MLP \textbf{no es invariante} a traslaci\'on, \textbf{explota} en
+      par\'ametros y \textbf{ignora} la estructura espacial.
+
+      Resultado: techo en $\sim$60\% en cats vs dogs.
+      }
+
+      \vspace{8pt}
+      {\footnotesize\bfseries\color{arcaDark} La idea:}
+      \vspace{4pt}
+
+      {\scriptsize\setlength{\parskip}{4pt}
+      \textbf{Filtros 3$\times$3 compartidos} que recorren la imagen.
+      Pocos par\'ametros, autom\'aticamente invariantes a posici\'on,
+      capturan estructura local.
+      }
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} La caja de herramientas:}
+      \vspace{4pt}
+
+      {\scriptsize\setlength{\parskip}{4pt}
+      \textbf{Conv2D} (filtros), \textbf{MaxPooling} (reducir),
+      \textbf{Flatten} (a vector), \textbf{Dense} (clasificar).
+      Misma API \texttt{.fit/.predict} que sklearn.
+      }
+
+      \vspace{8pt}
+      {\footnotesize\bfseries\color{arcaDark} Los costos:}
+      \vspace{4pt}
+
+      {\scriptsize\setlength{\parskip}{4pt}
+      Datos, c\'omputo, hiperpar\'ametros, interpretabilidad.
+      \textbf{Transfer learning} resuelve la mayor\'ia de los casos
+      con poca data.
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{8pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Lo m\'as importante:} no es la arquitectura
+    espec\'ifica que aprendieron hoy. Es \textbf{la idea de aprender
+    representaciones jer\'arquicas} (bordes $\to$ texturas $\to$ objetos)
+    a partir de datos. Esa idea es lo que mueve toda la IA moderna.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}{?`Qu\'e Viene Despu\'es?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Sigue el m\'odulo de \textbf{IA Generativa}, donde estos mismos
+    bloques se usan para \emph{generar} en vez de \emph{clasificar}:}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{5pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Autoencoders:} red que aprende a comprimir y reconstruir
+      una imagen. Base de detecci\'on de anomal\'ias y compresi\'on aprendida.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Variational Autoencoders / GANs:} aprenden a \emph{generar}
+      im\'agenes nuevas que parecen reales.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Diffusion / Stable Diffusion:} la familia de modelos detr\'as
+      de Midjourney y DALL-E. Se basan en CNN modernas (U-Net) +
+      transformers.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{LLMs y multimodales:} CLIP, GPT-4V, Gemini ---
+      combinan transformers de visi\'on con modelos de lenguaje.
+  \end{itemize}
+  }
+\end{frame}
+
+% ── QR DE CIERRE ──────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1.0cm}
+  \begin{center}
+    {\color{white}\Huge\bfseries Encuesta de Cierre} \\[0.4cm]
+    {\color{white!85}\Large Cu\'entanos qu\'e tal estuvo la clase}
+    \vspace{1cm}
+
+    \includegraphics[width=4.5cm]{qr_encuesta.jpg}
+
+    \vspace{0.6cm}
+    {\color{white!80}\small Gracias por hoy}
+  \end{center}
+\end{frame}
+}
+
+\end{document}

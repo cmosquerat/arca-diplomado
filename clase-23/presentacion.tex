@@ -583,6 +583,55 @@ print(f"Accuracy: {lr.score(X_test, y_test):.1%}")
     equivalen a 1 sola capa).}
 \end{frame}
 
+\begin{frame}[shrink=18]{Criterios para Elegir Activaci\'on en Capas Internas}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    No es opcional. La elecci\'on en \textbf{capas ocultas} marca
+    si la red entrena r\'apido, lento o no entrena.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}l l p{4.0cm} p{4.5cm}@{}}
+    \toprule
+    \textbf{Activaci\'on} & \textbf{F\'ormula} & \textbf{Cu\'ando usarla} & \textbf{Cuidados} \\
+    \midrule
+    \rowcolor{arcaGray}
+    \textbf{ReLU} & $\max(0, z)$ &
+      \textbf{Default} en redes modernas. Im\'agenes, tabular, casi todo. &
+      ``Dying ReLU'': neuronas que quedan en 0 si los pesos se vuelven
+      muy negativos. Mitigar con \texttt{he\_init} y LR moderado. \\
+    Leaky ReLU & $\max(0.01z, z)$ &
+      Cuando ves muchas neuronas muertas con ReLU. Un valor seguro. &
+      Pendiente $\alpha$ extra a calibrar (sklearn no lo trae; PyTorch s\'i). \\
+    \rowcolor{arcaGray}
+    Tanh & $\tanh(z)$ &
+      Redes peque\~nas, datos centrados en 0. RNN antiguas. &
+      Saturaci\'on en extremos $\Rightarrow$ \textbf{vanishing gradient}
+      en redes profundas. \\
+    Sigmoid & $1/(1{+}e^{-z})$ &
+      \textbf{Solo} en salida binaria. Casi nunca en capas internas. &
+      Vanishing gradient peor que tanh. Salida no centrada en 0. \\
+    \rowcolor{arcaGray}
+    GELU / SiLU & suave, no monot. &
+      Transformers modernos (BERT, GPT). En MLP grandes. &
+      M\'as caro de calcular. No est\'a en sklearn. \\
+    \textbf{Lineal} & $z$ &
+      \textbf{NUNCA} en capas internas. Solo en salida de regresi\'on. &
+      Sin no-linealidad la red colapsa a una sola capa.\\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Receta segura:} ReLU en capas ocultas
+    + softmax/sigmoid en la salida. Solo cambien si tienen evidencia
+    (curva de loss plana, neuronas muertas) de que algo no funciona.}
+  \end{tcolorbox}
+\end{frame}
+
 % =============================================================================
 %  BLOQUE 3: CONECTAR NEURONAS — QU\'E VIAJA, QU\'E DETECTA CADA CAPA
 % =============================================================================
@@ -1165,6 +1214,166 @@ print(f"MLP Accuracy: {mlp_mnist.score(X_test_n, y_test):.1%}")
       ?`Tarda m\'as?
   \end{enumerate}
   }
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 5.5: REDES NEURONALES EN DATOS TABULARES
+% =============================================================================
+\sectionframe{Redes en Datos Tabulares}{El caso m\'as com\'un en la industria}
+
+\begin{frame}{?`Por Qu\'e Hablar de Tabular?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    En la industria, el 80\% de los problemas no son im\'agenes ni texto:
+    son \textbf{tablas} --- ventas, clientes, transacciones, sensores.
+    Filas = observaciones. Columnas = mezcla de num\'ericas + categ\'oricas.}
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Ejemplos cl\'asicos:} predecir churn de clientes, scoring
+      crediticio, fraude, demanda, mantenimiento predictivo,
+      diagn\'ostico cl\'inico (lab + s\'intomas).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Lo que hace tabular ``dif\'icil'' para una NN:}
+      pocas filas (cientos--miles), variables heterog\'eneas,
+      categ\'oricas, faltantes (\texttt{NaN}), outliers.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Buena noticia:} la misma \texttt{MLPClassifier} con
+      \texttt{Pipeline} + \texttt{ColumnTransformer} resuelve el caso
+      tabular cl\'asico. No cambia la API.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{Preprocesamiento: Tres Cosas Obligatorias}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Antes de meter un MLP a una tabla, casi siempre hay que hacer estos
+    tres pasos. Saltarse cualquiera dispara errores o un MLP que no aprende.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}p{2.6cm} p{4.5cm} p{5.4cm}@{}}
+    \toprule
+    \textbf{Problema} & \textbf{Soluci\'on} & \textbf{Por qu\'e} \\
+    \midrule
+    \rowcolor{arcaGray}
+    Variables en escalas distintas (Edad 18--90, Ingreso 100--100k)
+    & \texttt{StandardScaler} (o \texttt{MinMaxScaler})
+    & Sin escalar, las variables grandes dominan los gradientes y
+      el MLP aprende mal. Igual que K-Means. \\
+    Categ\'oricas (\texttt{ciudad}, \texttt{producto}, \texttt{genero})
+    & \texttt{OneHotEncoder} \emph{o} \texttt{OrdinalEncoder}
+    & La red s\'olo entiende n\'umeros. ``Quito'' no es un n\'umero;
+      one-hot la convierte en columnas 0/1. \\
+    \rowcolor{arcaGray}
+    Valores faltantes (\texttt{NaN})
+    & \texttt{SimpleImputer} (mediana / moda)
+    & La red \textbf{no acepta NaN}. Imputar con la mediana es seguro;
+      o crear flag \texttt{X\_was\_missing}. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Receta:} todo dentro de un \texttt{Pipeline}
+    con \texttt{ColumnTransformer}. As\'i evitan data leakage al hacer
+    \texttt{cross\_val\_score} o \texttt{GridSearchCV}.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile,shrink=10]{C\'odigo: MLP Tabular Completo}
+  \vspace{-6pt}
+  \begin{pyblock}
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.neural_network import MLPClassifier
+
+num_cols = ["edad", "ingreso", "antiguedad"]
+cat_cols = ["ciudad", "producto"]
+
+# Numericas: imputar mediana + escalar
+num_pipe = Pipeline([("imp", SimpleImputer(strategy="median")),
+                     ("sc",  StandardScaler())])
+# Categoricas: imputar moda + one-hot
+cat_pipe = Pipeline([("imp", SimpleImputer(strategy="most_frequent")),
+                     ("oh",  OneHotEncoder(handle_unknown="ignore"))])
+
+pre = ColumnTransformer([("num", num_pipe, num_cols),
+                         ("cat", cat_pipe, cat_cols)])
+
+mlp_tabular = Pipeline([
+    ("pre", pre),
+    ("nn",  MLPClassifier(hidden_layer_sizes=(64, 32),
+                          max_iter=300, early_stopping=True,
+                          random_state=42)),
+])
+mlp_tabular.fit(X_train, y_train)
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}{Resultados: ?`Gana el MLP en Tabular?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Dos datasets reales. El MLP es competitivo pero \textbf{no domina}
+    --- el ganador depende del dataset y del tama\~no.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.96\textwidth]{fig_mlp_tabular.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Wine} (178 filas, separable):
+    LR y RF llegan al 100\%; el MLP \emph{baja} a $\sim$78\% --- demasiados
+    par\'ametros para tan pocas filas. \textbf{Titanic} (891 filas, num+cat+NaN):
+    los tres quedan en $\sim$71--78\%, LR gana por poco. En la pr\'actica
+    industrial, el rey de tabular es \textbf{XGBoost / LightGBM}, no las
+    redes neuronales.}
+\end{frame}
+
+\begin{frame}{?`Cu\'ando Vale la Pena un MLP en Tabular?}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    No siempre. Aqu\'i la decisi\'on r\'apida:}
+
+  \vspace{4pt}
+  {\scriptsize
+  \begin{tabular}{@{}p{6.5cm} p{6.0cm}@{}}
+    \toprule
+    \textbf{\color{codeGreen}MLP es buena idea cuando\ldots}
+    & \textbf{\color{arcaRed}Mejor RF / XGBoost cuando\ldots} \\
+    \midrule
+    Tienen \textbf{$>$ 50\,000 filas} y suficientes features.
+    & Pocas filas (cientos--algunos miles). \\
+    Hay \textbf{interacciones complejas} entre variables.
+    & Muchos categ\'oricos de alta cardinalidad (miles de niveles). \\
+    Necesitan \textbf{embeddings} (categ\'oricas como vectores aprendidos).
+    & Necesitan \textbf{interpretabilidad} (feature importance, SHAP). \\
+    El modelo es parte de un pipeline neuronal m\'as grande
+    (deep learning para texto/im\'agenes que se combina con tabular).
+    & Tiempo de entrenamiento corto, pocos hiperpar\'ametros que tunear. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Heur\'istica de bolsillo:} para tabular,
+    siempre arrancar con \textbf{Logistic + Random Forest}.
+    Solo si el problema lo amerita (mucha data, no-linealidades fuertes,
+    embeddings), probar MLP.}
+  \end{tcolorbox}
 \end{frame}
 
 % =============================================================================

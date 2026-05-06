@@ -672,6 +672,219 @@ demo.launch()
 \end{frame}
 
 % =============================================================================
+%  BLOQUE G.5: IM\'AGENES A COLOR (RGB) --- CATS VS DOGS
+% =============================================================================
+\sectionframe{Im\'agenes a Color}{El salto real: cats vs dogs}
+
+\begin{frame}{De Grises a RGB: 3$\times$ M\'as N\'umeros}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Hasta ahora trabajamos en \textbf{escala de grises}. Una foto real
+    es \textbf{RGB}: cada pixel tiene 3 valores --- Rojo, Verde, Azul.}
+
+  \vspace{12pt}
+  \begin{center}
+  {\footnotesize
+  \begin{tabular}{@{}l l r l@{}}
+    \toprule
+    \textbf{Dataset} & \textbf{Forma} & \textbf{Numeros/imagen} & \textbf{Tipo} \\
+    \midrule
+    MNIST          & $28 \times 28$       & 784      & grises \\
+    Fashion MNIST  & $28 \times 28$       & 784      & grises \\
+    \rowcolor{arcaGray}
+    Cats vs Dogs (CIFAR-10) & $32 \times 32 \times 3$ & 3\,072 & \textbf{RGB} \\
+    Foto t\'ipica web & $224 \times 224 \times 3$ & 150\,528 & RGB \\
+    \bottomrule
+  \end{tabular}
+  }
+  \end{center}
+
+  \vspace{14pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, boxrule=0.5pt, arc=2pt,
+    left=8pt, right=8pt, top=6pt, bottom=6pt]
+    {\footnotesize\color{arcaDark}
+    \faExclamationTriangle\hspace{4pt}\textbf{La dimensionalidad explota.}
+    Pasar de 784 a 3\,072 features ya rompe la suposici\'on de que
+    \emph{``m\'as datos + modelo simple = buen resultado''}.
+    Para una foto web (150\,000+ pixeles), los modelos lineales son inviables.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink=12]{Anatom\'ia de una Imagen RGB}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Una imagen RGB es \textbf{3 matrices apiladas}, una por canal.
+    El array de NumPy tiene forma \texttt{(alto, ancho, 3)}.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_rgb_anatomia.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Cada canal es \textbf{una imagen completa
+    en grises}. La m\'aquina ve los 3 valores por pixel; nuestros ojos
+    los combinan para ver color. Un pixel ``naranja'' es R=255, G=140, B=0.}
+\end{frame}
+
+\begin{frame}{El Dataset: Cats vs Dogs (CIFAR-10)}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \textbf{CIFAR-10} (Canadian Institute for Advanced Research, 2009):
+    60\,000 fotos a color de 10 clases. Tomamos solo las 2 clases
+    \textbf{gato} y \textbf{perro}.}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{tabular}{@{}llp{7cm}@{}}
+    \toprule
+    \textbf{Propiedad} & \textbf{Valor} & \textbf{Detalle} \\
+    \midrule
+    Im\'agenes & 12\,000 & 6\,000 gatos + 6\,000 perros. \\
+    Tama\~no & 32 $\times$ 32 $\times$ 3 & = 3\,072 features por imagen. \\
+    Clases & 2 & gato (0), perro (1). \\
+    Azar  & 50\% & punto de comparaci\'on de cualquier modelo. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{6pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{?`Por qu\'e es much\'isimo m\'as dif\'icil?} Variaci\'on de
+      poses, fondos, razas, iluminaci\'on, oclusiones --- y todo eso
+      en \textbf{32$\times$32}, donde la cara del animal son apenas
+      6$\times$6 pixeles.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Un humano lo resuelve casi al 100\%. Un modelo lineal sobre
+      pixeles RGB en bruto, no.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink=10]{EDA: Conteo de Clases en CIFAR-10}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Antes de filtrar, miramos las 10 clases originales de CIFAR-10
+    (\texttt{np.unique(y, return\_counts=True)}). El dataset est\'a
+    \textbf{perfectamente balanceado} --- 6\,000 im\'agenes por clase.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_cifar_clases.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Filtramos solo las clases 3 (gato) y 5 (perro)},
+    quedando 12\,000 im\'agenes balanceadas. El balance es bueno
+    para empezar: el azar es exactamente 50\% (no como en datasets
+    desbalanceados donde el azar puede ser 90\%).}
+\end{frame}
+
+\begin{frame}[shrink=10]{As\'i Se Ven --- Gatos y Perros en 32$\times$32 RGB}
+  \vspace{-4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_cats_dogs_samples.png}
+  \end{center}
+
+  \vspace{-4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Comparado con MNIST, esto es \textbf{otro mundo}:
+    poses, razas, fondos, iluminaci\'on, oclusiones --- y todo en apenas
+    32$\times$32 pixeles, donde la cara del animal son
+    $\sim$6$\times$6 puntos. Aun as\'i, un humano los distingue
+    instant\'aneamente; nuestros modelos no.}
+\end{frame}
+
+\begin{frame}[shrink=10]{EDA en Color: Distribuci\'on por Canal}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    En grises hac\'iamos histograma de intensidades. En RGB se hace
+    \textbf{uno por canal}: muestra el ``perfil de color'' del dataset.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{fig_rgb_canales_hist.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      ?`El canal R es mayor que el B? La imagen es \textbf{c\'alida} (atardeceres,
+      pieles). ?`B mayor que R? Imagen \textbf{fr\'ia} (cielos, agua).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Comparar la distribuci\'on de \textbf{gatos vs perros}: si los
+      perros tienen m\'as marr\'on/dorado y los gatos m\'as gris/blanco,
+      el color \emph{ayuda} un poco. Pero no separa por s\'i solo.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Otras preguntas de EDA}: brillo medio (suma de los 3 canales),
+      saturaci\'on, ?`hay clases con fondos m\'as oscuros?
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink=18]{Manipular Canales en Python}
+  \vspace{-6pt}
+  \begin{pyblock}
+img.shape           # (32, 32, 3)  - alto, ancho, canales
+
+# Acceder a un canal
+R = img[:, :, 0]    # solo Rojo  -> (32, 32)
+G = img[:, :, 1]    # solo Verde
+B = img[:, :, 2]    # solo Azul
+
+# Convertir a grises (formula estandar luminancia)
+gris = 0.299*R + 0.587*G + 0.114*B   # (32, 32)
+
+# Intercambiar canales (R <-> B): convierte BGR de OpenCV a RGB
+img_rgb = img[:, :, ::-1]
+
+# Aplanar para ML: (32, 32, 3) -> (3072,)
+vector = img.flatten()
+
+# Apilar 1000 imagenes en un dataset (N, 3072)
+X = np.stack([im.flatten() for im in lista_imagenes])
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{arcaDark}
+  \faLightbulb\hspace{4pt} \textbf{Cuidado:} algunas librer\'ias (OpenCV)
+  cargan en \textbf{BGR}, no RGB. Si los colores se ven raros,
+  invertir el \'ultimo eje: \texttt{img[:, :, ::-1]}.}
+\end{frame}
+
+\begin{frame}[shrink=14]{Probar Nuestros Modelos en Cats vs Dogs}
+  \vspace{-4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Tomamos los \textbf{mismos modelos} que entrenamos en MNIST
+    (\texttt{LogisticRegression} y \texttt{RandomForestClassifier}) y los
+    aplicamos a 12\,000 fotos de gatos y perros aplanadas a 3\,072 columnas.}
+
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{fig_techo_pared.png}
+  \end{center}
+
+  \vspace{-2pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Log\'istica: $\approx$ 55\% (apenas mejor que tirar una moneda).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Random Forest: $\approx$ 62\%. Mejor, pero a~\'un lej\'isimos del 95\% de MNIST.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{No es que el c\'odigo est\'e mal.} Es que tratar 3\,072 pixeles
+      RGB como variables independientes \textbf{ignora la estructura espacial
+      y de color}. Aqu\'i se necesitan CNNs.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
 %  BLOQUE H: QU\'E SIGUE
 % =============================================================================
 \sectionframe{?`Qu\'e Sigue?}{Una ventana al futuro}
