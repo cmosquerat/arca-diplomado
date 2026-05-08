@@ -1,0 +1,1150 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 25: Detección de Placas + OCR (cascada YOLO + reconocimiento)
+%  Arca Continental Ecuador | UDLA
+%  Compilar: pdflatex -shell-escape presentacion.tex (x2 para refs)
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc,
+  calc, fit, decorations.pathreplacing, backgrounds}
+\usepackage{fontawesome5}
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+\usepackage{amsmath}
+
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{udlaCrimson}{HTML}{A31545}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+\definecolor{codePurple}{HTML}{7C3AED}
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamercolor{block title}{fg=white, bg=arcaRed}
+\setbeamercolor{block body}{fg=textDark, bg=arcaGray}
+\setbeamercolor{section in toc}{fg=arcaDark}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.5cm, yshift=0.15cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.3cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 25: Detección de Placas + OCR}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{22 de Mayo, 2026}
+
+\begin{document}
+
+% ── PORTADA ──────────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% ── M\'ODULO 5 ──────────────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Large\bfseries, text width=12cm,
+          align=center] at ([yshift=1cm]current page.center)
+      {M\'odulo 5};
+    \node[anchor=center, text=white!90, font=\huge\bfseries, text width=12cm,
+          align=center] at ([yshift=-0.3cm]current page.center)
+      {Detecci\'on de Objetos};
+  \end{tikzpicture}
+\end{frame}
+}
+
+\begin{frame}[shrink]{Hoja de Ruta de Hoy}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.25cm,
+    roadstep/.style={rectangle, rounded corners=4pt, draw=arcaRed, fill=arcaRed!8,
+                 minimum width=11.5cm, minimum height=0.55cm,
+                 font=\footnotesize\bfseries\color{arcaDark}, align=left,
+                 text width=10.5cm, inner sep=4pt},
+    num/.style={circle, fill=arcaRed, text=white, font=\scriptsize\bfseries,
+                minimum size=0.45cm, inner sep=0pt},
+  ]
+    \node[roadstep] (s0) {\hspace{0.7cm}Cierre clase 24: transfer learning + Coca/Pepsi};
+    \node[roadstep, below=of s0] (s1) {\hspace{0.7cm}Tareas de visi\'on por computadora};
+    \node[roadstep, below=of s1] (s2) {\hspace{0.7cm}El problema y bounding boxes};
+    \node[roadstep, below=of s2] (s3) {\hspace{0.7cm}YOLO en profundidad};
+    \node[roadstep, below=of s3] (s4) {\hspace{0.7cm}M\'etricas: mAP, IoU, precision/recall};
+    \node[roadstep, below=of s4] (s5) {\hspace{0.7cm}Etiquetar con CVAT.ai};
+    \node[roadstep, below=of s5] (s6) {\hspace{0.7cm}Fine-tuning de YOLO + OCR};
+    \node[roadstep, below=of s6] (s7) {\hspace{0.7cm}\textbf{Proyecto:} detector de placas + lectura de texto};
+
+    \foreach \i in {0,...,7}{
+      \node[num] at ([xshift=0.4cm]s\i.west) {\the\numexpr\i+1};
+    }
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE A: CIERRE CLASE 24 (REUSO DE TRANSFER LEARNING + COCA/PEPSI)
+% =============================================================================
+\sectionframe{Cierre Clase 24}{Transfer learning + el proyecto Coca vs Pepsi}
+
+\begin{frame}[shrink]{Recap: lo que dejamos a medias}
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    En clase 24 vimos que entrenar una CNN desde cero con 4\,000 fotos
+    no alcanza para resolver problemas reales. La soluci\'on:
+    \textbf{transfer learning}.}
+
+  \vspace{14pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Backbone preentrenado} (VGG16 en ImageNet 1.4M
+      im\'agenes) tiene filtros que ya saben detectar bordes,
+      texturas, formas.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Congelamos el backbone} y solo entrenamos un cabezal
+      Dense con nuestras pocas fotos.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Resultado: con 50 fotos por clase logramos $\sim$90\% en Coca vs Pepsi.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Hoy extendemos esa idea a \textbf{detecci\'on}: misma idea,
+      cambia la arquitectura.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{Transfer Learning: La Idea Visual}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_finetune.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Una CNN preentrenada \textbf{sabe ver}:
+    bordes, texturas, formas. Reusamos esos filtros (congelados) y
+    entrenamos un cabezal nuevo con \emph{nuestras} clases.}
+\end{frame}
+
+\begin{frame}[shrink]{?`Por Qu\'e Funciona?}
+  \vspace{8pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Las primeras capas convolucionales aprenden conceptos que son
+    \textbf{los mismos en cualquier tarea de visi\'on}:}
+
+  \vspace{14pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Capas tempranas:} bordes, manchas, gradientes simples.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Capas medias:} texturas, esquinas, patrones repetitivos.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Capas tard\'ias:} partes (orejas, ojos, ruedas) y luego objetos.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Solo las \emph{\'ultimas} capas son espec\'ificas de la tarea.
+      Reusamos las primeras y reentrenamos las \'ultimas.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink]{C\'odigo Coca vs Pepsi (clase 24)}
+  \vspace{-4pt}
+  \begin{pyblock}
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras import Sequential, layers
+
+# 1. Cargar VGG16 sin la cabeza, con pesos de ImageNet
+base = VGG16(input_shape=(96,96,3), include_top=False, weights="imagenet")
+base.trainable = False                  # congelar capas conv
+
+# 2. Backbone congelado + cabeza nueva
+modelo = Sequential([
+    base,
+    layers.Flatten(),
+    layers.Dense(64, activation="relu"),
+    layers.Dense(2, activation="softmax"),    # Coca vs Pepsi
+])
+
+# 3. Solo entrena el cabezal
+modelo.compile("adam", "sparse_categorical_crossentropy", ["accuracy"])
+modelo.fit(X_train, y_train, epochs=5, validation_split=0.1)
+  \end{pyblock}
+\end{frame}
+
+\begin{frame}[shrink]{Limitaci\'on de Esa Aproximaci\'on}
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    El modelo de Coca vs Pepsi es de \textbf{clasificaci\'on}: dice
+    ``esta foto es Coca'' o ``es Pepsi''. \textbf{Una respuesta para
+    toda la imagen}.}
+
+  \vspace{14pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      ?`Y si tengo \textbf{varias} latas en una foto?
+      No las puede contar.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      ?`Y si quiero saber \textbf{d\'onde} est\'a cada una?
+      No las puede ubicar.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      ?`Y si necesito \textbf{leer} la fecha de vencimiento o un texto
+      en la lata? No puede tampoco.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      Para todo eso hace falta otra tarea: \textbf{detecci\'on de objetos}.
+  \end{itemize}
+  }
+\end{frame}
+
+% =============================================================================
+%  BLOQUE B: TAREAS DE VISION POR COMPUTADORA
+% =============================================================================
+\sectionframe{Tareas de Visi\'on por Computadora}{Cinco maneras distintas de ``ver''}
+
+\begin{frame}[shrink]{Las 5 Tareas Principales}
+  \vspace{8pt}
+  {\footnotesize
+  \begin{tabular}{@{}p{3.0cm} p{4.5cm} p{5.0cm}@{}}
+    \toprule
+    \textbf{Tarea} & \textbf{Salida} & \textbf{Pregunta que responde} \\
+    \midrule
+    \rowcolor{arcaGray}
+    \textbf{Clasificaci\'on}
+    & 1 etiqueta por imagen
+    & ?`Qu\'e hay en la imagen? \\
+    \textbf{Detecci\'on}
+    & N bounding boxes + clase
+    & ?`Qu\'e hay y \emph{d\'onde}? \\
+    \rowcolor{arcaGray}
+    \textbf{Segmentaci\'on}
+    & M\'ascara por pixel
+    & ?`Qu\'e \emph{pixeles} son cada cosa? \\
+    \textbf{Pose / keypoints}
+    & Puntos clave conectados
+    & ?`D\'onde est\'an las articulaciones? \\
+    \rowcolor{arcaGray}
+    \textbf{OCR}
+    & Texto extra\'ido
+    & ?`Qu\'e \emph{dice} la imagen? \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{14pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Hoy:} miramos cada una con un ejemplo,
+    luego nos enfocamos en \textbf{detecci\'on + OCR} para el proyecto.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink]{1. Clasificaci\'on}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.55\textwidth]{fig_task_classification.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Salida:} una etiqueta y su confianza (``lata'' 0.97).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Asume que hay \textbf{un objeto principal} en la imagen.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Lo que hicimos en clases 22--24: MNIST, Fashion MNIST, Cats vs Dogs, Coca vs Pepsi.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{2. Detecci\'on}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.78\textwidth]{fig_task_detection.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Salida:} lista de bboxes \texttt{(x, y, w, h, clase)}, una por objeto.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Maneja \textbf{m\'ultiples objetos} simult\'aneos en una sola imagen.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{3. Segmentaci\'on}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.78\textwidth]{fig_task_segmentation.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Salida:} m\'ascara por \emph{pixel} (cada pixel etiquetado).
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      M\'as costoso de etiquetar y entrenar, pero precisi\'on al pixel.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Casos: medicina (delimitar tumor), agricultura (\'area cultivada).
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{4. Pose / Keypoints}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.78\textwidth]{fig_task_pose.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Salida:} puntos clave (articulaciones) conectados.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Casos: an\'alisis deportivo, ergonom\'ia, vigilancia de movimientos.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{5. OCR (lectura de texto)}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.78\textwidth]{fig_task_ocr.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Salida:} la cadena de texto extra\'ida.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Casos: lectura de placas, fechas de vencimiento, lotes, recibos.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Hoy lo combinamos con detecci\'on}: detectar el rect\'angulo de la placa $\to$ leer el texto adentro.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{?`Cu\'al Tarea Para Cu\'al Problema?}
+  \vspace{8pt}
+  {\footnotesize
+  \begin{tabular}{@{}p{6.0cm} p{6.5cm}@{}}
+    \toprule
+    \textbf{Si tu pregunta es\ldots} & \textbf{La tarea es\ldots} \\
+    \midrule
+    \rowcolor{arcaGray}
+    ?`Esta lata est\'a defectuosa? (1 producto por foto)
+    & Clasificaci\'on \\
+    ?`Cu\'antas latas hay en la g\'ondola y de qu\'e marca?
+    & Detecci\'on \\
+    \rowcolor{arcaGray}
+    ?`Qu\'e \'area de la cinta transportadora ocupa el producto?
+    & Segmentaci\'on \\
+    ?`El operario tiene la mano cerca de zona peligrosa?
+    & Pose / keypoints \\
+    \rowcolor{arcaGray}
+    ?`Cu\'al es el c\'odigo de lote impreso en esta caja?
+    & OCR \\
+    ?`Qu\'e dice la placa del cami\'on que ingresa?
+    & \textbf{Detecci\'on + OCR (cascada)} \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{14pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Hoy nos enfocamos en la \'ultima fila}: detecci\'on + OCR.
+    Es el caso m\'as com\'un en la industria (placas, fechas, lotes,
+    QR, c\'odigos de barras).}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE C: EL PROBLEMA Y BOUNDING BOXES
+% =============================================================================
+\sectionframe{El Problema}{Lectura autom\'atica de placas vehiculares}
+
+\begin{frame}[shrink]{El Problema Concreto}
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Imaginen este caso real de Arca: control de acceso a planta.
+    Cada cami\'on que entra debe registrarse en un libro --- un guardia
+    anota la placa con bol\'igrafo. Lento, propenso a errores.}
+
+  \vspace{6pt}
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{fig_motivacion_problema.png}
+  \end{center}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Lo que vamos a construir hoy y la
+    pr\'oxima clase:} una app que recibe foto de un veh\'iculo y
+    devuelve la placa le\'ida en texto, autom\'aticamente.}
+\end{frame}
+
+\begin{frame}[shrink]{El Pipeline en Cascada}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{fig_ocr_cascade_diagram.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Dos modelos encadenados}:
+    primero un detector (YOLO) que encuentra el rect\'angulo de la placa,
+    luego un OCR (Tesseract / EasyOCR) que lee el texto.
+    Cada uno hace una sola cosa muy bien.}
+\end{frame}
+
+\begin{frame}[shrink]{Anatom\'ia de un Bounding Box}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_bbox.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Un bbox = (\textbf{x, y, w, h, clase}).
+    En nuestro proyecto la \'unica clase es \texttt{placa}, as\'i que los
+    estudiantes solo etiquetan rect\'angulos sin pensar en clases.}
+\end{frame}
+
+\begin{frame}[shrink]{IoU: ?`Qu\'e Tan Buena Es Una Predicci\'on?}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \textbf{IoU} (Intersection over Union) compara la caja real con la
+    predicha: $\text{IoU} = \dfrac{\text{intersecci\'on}}{\text{uni\'on}}$. Va de 0 a 1.}
+
+  \vspace{6pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_iou.png}
+  \end{center}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Convenci\'on: IoU $\geq$ 0.5 cuenta como
+    detecci\'on correcta. Es el umbral de la m\'etrica m\'as usada,
+    \textbf{mAP@0.5}.}
+\end{frame}
+
+\begin{frame}[shrink]{?`Por Qu\'e una CNN Cl\'asica No Sirve?}
+  \vspace{8pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Una CNN cl\'asica produce \textbf{una sola salida} por imagen.
+    En detecci\'on tenemos que predecir \textbf{N salidas variables} ---
+    una por objeto detectado.}
+
+  \vspace{14pt}
+  {\footnotesize
+  \begin{tabular}{@{}p{4.0cm} p{4.0cm} p{4.0cm}@{}}
+    \toprule
+    \textbf{Problema} & \textbf{CNN cl\'asica} & \textbf{Detector} \\
+    \midrule
+    \rowcolor{arcaGray}
+    Salida
+    & 1 vector fijo
+    & Lista variable de bboxes \\
+    Cantidad de objetos
+    & Asume 1
+    & Puede ser 0, 1 o 100 \\
+    \rowcolor{arcaGray}
+    Ubicaci\'on
+    & No la sabe
+    & Da (x, y, w, h) por objeto \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{14pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faExclamationTriangle\hspace{4pt} Hace falta una arquitectura distinta,
+    dise\~nada para producir m\'ultiples bboxes en una sola pasada.
+    Esa es la idea de \textbf{YOLO}.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE D: YOLO EN PROFUNDIDAD
+% =============================================================================
+\sectionframe{C\'omo Funciona YOLO}{La idea revolucionaria de 2015}
+
+\begin{frame}[shrink]{La Idea: ``You Only Look Once''}
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Antes de YOLO los detectores hac\'ian dos pasadas: primero proponer
+    regiones, despu\'es clasificar cada una. \textbf{Lento}.
+    YOLO lo hace todo en \textbf{una sola pasada} de la CNN.}
+
+  \vspace{14pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      \textbf{Divide la imagen en una rejilla} (ej: 13$\times$13).
+    \item[{\color{arcaRed}\bfseries 2.}]
+      Cada celda predice: ``?`hay un objeto centrado en m\'i?'' Si s\'i,
+      devuelve una bbox completa (x, y, w, h, clase, confianza).
+    \item[{\color{arcaRed}\bfseries 3.}]
+      \textbf{Una sola pasada} de la red $\Rightarrow$ todas las cajas a la vez.
+    \item[{\color{codeGreen}\bfseries 4.}]
+      Al final, \textbf{NMS} limpia las cajas duplicadas.
+  \end{enumerate}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{La Rejilla en la Pr\'actica}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{fig_yolo_grid.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} La celda donde cae el centro de la placa
+    es \emph{responsable} de detectarla.
+    En YOLO26 hay 3 escalas de rejilla simult\'aneas
+    para detectar objetos de distintos tama\~nos.}
+\end{frame}
+
+\begin{frame}[shrink]{NMS: Limpiar Detecciones Duplicadas}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    YOLO produce \textbf{cientos} de detecciones por imagen, varias
+    del mismo objeto. \textbf{NMS} (Non-Maximum Suppression) deja una sola.}
+
+  \vspace{6pt}
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{fig_nms.png}
+  \end{center}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Algoritmo: ordenar por confianza, quedarse
+    con la mejor, descartar las que solapan con IoU $>$ 0.5. Repetir.}
+\end{frame}
+
+\begin{frame}[shrink]{Una D\'ecada de YOLO}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_yolo_timeline.png}
+  \end{center}
+
+  \vspace{6pt}
+  {\scriptsize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Joseph Redmon (v1, 2015):} idea original, paper famoso.
+      Framework Darknet en C.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Bochkovskiy (v4, 2020):} continu\'o cuando Redmon abandon\'o.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Ultralytics (v5+, 2020+):} port a PyTorch, API moderna.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{YOLO26 (Ultralytics, ene 2026):} \'ultima versi\'on,
+      es la que vamos a usar.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{La Familia: Velocidad vs Precisi\'on}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.92\textwidth]{fig_yolo_family.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} 5 tama\~nos (n, s, m, l, x): la \emph{misma}
+    arquitectura con distinta cantidad de filtros. M\'as filtros = m\'as
+    preciso pero m\'as lento.}
+\end{frame}
+
+\begin{frame}[shrink]{?`Cu\'al Modelo Eligir?}
+  \vspace{8pt}
+  {\footnotesize
+  \begin{tabular}{@{}p{2.0cm} p{3.7cm} p{2.7cm} p{4.0cm}@{}}
+    \toprule
+    \textbf{Modelo} & \textbf{Hardware} & \textbf{Velocidad} & \textbf{Cu\'ando usarlo} \\
+    \midrule
+    \rowcolor{arcaGray}
+    \textbf{nano (n)}  & CPU laptop, m\'ovil & 80+ FPS & Edge, IoT, c\'amara en vivo \\
+    small (s)  & CPU buena o GPU peque\~na & 50 FPS & Demo r\'apido, prototipo \\
+    \rowcolor{arcaGray}
+    medium (m) & GPU consumer & 25 FPS & Producci\'on con buen hardware \\
+    large (l)  & GPU dedicada & 12 FPS & Calidad alta, no tiempo real \\
+    \rowcolor{arcaGray}
+    xlarge (x) & GPU servidor & 7 FPS & M\'axima precisi\'on, batch off-line \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{14pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt} Para nuestro proyecto vamos con \textbf{YOLO26 nano}.
+    Funciona en CPU, entrena r\'apido, y para detectar 1 sola clase
+    (placa) no necesitamos m\'as.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE E: METRICAS
+% =============================================================================
+\sectionframe{M\'etricas}{C\'omo medir si el modelo es bueno}
+
+\begin{frame}[shrink]{La M\'etrica Reina: mAP}
+  \vspace{8pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    \textbf{mAP} (mean Average Precision) es el ``accuracy'' de detecci\'on.
+    Combina precision y recall sobre todas las clases.}
+
+  \vspace{14pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{mAP@0.5}: una detecci\'on cuenta como correcta si su IoU
+      con la real es $\geq$ 0.5. \textbf{La m\'as usada}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{mAP@0.5:0.95}: promedio sobre 10 umbrales (0.5 a 0.95).
+      M\'as estricta. La que reporta COCO.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Para nuestro proyecto:} mAP@0.5 $\geq$ 0.85 con $\sim$300 fotos
+      etiquetadas + fine-tune.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{Precision, Recall y Trade-offs}
+  \vspace{8pt}
+  {\footnotesize
+  \begin{tabular}{@{}p{2.8cm} p{4.0cm} p{5.5cm}@{}}
+    \toprule
+    \textbf{M\'etrica} & \textbf{F\'ormula} & \textbf{Pregunta que responde} \\
+    \midrule
+    \rowcolor{arcaGray}
+    \textbf{Precision} & TP / (TP + FP)
+    & De las cajas que detect\'e, ?`cu\'antas eran reales? \\
+    \textbf{Recall} & TP / (TP + FN)
+    & De las cajas reales, ?`cu\'antas detect\'e? \\
+    \rowcolor{arcaGray}
+    \textbf{F1}        & 2 PR / (P + R)
+    & Equilibrio entre las dos. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{14pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Trade-off cl\'asico}: bajar el umbral de
+    confianza (\texttt{conf}) sube recall (m\'as cajas), pero baja precision
+    (m\'as falsos positivos). Hay que elegir seg\'un el caso.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink]{Hardware: ?`Necesito GPU?}
+  \vspace{8pt}
+  {\footnotesize
+  \begin{tabular}{@{}p{2.5cm} p{4.5cm} p{5.0cm}@{}}
+    \toprule
+    \textbf{Tarea} & \textbf{Hardware m\'inimo} & \textbf{Notas} \\
+    \midrule
+    \rowcolor{arcaGray}
+    \textbf{Inference} (predecir)
+    & CPU laptop OK con nano
+    & $\sim$30 FPS con nano. \\
+    \textbf{Fine-tuning}
+    & GPU recomendada
+    & Colab T4 gratis sirve para nano. \\
+    \rowcolor{arcaGray}
+    \textbf{Training desde cero}
+    & GPU dedicada o cluster
+    & Solo si tienes 100K+ im\'agenes. Casi nunca lo necesitas. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{14pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Para esta clase y proyecto:} Colab gratis
+    con GPU T4. El fine-tune de YOLO26n con 300 fotos toma $\sim$10 min.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE F: ETIQUETADO CON CVAT
+% =============================================================================
+\sectionframe{Etiquetar con CVAT}{La parte aburrida pero cr\'itica}
+
+\begin{frame}[shrink]{?`Qu\'e Significa ``Etiquetar''?}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.65\textwidth]{fig_etiquetado_humano.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      \textbf{Dibujar a mano una bbox} alrededor de cada placa, en cada foto.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Tiempo: $\sim$10--20s por imagen (1 placa por foto).
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Etiquetas malas $\Rightarrow$ modelo malo}, sin importar la arquitectura.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{Software de Etiquetado: Comparativa}
+  \vspace{6pt}
+  {\footnotesize
+  \begin{tabular}{@{}p{2.7cm} p{3.0cm} p{6.5cm}@{}}
+    \toprule
+    \textbf{Herramienta} & \textbf{Tipo} & \textbf{Cu\'ando usarla} \\
+    \midrule
+    \rowcolor{arcaGray}
+    \textbf{CVAT}
+    & Open source (Intel/OpenCV)
+    & \textbf{Nuestra opci\'on hoy.} Est\'andar industrial.
+      Self-host o app.cvat.ai gratis. \\
+    \textbf{Label Studio}
+    & Open source
+    & Multi-modal (imagen, audio, texto). M\'as flexible. \\
+    \rowcolor{arcaGray}
+    \textbf{labelImg}
+    & Open source legacy
+    & Solo bboxes, m\'as simple. Util offline. \\
+    \textbf{Roboflow}
+    & Freemium (de pago)
+    & Tier gratis 10K im\'agenes. Etiquetar + entrenar + hostear. \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \vspace{12pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Vamos con CVAT} para no depender de
+    plataformas de pago. Adem\'as tiene \textbf{SDK de Python} que
+    nos deja conectar el dataset directo a Colab.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink]{CVAT en Vivo}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.92\textwidth]{fig_cvat_screenshot.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} La interfaz: panel de herramientas a la
+    izquierda, imagen al centro, lista de etiquetas a la derecha.
+    Atajo de teclado: \texttt{N} para nueva caja.}
+\end{frame}
+
+\begin{frame}[shrink]{Tres Formatos de Etiquetado}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_formats.png}
+  \end{center}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{YOLO} es el m\'as simple
+    (1 .txt por imagen). \textbf{Nosotros exportamos a YOLO 1.1}
+    desde CVAT --- Ultralytics lo lee directo.}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE G: FINE-TUNING DE YOLO + OCR
+% =============================================================================
+\sectionframe{Fine-Tuning + OCR}{Misma idea que clase 24, ahora con YOLO26}
+
+\begin{frame}[shrink]{Recordemos: Fine-Tuning Es Lo Mismo}
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Bloque A de hoy: VGG16 preentrenado + cabezal Dense nuevo. Misma
+    idea ahora: \textbf{YOLO26 preentrenado en COCO + cabezal nuevo
+    para placas}.}
+
+  \vspace{6pt}
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{fig_finetune.png}
+  \end{center}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} En YOLO el ``cabezal'' incluye los anchors
+    y la salida de bboxes; el optimizador Ultralytics lo maneja autom\'aticamente.}
+\end{frame}
+
+\begin{frame}[shrink]{Pretrained YOLO26: ?`Detecta Placas?}
+  \vspace{8pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    YOLO26 pretrained reconoce 80 clases gen\'ericas de COCO:
+    persona, auto, perro, botella\ldots \textbf{No incluye `placa'}.
+    Por eso fine-tuneamos.}
+
+  \vspace{14pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Pretrained detecta el \texttt{auto} pero \textbf{no la placa}.
+    \item[{\color{arcaRed}\scriptsize\faArrowRight}]
+      Despu\'es de fine-tune con $\sim$300 fotos etiquetadas $\to$ mAP@0.5 $\geq$ 0.85.
+    \item[{\color{codeGreen}\scriptsize\faArrowRight}]
+      \textbf{Demo dramatica}: pretrained = 0\% en placas $\to$ fine-tune = 90\%+.
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}[fragile,shrink]{Fine-Tune YOLO26 en 4 L\'ineas}
+  \vspace{-4pt}
+  \begin{pyblock}
+from ultralytics import YOLO
+
+# 1. Cargar pretrained (YOLO26 nano)
+model = YOLO("yolo26n.pt")
+
+# 2. Fine-tune con NUESTROS datos
+model.train(data="dataset/data.yaml",
+            epochs=30, imgsz=640, batch=16)
+
+# 3. Evaluar
+metrics = model.val()
+print(f"mAP@0.5 = {metrics.box.map50:.3f}")
+  \end{pyblock}
+
+  \vspace{6pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Estructura esperada:
+    \texttt{dataset/images/\{train,val\}/*.jpg} +
+    \texttt{dataset/labels/\{train,val\}/*.txt} + un \texttt{data.yaml}.
+    CVAT lo exporta listo en formato YOLO 1.1.}
+\end{frame}
+
+\begin{frame}[fragile,shrink]{Despu\'es de YOLO: OCR}
+  \vspace{-4pt}
+  \begin{pyblock}
+import easyocr
+
+# 1. Detectar placa con YOLO fine-tuneado
+results = model("auto.jpg")
+boxes = results[0].boxes.xyxy   # cajas (x1,y1,x2,y2)
+
+# 2. Recortar la región de la placa
+img = cv2.imread("auto.jpg")
+x1, y1, x2, y2 = map(int, boxes[0])
+plate_crop = img[y1:y2, x1:x2]
+
+# 3. Pasar el recorte por OCR
+reader = easyocr.Reader(['en', 'es'])
+texto = reader.readtext(plate_crop, detail=0)
+print(texto)    # ['PCJ-3421']
+  \end{pyblock}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Pipeline en cascada:} 2 modelos
+    independientes encadenados. Si uno falla, el otro tampoco funciona ---
+    pero cada uno es bueno en lo suyo.}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE H: EL PROYECTO
+% =============================================================================
+\sectionframe{El Proyecto}{Detector de placas + OCR colectivo}
+
+\begin{frame}[shrink]{El Reto Colectivo}
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}\bfseries
+    Vamos a construir un \textbf{LPR (License Plate Recognition)} entre todos.
+    Cada estudiante etiqueta su lote, consolidamos, fine-tuneamos,
+    desplegamos.}
+
+  \vspace{6pt}
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{fig_hero_plate_dramatico.png}
+  \end{center}
+
+  \vspace{2pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} Caso real: control de acceso a planta,
+    parqueos, peajes, ruteo de camiones.}
+\end{frame}
+
+\begin{frame}[shrink]{Pipeline del Proyecto}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_pipeline_proyecto.png}
+  \end{center}
+
+  \vspace{4pt}
+  {\scriptsize\color{textMuted}
+    \faLightbulb\hspace{4pt} \textbf{Hoy} cubrimos pasos 1-2 (descargar dataset
+    + demo de etiquetado en CVAT). \textbf{Pr\'oxima clase}: cada estudiante
+    trae su lote etiquetado y entrenamos juntos.}
+\end{frame}
+
+\begin{frame}[shrink]{Tu Tarea Para la Pr\'oxima Clase}
+  \vspace{6pt}
+  {\footnotesize
+  \begin{enumerate}\setlength{\itemsep}{6pt}
+    \item[{\color{arcaRed}\bfseries 1.}]
+      \textbf{Descargar} \texttt{plates\_unlabeled.zip} del repo del diplomado.
+    \item[{\color{arcaRed}\bfseries 2.}]
+      Crear cuenta en \texttt{app.cvat.ai} (gratis).
+    \item[{\color{arcaRed}\bfseries 3.}]
+      Crear \emph{task} ``placas-[apellido]'', subir tu lote, definir 1 label: \texttt{placa}.
+    \item[{\color{arcaRed}\bfseries 4.}]
+      Etiquetar todas las im\'agenes del lote (las que asign\'e a cada uno).
+    \item[{\color{arcaRed}\bfseries 5.}]
+      Exportar formato \textbf{YOLO 1.1} (men\'u Project $\to$ Export task dataset).
+    \item[{\color{arcaRed}\bfseries 6.}]
+      Subir el ZIP exportado al Drive compartido como
+      \texttt{[apellido]\_etiquetas.zip}.
+    \item[{\color{codeGreen}\bfseries 7.}]
+      \textbf{Deadline:} 24h antes de la pr\'oxima clase.
+  \end{enumerate}
+  }
+\end{frame}
+
+\begin{frame}[shrink]{Tip: C\'omo Etiquetar Bien}
+  \vspace{8pt}
+  {\footnotesize
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \item[{\color{codeGreen}\scriptsize\faCheck}]
+      Caja \textbf{ajustada} al rect\'angulo de la placa, sin mucho margen.
+    \item[{\color{codeGreen}\scriptsize\faCheck}]
+      Si hay varias placas en una foto, etiquetar \textbf{todas las legibles}.
+    \item[{\color{codeGreen}\scriptsize\faCheck}]
+      Si la placa est\'a parcialmente oculta, etiquetar solo lo visible.
+    \item[{\color{arcaRed}\scriptsize\faTimes}]
+      \textbf{NO} etiquetar placas borrosas / muy lejanas / ilegibles
+      (saltar esa imagen).
+    \item[{\color{arcaRed}\scriptsize\faTimes}]
+      \textbf{NO} dejar margen grande alrededor de la caja.
+    \item[{\color{arcaRed}\scriptsize\faTimes}]
+      \textbf{NO} etiquetar otras cosas (carros, ruedas, faros).
+  \end{itemize}
+  }
+
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Reglas claras = modelo bueno.} El error
+    m\'as com\'un al etiquetar es \emph{inconsistencia} entre lotes.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que aprendimos hoy}
+
+\begin{frame}[shrink]{Resumen}
+  \vspace{6pt}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} La tarea:}
+      \vspace{4pt}
+
+      {\scriptsize
+      Detecci\'on = clasificar y ubicar.
+      Salida = lista de bboxes \texttt{(x, y, w, h, clase)}.
+
+      \vspace{8pt}
+      \textbf{La idea YOLO:}
+
+      \vspace{4pt}
+      Una sola pasada de CNN, rejilla, NMS.
+      }
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      {\footnotesize\bfseries\color{arcaDark} La caja de herramientas:}
+      \vspace{4pt}
+
+      {\scriptsize
+      Ultralytics + \texttt{model.train()} + formato YOLO. Etiquetar con CVAT.
+
+      \vspace{8pt}
+      \textbf{El pipeline OCR:}
+
+      \vspace{4pt}
+      Detector + recorte + reconocedor de texto. Cascada simple, alto valor.
+      }
+    \end{column}
+  \end{columns}
+
+  \vspace{12pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, boxrule=0.5pt,
+    arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+    {\scriptsize\color{arcaDark}
+    \faKey\hspace{4pt}\textbf{Pr\'oxima clase:} cada uno trae su lote
+    etiquetado. Consolidamos, fine-tuneamos YOLO26, integramos OCR,
+    desplegamos app Gradio.}
+  \end{tcolorbox}
+\end{frame}
+
+% ── QR DE CIERRE ──────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{1.0cm}
+  \begin{center}
+    {\color{white}\Huge\bfseries Encuesta de Cierre} \\[0.4cm]
+    {\color{white!85}\Large Cu\'entanos qu\'e tal estuvo la clase}
+    \vspace{1cm}
+
+    \includegraphics[width=4.5cm]{qr_encuesta.jpg}
+
+    \vspace{0.6cm}
+    {\color{white!80}\small Gracias por hoy --- nos vemos mi\'ercoles}
+  \end{center}
+\end{frame}
+}
+
+\end{document}
