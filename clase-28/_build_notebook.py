@@ -597,6 +597,172 @@ if len(res.masks.data) >= 2:
     print(f"(esperamos cerca de 0: son objetos distintos)")""")
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 5.6 — Detection vs Segmentation: la misma imagen, dos modelos
+# ─────────────────────────────────────────────────────────────────────────────
+md("""### 5.6 Detection vs Segmentation — lado a lado
+
+Para que la diferencia entre los dos modelos sea **tangible**, corremos el mismo `bus.jpg` con `yolo26n` (detection, sin sufijo) y `yolo26n-seg` (segmentation, sufijo `-seg`). La API es idéntica, solo cambia el modelo y los outputs.""")
+
+code("""# Cargamos los DOS modelos pretrained
+det_model = YOLO("yolo26n.pt")        # detection
+seg_model_demo = seg_model            # ya cargado arriba
+
+# Predicciones sobre la MISMA imagen
+res_det = det_model(demo_img, conf=0.5, verbose=False)[0]
+res_seg = seg_model_demo(demo_img, conf=0.5, verbose=False)[0]
+
+print(f"Detection:    {len(res_det.boxes)} objetos")
+print(f"  output: boxes (4 números/objeto)")
+print(f"  shape:  {tuple(res_det.boxes.xyxy.shape)}\\n")
+
+print(f"Segmentation: {len(res_seg.boxes)} objetos")
+print(f"  output: boxes + masks ({tuple(res_seg.masks.data.shape)})")
+print(f"  cada máscara: tensor {tuple(res_seg.masks.data[0].shape)} binario")""")
+
+code("""# Visualizar lado a lado
+fig, axes = plt.subplots(1, 2, figsize=(15, 9))
+
+axes[0].imshow(res_det.plot()[..., ::-1])
+axes[0].axis('off')
+axes[0].set_title(f"yolo26n (detection) — {len(res_det.boxes)} bboxes",
+                  fontsize=13, fontweight='bold', color='#2563EB')
+
+axes[1].imshow(res_seg.plot()[..., ::-1])
+axes[1].axis('off')
+axes[1].set_title(f"yolo26n-seg (segmentation) — {len(res_seg.masks.data)} máscaras",
+                  fontsize=13, fontweight='bold', color='#16A34A')
+
+plt.tight_layout(); plt.show()""")
+
+md("""**Lo que se ve:**
+- Detection dibuja un **rectángulo** alrededor de cada objeto. El fondo (asfalto, otros objetos) queda dentro del rectángulo.
+- Segmentation dibuja la **silueta exacta** del objeto. El fondo queda fuera de la máscara.
+
+Esa diferencia es la que importa cuando queremos **medir, recortar limpiamente, o componer** con el objeto.""")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5.7 — Extraer crops (det) vs objetos aislados (seg)
+# ─────────────────────────────────────────────────────────────────────────────
+md("""### 5.7 Lo que devuelve cada uno: recortes vs objetos aislados
+
+Vamos a **extraer cada objeto** detectado por separado y mostrar el resultado de ambos modelos.
+
+- **Detection → crop:** `img[y1:y2, x1:x2]` (rectángulo, incluye fondo).
+- **Segmentation → objeto aislado:** aplicar la máscara para que el fondo quede transparente (alpha=0).""")
+
+code("""import torch.nn.functional as F
+
+img_arr = np.array(Image.open(demo_img))
+H, W = img_arr.shape[:2]
+
+# ── DETECTION: crops por bbox ──
+def extraer_crops_bbox(res, img):
+    \"\"\"Recorta cada objeto detectado con su bbox (incluye fondo).\"\"\"
+    crops = []
+    for box, cls, conf in zip(res.boxes.xyxy.cpu().numpy().astype(int),
+                                res.boxes.cls, res.boxes.conf):
+        x1, y1, x2, y2 = box
+        crop = img[y1:y2, x1:x2]
+        crops.append({
+            "img":  crop,
+            "clase": res.names[int(cls)],
+            "conf": float(conf),
+        })
+    return crops
+
+crops_det = extraer_crops_bbox(res_det, img_arr)
+print(f"Detection: {len(crops_det)} crops extraídos")
+for c in crops_det:
+    print(f"  {c['clase']:10s} conf={c['conf']:.2f}  shape={c['img'].shape}")""")
+
+code("""# ── SEGMENTATION: objetos aislados con máscara ──
+def extraer_objetos_mask(res, img):
+    \"\"\"Recorta cada objeto + aplica máscara (alpha 0 fuera del objeto).
+    Devuelve RGBA: el fondo queda transparente.\"\"\"
+    H, W = img.shape[:2]
+
+    # Las máscaras vienen a la resolución del modelo (640xN). Las resampleamos
+    # a la resolución original de la imagen.
+    masks = F.interpolate(
+        res.masks.data.unsqueeze(1).float(),
+        size=(H, W),
+        mode="nearest"
+    ).squeeze(1).bool().cpu().numpy()
+
+    objetos = []
+    for mask, cls, conf in zip(masks, res.boxes.cls, res.boxes.conf):
+        ys, xs = np.where(mask)
+        if len(ys) == 0: continue
+        y1, y2, x1, x2 = ys.min(), ys.max(), xs.min(), xs.max()
+        region = img[y1:y2+1, x1:x2+1].copy()
+        region_mask = mask[y1:y2+1, x1:x2+1]
+        # Stack alpha channel → RGBA. Alpha 0 fuera de la máscara, 255 dentro.
+        rgba = np.dstack([region, (region_mask * 255).astype(np.uint8)])
+        objetos.append({
+            "img":  rgba,
+            "clase": res.names[int(cls)],
+            "conf": float(conf),
+            "area_px": int(mask.sum()),
+        })
+    return objetos
+
+objetos_seg = extraer_objetos_mask(res_seg, img_arr)
+print(f"Segmentation: {len(objetos_seg)} objetos aislados")
+for o in objetos_seg:
+    print(f"  {o['clase']:10s} conf={o['conf']:.2f}  shape={o['img'].shape}  area={o['area_px']} px")""")
+
+md("""**Visualización: la misma persona, vista desde los dos modelos.**
+
+Notas:
+- El crop de detection arrastra **fondo** (calle, otras personas pegadas).
+- El objeto aislado por máscara tiene **bordes a nivel pixel** y fondo transparente — listo para componer en otra imagen, calcular área real, o entrenar otro modelo sin sesgo de fondo.""")
+
+code("""n = min(len(crops_det), len(objetos_seg))
+fig, axes = plt.subplots(2, n, figsize=(3*n, 7))
+if n == 1:
+    axes = axes.reshape(2, 1)
+
+# Fila 1: crops de detection
+for i in range(n):
+    axes[0, i].imshow(crops_det[i]["img"])
+    axes[0, i].axis('off')
+    axes[0, i].set_title(f"DET · {crops_det[i]['clase']}\\nconf {crops_det[i]['conf']:.2f}",
+                          fontsize=10, color='#2563EB')
+
+# Fila 2: objetos aislados de segmentation (con checkerboard detrás para verlo transparente)
+def checkerboard(h, w, size=10):
+    cb = np.indices((h, w)).sum(axis=0) // size % 2
+    return (cb * 60 + 195).astype(np.uint8)
+
+for i in range(n):
+    rgba = objetos_seg[i]["img"]
+    h, w = rgba.shape[:2]
+    bg = np.dstack([checkerboard(h, w)] * 3)
+    alpha = rgba[..., 3:4] / 255.0
+    composited = (rgba[..., :3] * alpha + bg * (1 - alpha)).astype(np.uint8)
+    axes[1, i].imshow(composited)
+    axes[1, i].axis('off')
+    axes[1, i].set_title(f"SEG · {objetos_seg[i]['clase']}\\nárea {objetos_seg[i]['area_px']} px",
+                          fontsize=10, color='#16A34A')
+
+plt.suptitle("Detection (arriba) vs Segmentation (abajo) — mismos objetos, distinto recorte",
+             fontsize=12, fontweight='bold', color='#6B1525', y=1.02)
+plt.tight_layout(); plt.show()""")
+
+md("""### 5.8 Casos donde el objeto aislado importa
+
+| Caso | Detection (crop) basta | Segmentation (mask) necesario |
+|------|-----------------------|-------------------------------|
+| **Catálogo e-commerce** (producto sobre fondo blanco) | ✗ trae fondo | ✓ extracción limpia |
+| **Composición de imagen** (insertar objeto en otra escena) | ✗ rectángulo se nota | ✓ bordes naturales |
+| **Pipeline OCR** (recortar placa para leer) | ✓ texto está adentro | — overkill |
+| **Medir área real** (mancha, lesión, derrame) | ✗ sobre-estima | ✓ pixel-exacto |
+| **Tag de plantillas** (entrenar otro modelo solo del objeto) | ✗ fondo introduce sesgo | ✓ data limpia |
+| **Visualización ejecutiva** (dashboard) | ✓ más rápido | — opcional |
+
+> Si tu siguiente paso es **medir, recortar limpio, o componer** → segmentation. Si tu siguiente paso es **leer texto adentro, clasificar el contenido del bbox, o solo contar** → detection alcanza.""")
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 6. Aplicaciones del pretrained — galería de demos antes de entrenar
 # ─────────────────────────────────────────────────────────────────────────────
 md("""---
