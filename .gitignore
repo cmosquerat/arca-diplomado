@@ -88,3 +88,35 @@ _minted/
 *.vrb
 *.data.minted
 *.config.minted
+
+# ── YOLO / Ultralytics — pesos pretrained descargados (no nuestros) ──
+yolo*.pt
+yolo*-seg.pt
+yolo*-pose.pt
+yolo*-cls.pt
+yolo*-obb.pt
+# Excepción: SÍ versionamos los modelos entrenados por nosotros (best.pt)
+!**/best.pt
+
+# ── Runs y artefactos de entrenamiento (regenerables) ──
+**/runs/
+**/runs_*.zip
+**/models/
+*.onnx
+*.engine
+*.tflite
+
+# ── Datasets temporales y descargas ──
+**/pills_raw/
+**/pills_ls/
+**/brain/
+**/brain.zip
+**/pills.zip
+**/dataset_ls.zip
+**/galeria_*.jpg
+**/pill_demo_*.jpg
+**/demo_*.jpg
+**/ocr_*.png
+
+# ── Notebook checkpoints/outputs ejecutados ──
+**/.ipynb_checkpoints/
