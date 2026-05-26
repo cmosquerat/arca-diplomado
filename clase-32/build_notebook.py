@@ -1,0 +1,626 @@
+"""
+Construye Clase_32_Series_Temporales.ipynb con la nueva estructura.
+Compatible con Colab (descarga CSV y deps si hace falta).
+"""
+import json, os
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(ROOT, "Clase_32_Series_Temporales.ipynb")
+
+cells = []
+def md(text):
+    cells.append({"cell_type": "markdown", "metadata": {},
+                  "source": text.strip().split("\n")})
+def code(text):
+    src = text.strip("\n").split("\n")
+    src = [(s + "\n") for s in src[:-1]] + [src[-1]]
+    cells.append({"cell_type": "code", "metadata": {}, "outputs": [],
+                  "execution_count": None, "source": src})
+
+REPO = "https://raw.githubusercontent.com/cmosquerat/arca-diplomado/main/clase-32"
+
+# =====================================================================
+# PORTADA
+# =====================================================================
+md("""
+# Clase 32 --- Series Temporales II
+### De la estacionariedad a la decision
+
+**Diplomado en Data Science Aplicada con Python para la Toma de Decisiones**
+Arca Continental Ecuador | UDLA
+
+---
+
+## Plan del notebook
+
+1. **Por que estacionariedad** --- experimento de descubrimiento con series sinteticas.
+2. **Diferenciacion** --- la cirugia que vuelve estacionaria una serie (sobre AirPassengers).
+3. **Prophet en accion** --- la herramienta moderna sobre AirPassengers (donde brilla).
+4. **Metricas honestas** --- MAE / RMSE / MAPE / WAPE + walk-forward.
+5. **Inferencia + costo asimetrico** --- de prediccion a decision (P50/P70/P80/P90).
+6. **Caso aplicado** --- Favorita Quito Q44, forecast de 6 meses.
+
+> **Trabajamos primero sobre series simples y conocidas. Solo cuando dominamos la
+> herramienta la aplicamos al caso real.**
+""")
+
+# =====================================================================
+# 0. Setup (Colab compat)
+# =====================================================================
+md("## 0. Setup --- corre esta celda primero")
+
+code(f"""
+# Setup compatible local + Colab
+import sys, os, urllib.request
+
+IN_COLAB = "google.colab" in sys.modules
+
+if IN_COLAB:
+    print("Detectamos Colab --- instalando dependencias...")
+    os.system("pip install -q prophet holidays")
+    print("Listo.")
+
+# Descargar el CSV de Favorita si no esta local
+DATA_URL = "{REPO}/quito44_beverages_daily.csv"
+DATA_FILE = "quito44_beverages_daily.csv"
+if not os.path.exists(DATA_FILE):
+    print(f"Descargando {{DATA_FILE}} desde GitHub...")
+    urllib.request.urlretrieve(DATA_URL, DATA_FILE)
+    print("Listo.")
+""")
+
+code("""
+import warnings; warnings.filterwarnings("ignore")
+import numpy as np, pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+plt.rcParams.update({"figure.figsize": (11, 4.5), "axes.grid": True,
+                      "grid.alpha": 0.3, "grid.linestyle": "--",
+                      "axes.spines.top": False, "axes.spines.right": False,
+                      "axes.titleweight": "bold"})
+ARCA_RED, ARCA_DARK, ARCA_BLUE, ARCA_GREEN, ARCA_ORANGE = (
+    "#C82B40", "#6B1525", "#2563EB", "#16A34A", "#EA580C")
+
+np.random.seed(42)
+print("OK")
+""")
+
+# =====================================================================
+# 1. Por que estacionariedad
+# =====================================================================
+md("""
+## 1. Por que un modelo necesita estacionariedad
+
+Antes de tocar datos reales, hacemos un experimento con dos series sinteticas
+que comparten escala pero tienen comportamientos distintos.
+""")
+
+code("""
+# Dos series con la misma escala pero comportamientos distintos
+n = 300; rng = np.random.RandomState(11)
+A = np.zeros(n); A[0] = 10
+for t in range(1, n):
+    A[t] = 0.6*A[t-1] + 4 + rng.randn()*0.8
+B = 10 + np.cumsum(rng.randn(n)*0.6) + 0.05*np.arange(n)
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 4))
+axes[0].plot(A, color=ARCA_BLUE); axes[0].set_title("Serie A")
+axes[1].plot(B, color=ARCA_RED);  axes[1].set_title("Serie B")
+for ax in axes:
+    ax.set_xlabel("tiempo"); ax.set_ylim(0, max(A.max(), B.max())*1.05)
+plt.tight_layout(); plt.show()
+""")
+
+md("""
+> **Ejercicio 1.** Sin codear nada, responde:
+> - Si tuvieras que predecir el valor del paso siguiente, en cual serie confiarias mas?
+> - Por que?
+""")
+
+code("""
+# El experimento honesto: entrenar un modelo simple en la mitad 1, predecir la mitad 2
+half = n // 2
+pred_A = np.full(n - half, A[half-10:half].mean())   # constante = media reciente del train
+pred_B = np.full(n - half, B[half-10:half].mean())
+
+err_A = np.mean(np.abs(A[half:] - pred_A))
+err_B = np.mean(np.abs(B[half:] - pred_B))
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 4))
+for ax, s, pred, name, err in [(axes[0], A, pred_A, "Serie A (estacionaria)", err_A),
+                                 (axes[1], B, pred_B, "Serie B (no estacionaria)", err_B)]:
+    ax.plot(np.arange(half), s[:half], "k-", alpha=0.6, label="train")
+    ax.plot(np.arange(half, n), s[half:], "k-", lw=1.4, label="real (futuro)")
+    ax.plot(np.arange(half, n), pred, color=ARCA_BLUE, lw=2, label="prediccion")
+    ax.set_title(f"{name}\\nMAE futuro = {err:.2f}")
+    ax.legend()
+plt.tight_layout(); plt.show()
+
+print(f"\\nRatio de error B/A: {err_B/err_A:.1f}x")
+""")
+
+md("""
+**Conclusion clave:** un modelo aprende patrones del pasado. Si la distribucion estadistica
+de la serie cambia con el tiempo, lo que el modelo aprendio ayer ya no es cierto hoy.
+
+Por eso pedimos **estacionariedad**: media, varianza y autocorrelacion estables.
+
+### El test ADF como diagnostico
+""")
+
+code("""
+from statsmodels.tsa.stattools import adfuller
+
+p_A = adfuller(A)[1]
+p_B = adfuller(B)[1]
+print(f"Serie A:  ADF p = {p_A:.4f}  ->  {'estacionaria' if p_A < 0.05 else 'NO estacionaria'}")
+print(f"Serie B:  ADF p = {p_B:.4f}  ->  {'estacionaria' if p_B < 0.05 else 'NO estacionaria'}")
+""")
+
+md("""
+**Como leer ADF:**
+- H_0: la serie tiene unit root (NO es estacionaria).
+- Si p < 0.05: rechazamos H_0 -> tratamos como estacionaria.
+- Si p >= 0.05: no podemos rechazar -> tratamos como NO estacionaria.
+
+ADF no es magia: solo testea cierto tipo de no-estacionariedad. Pero es el diagnostico
+inicial estandar de la industria.
+""")
+
+# =====================================================================
+# 2. Diferenciacion
+# =====================================================================
+md("""
+## 2. Diferenciacion --- la cirugia que vuelve estacionaria una serie
+
+**Idea central:** en lugar de modelar el VALOR, modelamos el CAMBIO.
+La temperatura tiene tendencia, pero el delta dia a dia oscila alrededor de cero.
+""")
+
+code("""
+# Ilustracion: serie con tendencia vs su delta
+n = 200; rng = np.random.RandomState(3); t = np.arange(n)
+temp = 30 - 0.05*t + 3*np.sin(2*np.pi*t/30) + rng.randn(n)*0.8
+diff = np.diff(temp)
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 4))
+axes[0].plot(t, temp, color=ARCA_RED, lw=1.4)
+axes[0].set_title("VALOR de la temperatura (NO estacionaria)")
+axes[0].set_xlabel("dia"); axes[0].set_ylabel("temperatura (C)")
+axes[1].plot(t[1:], diff, color=ARCA_BLUE, lw=1.0)
+axes[1].axhline(0, color="black", lw=0.5)
+axes[1].set_title("CAMBIO dia a dia (ESTACIONARIA)")
+axes[1].set_xlabel("dia"); axes[1].set_ylabel("delta (C)")
+plt.tight_layout(); plt.show()
+
+print(f"ADF temperatura : p = {adfuller(temp)[1]:.4f}")
+print(f"ADF delta       : p = {adfuller(diff)[1]:.4f}")
+""")
+
+md("""
+### Tres tipos de diferenciacion
+
+1. **log(y)** estabiliza VARIANZA cuando crece con el nivel
+2. **delta y_t = y_t - y_{t-1}** quita TENDENCIA
+3. **delta_s y_t = y_t - y_{t-s}** quita ESTACIONALIDAD de paso s
+
+Se pueden combinar. Esto es lo que Prophet hace internamente cuando detecta no-estacionariedad.
+
+### Aplicado a AirPassengers (clasico de Box-Jenkins)
+""")
+
+code("""
+from statsmodels.datasets import get_rdataset
+ap = get_rdataset("AirPassengers").data
+y_ap = pd.Series(ap["value"].values.astype(float),
+                  index=pd.date_range("1949-01-01", periods=len(ap), freq="MS"),
+                  name="passengers")
+print(f"AirPassengers: {len(y_ap)} meses ({y_ap.index.min().date()} a {y_ap.index.max().date()})")
+y_ap.head()
+""")
+
+code("""
+y_log = np.log(y_ap)
+y_d1 = y_log.diff().dropna()
+y_d1_d12 = y_d1.diff(12).dropna()
+
+results = [
+    ("1) original",              y_ap,     adfuller(y_ap.dropna())[1]),
+    ("2) log(y)",                y_log,    adfuller(y_log.dropna())[1]),
+    ("3) delta log(y)",          y_d1,     adfuller(y_d1)[1]),
+    ("4) delta_12 delta log(y)", y_d1_d12, adfuller(y_d1_d12)[1]),
+]
+print("\\nADF p en cada paso:")
+for name, _, p in results:
+    print(f"  {name:30s}  p = {p:.4g}")
+
+fig, axes = plt.subplots(2, 2, figsize=(13, 7))
+colors = [ARCA_DARK, ARCA_BLUE, ARCA_GREEN, ARCA_RED]
+for ax, (name, s, p), c in zip(axes.flat, results, colors):
+    ax.plot(s.index, s.values, color=c, lw=1.1)
+    ax.set_title(f"{name}  -  ADF p = {p:.3g}")
+    if name.startswith(("3", "4")):
+        ax.axhline(0, color="black", lw=0.5)
+plt.tight_layout(); plt.show()
+""")
+
+md("""
+Cada paso ataca una patologia distinta. **Despues de las dos diferenciaciones,
+la serie es claramente estacionaria** (p = 0.0002 << 0.05).
+
+Esto es lo que pasa dentro de Prophet sin que lo veas: internamente estabiliza
+la serie antes de modelarla.
+""")
+
+# =====================================================================
+# 3. Prophet sobre AirPassengers
+# =====================================================================
+md("""
+## 3. Prophet en accion
+
+**Prophet (Facebook, 2017)** descompone la serie en:
+
+$y(t) = g(t) + s(t) + h(t) + \\varepsilon$
+
+- g(t): tendencia con changepoints automaticos
+- s(t): estacionalidades via Fourier (multiple)
+- h(t): holidays
+- epsilon: ruido
+
+Brilla cuando hay tendencia + estacionalidad + (opcionalmente) holidays.
+""")
+
+code("""
+# Split train/test sobre AirPassengers
+AP_HORIZON = 24
+y_ap_train = y_ap.iloc[:-AP_HORIZON]
+y_ap_test  = y_ap.iloc[-AP_HORIZON:]
+print(f"Train: {len(y_ap_train)} meses, Test: {len(y_ap_test)} meses")
+""")
+
+code("""
+from prophet import Prophet
+
+m_ap = Prophet(yearly_seasonality=True, interval_width=0.80)
+m_ap.fit(pd.DataFrame({"ds": y_ap_train.index, "y": y_ap_train.values}))
+
+future = m_ap.make_future_dataframe(periods=AP_HORIZON, freq="MS")
+fc_ap = m_ap.predict(future)
+fc_ap_test = fc_ap["yhat"].iloc[-AP_HORIZON:].values
+lo_ap = fc_ap["yhat_lower"].iloc[-AP_HORIZON:].values
+hi_ap = fc_ap["yhat_upper"].iloc[-AP_HORIZON:].values
+
+mae_ap = float(np.mean(np.abs(y_ap_test.values - fc_ap_test)))
+mape_ap = float(np.mean(np.abs((y_ap_test.values - fc_ap_test) / y_ap_test.values))) * 100
+print(f"Prophet sobre AirPassengers:  MAE = {mae_ap:.1f}  MAPE = {mape_ap:.2f}%")
+""")
+
+code("""
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(y_ap_train.index, y_ap_train.values, "k-", alpha=0.7, label="train")
+ax.plot(y_ap_test.index, y_ap_test.values, "ko-", lw=2, markersize=4, label="real")
+ax.plot(y_ap_test.index, fc_ap_test, color=ARCA_GREEN, lw=2, marker="s", markersize=4,
+         label=f"Prophet  MAE={mae_ap:.0f}  MAPE={mape_ap:.1f}%")
+ax.fill_between(y_ap_test.index, lo_ap, hi_ap, color=ARCA_GREEN, alpha=0.2, label="IC 80%")
+ax.axvline(y_ap_train.index[-1], color="gray", ls=":")
+ax.set_title("Prophet sobre AirPassengers --- 24 meses de forecast")
+ax.set_xlabel("anio"); ax.set_ylabel("miles de pasajeros")
+ax.legend(); plt.tight_layout(); plt.show()
+""")
+
+md("""
+**MAPE ~6.5% a 2 anios** sobre una serie con tendencia + estacionalidad fuertes.
+Prophet captura los picos estacionales y la tendencia.
+
+### Componentes interpretables
+""")
+
+code("""
+fig = m_ap.plot_components(fc_ap)
+fig.set_size_inches(11, 6)
+plt.tight_layout(); plt.show()
+""")
+
+md("""
+A diferencia de modelos blackbox, Prophet te muestra las piezas:
+**tendencia** (creciente) y **estacionalidad anual** (pico en verano, valle en invierno).
+
+Esto es util cuando tienes que **explicarle al jefe** por que el modelo dice lo que dice.
+""")
+
+# =====================================================================
+# 4. Metricas
+# =====================================================================
+md("""
+## 4. Metricas honestas
+
+### Comparamos Prophet contra modelos baseline
+""")
+
+code("""
+def mae(y_true, y_pred):
+    return float(np.mean(np.abs(y_true - y_pred)))
+def wape(y_true, y_pred):
+    return float(np.sum(np.abs(y_true - y_pred)) / np.sum(y_true) * 100)
+
+pred_naive  = np.full(AP_HORIZON, y_ap_train.iloc[-1])
+pred_snaive = y_ap_train.iloc[-12:-12+AP_HORIZON].values if AP_HORIZON <= 12 else \\
+              np.tile(y_ap_train.iloc[-12:].values, (AP_HORIZON // 12) + 1)[:AP_HORIZON]
+pred_ma     = np.full(AP_HORIZON, y_ap_train.iloc[-12:].mean())
+
+modelos = {
+    "Naive (ultimo valor)":      pred_naive,
+    "Seasonal naive (12 m)":     pred_snaive,
+    "Media movil 12 m":          pred_ma,
+    "Prophet":                   fc_ap_test,
+}
+
+baseline = mae(y_ap_test.values, pred_naive)
+print(f"{'Modelo':<28} {'MAE':>7} {'WAPE':>7} {'lift vs naive':>14}")
+print("-"*60)
+for name, pred in modelos.items():
+    m_ = mae(y_ap_test.values, pred)
+    w_ = wape(y_ap_test.values, pred)
+    l_ = (baseline - m_) / baseline * 100
+    print(f"{name:<28} {m_:>7.0f} {w_:>6.1f}% {l_:>13.1f}%")
+""")
+
+md("""
+**Prophet gana con ~73% de mejora sobre naive.** Visible:
+""")
+
+code("""
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(y_ap_train.index[-24:], y_ap_train.values[-24:], "k-", alpha=0.6, label="historico")
+ax.plot(y_ap_test.index, y_ap_test.values, "ko-", lw=2, label="real")
+colors = ["#94A3B8", ARCA_BLUE, "#7C3AED", ARCA_GREEN]
+for (name, pred), c in zip(modelos.items(), colors):
+    ax.plot(y_ap_test.index, pred, "x-", color=c, label=name, alpha=0.85)
+ax.axvline(y_ap_train.index[-1], color="gray", ls=":")
+ax.set_title("Cuatro modelos sobre los mismos 24 meses (AirPassengers)")
+ax.legend(); plt.tight_layout(); plt.show()
+""")
+
+md("""
+### Cuando usar cada metrica
+
+- **MAE**: facil de interpretar, robusta a outliers.
+- **RMSE**: castiga errores grandes -> usar cuando outliers son inaceptables.
+- **MAPE**: comparable entre escalas, pero EXPLOTA cuando valores reales son ~ 0.
+- **WAPE**: como MAPE pero suma errores / suma reales. Metrica de portafolio.
+
+### Walk-forward CV
+
+En series temporales NO podes shufflear. Cada fold: entrenar con todo el pasado,
+predecir el horizonte siguiente, medir. Asi simulas como vas a usar el modelo en produccion.
+""")
+
+# =====================================================================
+# 5. Inferencia + costo asimetrico
+# =====================================================================
+md("""
+## 5. Inferencia --- la prediccion NO es el numero final
+
+Prophet te da un PUNTO central (yhat) y una BANDA (yhat_lower, yhat_upper).
+Si entregas el punto central, vas a tener stockout el 50% del tiempo.
+
+### El costo asimetrico decide el percentil
+
+En planeacion real, el costo de subestimar (stockout) y sobrestimar (vencido)
+NO es simetrico. **Esto se traduce en elegir un percentil mas alto que la mediana**.
+""")
+
+code("""
+from scipy.stats import norm
+
+# Convertir el CI 80% a sigma asumiendo gaussian
+sigma_ap = (hi_ap - lo_ap) / (2 * 1.28)
+percentiles_ap = {
+    "P50": fc_ap_test,
+    "P70": fc_ap_test + norm.ppf(0.70) * sigma_ap,
+    "P80": fc_ap_test + norm.ppf(0.80) * sigma_ap,
+    "P90": fc_ap_test + norm.ppf(0.90) * sigma_ap,
+}
+
+fig, ax = plt.subplots(figsize=(11, 5))
+x = np.arange(AP_HORIZON); width = 0.20
+colors_p = {"P50": ARCA_GREEN, "P70": ARCA_BLUE, "P80": ARCA_ORANGE, "P90": ARCA_RED}
+for i, (name, p) in enumerate(percentiles_ap.items()):
+    ax.bar(x + (i-1.5)*width, p, width, color=colors_p[name], alpha=0.85,
+            label=f"{name}  total={p.sum():.0f}")
+ax.plot(x, y_ap_test.values, "ko-", lw=2, markersize=7, label=f"real  total={y_ap_test.sum():.0f}")
+ax.set_xticks(x); ax.set_xticklabels([d.strftime("%b %y") for d in y_ap_test.index],
+                                       rotation=45, ha="right", fontsize=8)
+ax.set_ylabel("miles de pasajeros")
+ax.set_title("Despacho final por percentil (sobre AirPassengers, 24 meses)")
+ax.legend(loc="upper left", fontsize=9)
+plt.tight_layout(); plt.show()
+""")
+
+md("""
+### Tabla de tradeoffs
+
+| Percentil | Riesgo stockout | Capital atado | Cuando usarlo |
+|-----------|-----------------|---------------|---------------|
+| P50       | 50%             | minimo         | costos simetricos (raro) |
+| P70       | 30%             | +10%           | default razonable |
+| P80       | 20%             | +20%           | stockout 3x mas caro que vencido |
+| P90       | 10%             | +35%           | stockout es catastrofico |
+""")
+
+# =====================================================================
+# 6. CASO APLICADO: FAVORITA
+# =====================================================================
+md("""
+## 6. Caso aplicado --- Favorita Quito Q44 (6 meses de forecast)
+
+Ahora aplicamos TODO lo que aprendimos a un caso real: ventas semanales de
+**bebidas** en una tienda Favorita de Quito. El planeador de Arca necesita el
+numero para los proximos **6 meses (26 semanas)**.
+""")
+
+code("""
+# Cargar Favorita y convertir a semanal
+df_fav = pd.read_csv("quito44_beverages_daily.csv",
+                      parse_dates=["date"], index_col="date").asfreq("D")
+df_fav["unit_sales"] = df_fav["unit_sales"].interpolate(method="time")
+
+counts = df_fav["unit_sales"].resample("W").count()
+y_w = df_fav["unit_sales"].resample("W").sum()
+y_w = y_w[counts == 7]  # solo semanas completas
+print(f"Favorita semanal: {len(y_w)} semanas ({y_w.index.min().date()} a {y_w.index.max().date()})")
+""")
+
+code("""
+# Split: train hasta sep 2016, test 26 semanas (incluye navidad + ano nuevo)
+FAV_HORIZON = 26
+FAV_TEST_START = pd.Timestamp("2016-09-04")
+y_fav_train = y_w[y_w.index < FAV_TEST_START]
+y_fav_test  = y_w[y_w.index >= FAV_TEST_START].iloc[:FAV_HORIZON]
+print(f"Train: {len(y_fav_train)} sem  -  Test: {len(y_fav_test)} sem")
+
+fig, ax = plt.subplots(figsize=(13, 4.5))
+ax.plot(y_fav_train.index, y_fav_train.values, color=ARCA_DARK, lw=1, label="historico")
+ax.plot(y_fav_test.index, y_fav_test.values, "lightgray", lw=1.2, label="proximos 6 meses (test)")
+ax.axvspan(y_fav_test.index[0], y_fav_test.index[-1], color=ARCA_RED, alpha=0.10)
+ax.axvline(y_fav_test.index[0], color=ARCA_RED, ls="--")
+ax.set_title("Favorita Quito Q44 bebidas --- el caso del planeador")
+ax.set_xlabel("fecha"); ax.set_ylabel("ventas semanales (cajas)")
+ax.legend(); plt.tight_layout(); plt.show()
+""")
+
+code("""
+# Prophet sobre Favorita CON HOLIDAYS Ecuador
+import holidays as hol
+
+ec = hol.country_holidays("EC", years=range(2013, 2018))
+hdays = pd.DataFrame({
+    "holiday": list(ec.values()),
+    "ds": pd.to_datetime(list(ec.keys())),
+    "lower_window": 0, "upper_window": 1,
+})
+
+m_fav = Prophet(yearly_seasonality=True, weekly_seasonality=False,
+                daily_seasonality=False, holidays=hdays,
+                interval_width=0.80, changepoint_prior_scale=0.05)
+m_fav.fit(pd.DataFrame({"ds": y_fav_train.index, "y": y_fav_train.values}))
+
+future_fav = m_fav.make_future_dataframe(periods=FAV_HORIZON, freq="W")
+fc_fav = m_fav.predict(future_fav)
+fc_fav_t = fc_fav["yhat"].iloc[-FAV_HORIZON:].values
+lo_fav = fc_fav["yhat_lower"].iloc[-FAV_HORIZON:].values
+hi_fav = fc_fav["yhat_upper"].iloc[-FAV_HORIZON:].values
+
+mae_fav = mae(y_fav_test.values, fc_fav_t)
+wape_fav = wape(y_fav_test.values, fc_fav_t)
+mape_fav = float(np.mean(np.abs((y_fav_test.values - fc_fav_t) / y_fav_test.values))) * 100
+print(f"Prophet sobre Favorita: MAE={mae_fav:.0f}  MAPE={mape_fav:.1f}%  WAPE={wape_fav:.1f}%")
+""")
+
+code("""
+fig, ax = plt.subplots(figsize=(13, 5))
+hist_tail = y_fav_train.iloc[-52:]
+ax.plot(hist_tail.index, hist_tail.values, color=ARCA_DARK, lw=1, alpha=0.8, label="1 ano previo")
+ax.plot(y_fav_test.index, y_fav_test.values, "ko-", lw=1.5, markersize=4, label="real (test 26 sem)")
+ax.plot(y_fav_test.index, fc_fav_t, color=ARCA_GREEN, lw=2, marker="s", markersize=4,
+         label=f"Prophet (holidays EC)  MAE={mae_fav:.0f}  WAPE={wape_fav:.1f}%")
+ax.fill_between(y_fav_test.index, lo_fav, hi_fav, color=ARCA_GREEN, alpha=0.2, label="IC 80%")
+ax.axvline(y_fav_train.index[-1], color="gray", ls=":")
+ax.set_title("Forecast Favorita --- 6 meses con Prophet")
+ax.set_xlabel("fecha"); ax.set_ylabel("ventas semanales (cajas)")
+ax.legend(); plt.tight_layout(); plt.show()
+""")
+
+md("""
+**WAPE ~10% a 6 meses** sobre una serie real con tendencia creciente, ruido y eventos.
+En forecasting de demanda industrial, eso es un resultado solido.
+""")
+
+code("""
+# Componentes interpretables de Favorita
+fig = m_fav.plot_components(fc_fav)
+fig.set_size_inches(11, 7)
+plt.tight_layout(); plt.show()
+""")
+
+md("""
+Prophet aprendio:
+- **Tendencia:** crecimiento sostenido de ~30k a ~80k semanal en 4 anios.
+- **Holidays Ecuador:** algunos feriados bajan las ventas ~5-12k cajas.
+- **Patron anual:** pico en septiembre, minimo en febrero.
+
+### El despacho final con costo asimetrico
+""")
+
+code("""
+# Convertir CI 80% a percentiles via gaussian
+sigma_fav = (hi_fav - lo_fav) / (2 * 1.28)
+p50 = fc_fav_t
+p70 = fc_fav_t + norm.ppf(0.70) * sigma_fav
+p80 = fc_fav_t + norm.ppf(0.80) * sigma_fav
+p90 = fc_fav_t + norm.ppf(0.90) * sigma_fav
+
+real_total = y_fav_test.sum()
+print(f"Total real (26 sem):       {real_total:>10,.0f} cajas")
+print(f"Despacho P50:              {p50.sum():>10,.0f} cajas  ({(p50.sum()-real_total)/real_total*100:+.1f}%)")
+print(f"Despacho P70:              {p70.sum():>10,.0f} cajas  ({(p70.sum()-real_total)/real_total*100:+.1f}%)")
+print(f"Despacho P80 (recomendado):{p80.sum():>10,.0f} cajas  ({(p80.sum()-real_total)/real_total*100:+.1f}%)")
+print(f"Despacho P90:              {p90.sum():>10,.0f} cajas  ({(p90.sum()-real_total)/real_total*100:+.1f}%)")
+""")
+
+md("""
+> **Ejercicio final.** Si en tu empresa el costo de stockout fuera 5x el costo
+> de vencido, que percentil entregarias? Y si fuera al reves?
+
+Esta decision NO es matematica pura: requiere conocer el negocio. El modelo
+te da el rango, vos (con el dueno del problema) eliges donde dispararte.
+""")
+
+# =====================================================================
+# CIERRE
+# =====================================================================
+md("""
+## 7. Cierre
+
+### Lo que te llevas hoy
+
+1. Una serie tiene que ser **estacionaria** para que un modelo aprenda algo util.
+   Si no lo es, **diferenciamos**.
+2. **ADF** diagnostica. Tres transformaciones (log, delta, delta_s) cubren casi todo.
+3. **Prophet** es la herramienta moderna para series de negocio con tendencia,
+   estacionalidad y holidays. API minima, componentes interpretables.
+4. **Walk-forward CV** para metricas honestas. **MAE, RMSE, MAPE, WAPE** con su uso.
+5. **La prediccion es un rango, no un punto.** El **costo asimetrico** define el percentil.
+6. Cuando los clasicos no bastan (regimen cambia, no-linealidad, multivariado):
+   **redes neuronales (clase 33)**.
+
+### Decision tree practico
+
+```
+Pocos datos (< 2 ciclos)?              -> Naive / Seasonal naive / MA
+Patron CLASICO (tendencia + estac)?    -> Prophet (con holidays!)
+Patron NO LINEAL / drivers externos?   -> Redes neuronales (clase 33)
+```
+
+**Empieza simple. Sube de complejidad solo si lo simple ya no da.**
+
+---
+
+*Codigo + datos: github.com/cmosquerat/arca-diplomado/tree/main/clase-32*
+""")
+
+# =====================================================================
+# BUILD
+# =====================================================================
+nb = {
+    "cells": cells,
+    "metadata": {
+        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+        "language_info": {"name": "python", "version": "3.12"},
+    },
+    "nbformat": 4, "nbformat_minor": 5,
+}
+with open(OUT, "w") as f:
+    json.dump(nb, f, indent=1)
+print(f"Notebook generado: {OUT} ({len(cells)} celdas)")
