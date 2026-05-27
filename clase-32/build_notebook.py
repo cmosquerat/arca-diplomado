@@ -578,10 +578,233 @@ te da el rango, vos (con el dueno del problema) eliges donde dispararte.
 """)
 
 # =====================================================================
-# CIERRE
+# 7. CUANDO PROPHET FALLA
 # =====================================================================
 md("""
-## 7. Cierre
+## 7. Cuando Prophet falla --- otro tipo de serie
+
+Cambiamos de problema. Imagina que sos ingeniero industrial y tenes un **sensor
+de presion en una caldera**, medido cada hora. La serie NO tiene tendencia clara
+ni estacionalidad fija --- la dinamica esta "adentro" de la propia serie.
+
+Vamos a generar una serie sintetica con esa pinta (ecuacion de **Mackey-Glass**,
+benchmark canonico para RNN/LSTM):
+""")
+
+code("""
+def mackey_glass(n=1500, tau=17, gamma=0.1, beta=0.2, p=10, dt=1.0, x0=1.2, burn=200):
+    \"\"\"Genera una serie caotica determinista con memoria de tau pasos.\"\"\"
+    n_total = n + burn
+    x = np.full(n_total, x0)
+    for t in range(1, n_total):
+        x_tau = x[t-tau] if t > tau else x0
+        x[t] = x[t-1] + dt * (beta * x_tau / (1 + x_tau**p) - gamma * x[t-1])
+    return x[burn:]
+
+SENSOR_N = 1500
+sensor = mackey_glass(n=SENSOR_N)
+sensor_idx = pd.date_range("2020-01-01", periods=SENSOR_N, freq="h")
+y_sensor = pd.Series(sensor, index=sensor_idx, name="presion")
+
+# Split: 80% train, 20% test
+SENSOR_HORIZON = 300
+y_sensor_train = y_sensor.iloc[:-SENSOR_HORIZON]
+y_sensor_test  = y_sensor.iloc[-SENSOR_HORIZON:]
+
+fig, ax = plt.subplots(figsize=(12, 4))
+ax.plot(y_sensor_train.index, y_sensor_train.values, color=ARCA_DARK, lw=0.5, label="train")
+ax.plot(y_sensor_test.index, y_sensor_test.values, color="lightgray", lw=0.7, label="test")
+ax.axvline(y_sensor_test.index[0], color=ARCA_RED, ls="--")
+ax.set_title("Sensor industrial --- dinamica no lineal con memoria de ~17 pasos")
+ax.set_xlabel("fecha"); ax.set_ylabel("presion (bar)")
+ax.legend(); plt.tight_layout(); plt.show()
+""")
+
+md("""
+> **Ejercicio 5.** Mira la serie: no hay tendencia ni estacionalidad obvia.
+> Crees que Prophet va a funcionar aqui? Por que si o por que no?
+
+### Aplicamos Prophet --- y se rompe
+""")
+
+code("""
+m_sensor = Prophet(yearly_seasonality=False, weekly_seasonality=True,
+                    daily_seasonality=True, interval_width=0.80,
+                    changepoint_prior_scale=0.05)
+m_sensor.fit(pd.DataFrame({"ds": y_sensor_train.index, "y": y_sensor_train.values}))
+
+future = m_sensor.make_future_dataframe(periods=SENSOR_HORIZON, freq="h")
+fc_sensor = m_sensor.predict(future)
+fc_sensor_t = fc_sensor["yhat"].iloc[-SENSOR_HORIZON:].values
+
+mae_sensor_p = mae(y_sensor_test.values, fc_sensor_t)
+mape_sensor_p = float(np.mean(np.abs((y_sensor_test.values - fc_sensor_t) / y_sensor_test.values))) * 100
+print(f"Prophet sobre sensor:  MAE = {mae_sensor_p:.3f}  MAPE = {mape_sensor_p:.1f}%")
+
+fig, ax = plt.subplots(figsize=(12, 4.5))
+ax.plot(y_sensor_train.index[-300:], y_sensor_train.values[-300:], color=ARCA_DARK, lw=0.7, alpha=0.7, label="train")
+ax.plot(y_sensor_test.index, y_sensor_test.values, "k-", lw=1.3, label="real")
+ax.plot(y_sensor_test.index, fc_sensor_t, color=ARCA_RED, lw=1.4,
+         label=f"Prophet  MAPE={mape_sensor_p:.1f}%")
+ax.axvline(y_sensor_train.index[-1], color="gray", ls=":")
+ax.set_title("Prophet sobre el sensor: forecast PLANO, no captura la dinamica")
+ax.set_xlabel("fecha"); ax.set_ylabel("presion (bar)")
+ax.legend(); plt.tight_layout(); plt.show()
+""")
+
+md("""
+**Prophet predice una linea casi plana** porque su modelo es funcion del tiempo
+(tendencia + estacionalidad), no de los valores pasados. La serie del sensor
+necesita lo contrario: $y_t = f(y_{t-1}, y_{t-2}, \\ldots, y_{t-k})$ con $f$ NO lineal.
+
+Necesitamos un modelo que tenga **memoria** y aprenda **patrones no lineales**.
+
+---
+
+## 8. LSTM al rescate
+
+### Que es una LSTM (con una analogia)
+
+Imaginate **alguien tomando notas en una reunion larga**. En cada parrafo nuevo:
+
+1. **Lee** el parrafo (eso es el dato nuevo $x_t$).
+2. **Mira** su libreta de notas (la memoria de lo que vino antes).
+3. **Decide que tachar** de las notas viejas (lo que ya no es relevante).
+4. **Decide que anotar nuevo** en la libreta.
+5. **Decide que decirle** al grupo en ese momento (eso es la prediccion $h_t$).
+6. **Pasa al siguiente parrafo** con la libreta actualizada.
+
+Una **LSTM** (Long Short-Term Memory) hace exactamente eso, paso a paso. La gran
+ventaja es que la "libreta" (memoria interna) sobrevive a traves de muchos pasos
+--- por eso aprende patrones que dependen de cosas que pasaron hace mucho.
+
+### Comparativa rapida: por que funciona donde Prophet no
+
+| | **Prophet** | **LSTM** |
+|---|-------------|----------|
+| Input | el tiempo $t$ | los valores pasados $y_{t-1}, y_{t-2}, \\ldots$ |
+| Modelo | trend + estacion + holidays (aditivo) | combinaciones NO lineales aprendidas |
+| Cuando gana | tendencia y estacionalidad claras | dinamica interna no lineal |
+| Interpretabilidad | alta (te muestra componentes) | baja (caja negra) |
+
+### Como se entrena: ventanas deslizantes
+
+Cada ejemplo de entrenamiento es **(ventana de k pasos, valor siguiente)**.
+Asi la LSTM aprende: *"dadas estas k mediciones, cual es la proxima?"*
+""")
+
+code("""
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+keras.utils.set_random_seed(42)
+
+# Normalizar a [0,1] con stats del train
+s = y_sensor.values.astype(np.float32)
+train_n = len(y_sensor_train)
+mn, mx = s[:train_n].min(), s[:train_n].max()
+s_norm = (s - mn) / (mx - mn + 1e-9)
+
+WINDOW = 50
+
+def make_windows(arr, w):
+    X, y = [], []
+    for i in range(len(arr) - w):
+        X.append(arr[i:i+w])
+        y.append(arr[i+w])
+    return np.array(X)[..., None], np.array(y)
+
+X_all, y_all = make_windows(s_norm, WINDOW)
+n_train_w = train_n - WINDOW
+X_train_lstm, y_train_lstm = X_all[:n_train_w], y_all[:n_train_w]
+print(f"Ejemplos train: {len(X_train_lstm)}, shape de X: {X_train_lstm.shape}")
+""")
+
+code("""
+# Modelo LSTM minimo
+model = keras.Sequential([
+    layers.Input(shape=(WINDOW, 1)),
+    layers.LSTM(32),
+    layers.Dense(1),
+])
+model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse")
+model.summary()
+""")
+
+code("""
+# Entrenamiento (20 epocas, ~30 segundos sin GPU, ~5 segundos con GPU)
+hist = model.fit(X_train_lstm, y_train_lstm,
+                  epochs=20, batch_size=64, validation_split=0.1, verbose=0)
+
+# Plot training history
+fig, ax = plt.subplots(figsize=(9, 3.5))
+ax.plot(hist.history["loss"], label="train", color=ARCA_DARK)
+ax.plot(hist.history["val_loss"], label="val", color=ARCA_RED)
+ax.set_title("Entrenamiento LSTM"); ax.set_xlabel("epoca"); ax.set_ylabel("MSE")
+ax.legend(); plt.tight_layout(); plt.show()
+""")
+
+code("""
+# Forecast del test (1-step ahead con los valores reales como ventana)
+fc_lstm = []
+for t in range(train_n, len(s_norm)):
+    window_arr = s_norm[t-WINDOW:t].reshape(1, WINDOW, 1)
+    pred_norm = model.predict(window_arr, verbose=0)[0, 0]
+    fc_lstm.append(pred_norm * (mx - mn) + mn)
+fc_lstm = np.array(fc_lstm)
+
+mae_sensor_l = mae(y_sensor_test.values, fc_lstm)
+mape_sensor_l = float(np.mean(np.abs((y_sensor_test.values - fc_lstm) / y_sensor_test.values))) * 100
+print(f"LSTM sobre sensor:    MAE = {mae_sensor_l:.3f}  MAPE = {mape_sensor_l:.1f}%")
+print(f"Prophet sobre sensor: MAE = {mae_sensor_p:.3f}  MAPE = {mape_sensor_p:.1f}%")
+print(f"\\nMejora de LSTM vs Prophet: {(mae_sensor_p - mae_sensor_l) / mae_sensor_p * 100:.0f}%")
+""")
+
+code("""
+# Visualizacion comparativa
+fig, axes = plt.subplots(1, 2, figsize=(15, 5),
+                          gridspec_kw={"width_ratios": [2.5, 1]})
+
+n_show = 200
+axes[0].plot(y_sensor_test.index[:n_show], y_sensor_test.values[:n_show], "k-", lw=1.5, label="real")
+axes[0].plot(y_sensor_test.index[:n_show], fc_sensor_t[:n_show], color=ARCA_RED, lw=1.3,
+              label=f"Prophet  MAPE={mape_sensor_p:.1f}%")
+axes[0].plot(y_sensor_test.index[:n_show], fc_lstm[:n_show], color=ARCA_GREEN, lw=1.3,
+              label=f"LSTM     MAPE={mape_sensor_l:.1f}%")
+axes[0].set_title("Misma serie, dos modelos --- primeros 200 puntos del test")
+axes[0].legend()
+
+metrics = ["MAE", "MAPE (%)"]
+pro_v = [mae_sensor_p, mape_sensor_p]
+lstm_v = [mae_sensor_l, mape_sensor_l]
+xpos = np.arange(2); width = 0.35
+axes[1].bar(xpos - width/2, pro_v, width, color=ARCA_RED, label="Prophet")
+axes[1].bar(xpos + width/2, lstm_v, width, color=ARCA_GREEN, label="LSTM")
+for i, (p, l) in enumerate(zip(pro_v, lstm_v)):
+    axes[1].text(i - width/2, p, f"{p:.2f}", ha="center", va="bottom", fontsize=9)
+    axes[1].text(i + width/2, l, f"{l:.2f}", ha="center", va="bottom", fontsize=9)
+axes[1].set_xticks(xpos); axes[1].set_xticklabels(metrics)
+axes[1].set_title("Metricas lado a lado")
+axes[1].legend(); plt.tight_layout(); plt.show()
+""")
+
+md("""
+**LSTM mejora ~85% sobre Prophet** (MAPE 3% vs 23%). Cuando la dinamica esta
+dentro de la serie y no en el calendario, redes con memoria > modelos aditivos.
+
+### Cuando vale la pena pasar de Prophet a LSTM
+
+- **Si:** la serie tiene dependencia no lineal de sus pasados (sensores, fisica, financieros caoticos)
+- **Si:** tenes muchos datos (LSTM necesita miles de puntos)
+- **Si:** tenes features exogenas que interactuan de forma compleja
+- **NO:** si la serie es "simple" (tendencia + estacionalidad + holidays) --- ahi Prophet gana en simplicidad
+
+> **Regla del oficio:** prueba Prophet primero. Solo pasa a LSTM si Prophet falla
+> y tenes los datos para entrenar bien.
+
+---
+
+# 9. Cierre
 
 ### Lo que te llevas hoy
 
@@ -592,15 +815,15 @@ md("""
    estacionalidad y holidays. API minima, componentes interpretables.
 4. **Walk-forward CV** para metricas honestas. **MAE, RMSE, MAPE, WAPE** con su uso.
 5. **La prediccion es un rango, no un punto.** El **costo asimetrico** define el percentil.
-6. Cuando los clasicos no bastan (regimen cambia, no-linealidad, multivariado):
-   **redes neuronales (clase 33)**.
+6. Cuando los clasicos no bastan (dinamica no lineal, sensores, multivariado):
+   **LSTM**. Hoy probamos una con ~10 lineas de Keras y vimos como pasa de MAPE 23% a 3%.
 
 ### Decision tree practico
 
 ```
-Pocos datos (< 2 ciclos)?              -> Naive / Seasonal naive / MA
-Patron CLASICO (tendencia + estac)?    -> Prophet (con holidays!)
-Patron NO LINEAL / drivers externos?   -> Redes neuronales (clase 33)
+Pocos datos (< 2 ciclos)?               -> Naive / Seasonal naive / MA
+Patron CLASICO (tendencia + estac)?     -> Prophet (con holidays!)
+Patron NO LINEAL / mucha memoria?       -> LSTM
 ```
 
 **Empieza simple. Sube de complejidad solo si lo simple ya no da.**

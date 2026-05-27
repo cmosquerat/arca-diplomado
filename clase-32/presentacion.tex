@@ -578,9 +578,249 @@ forecast = m.predict(m.make_future_dataframe(periods=26, freq="W"))
 \end{frame}
 
 % =============================================================================
-%  BLOQUE 7 - CIERRE
+%  BLOQUE 7 - CUANDO PROPHET FALLA (sensor industrial)
 % =============================================================================
-\sectionframe{Bloque 7}{Cierre --- decision tree\\y que viene en clase 33}
+\sectionframe{Bloque 7}{Pero Prophet no es magia\\hay series donde se rompe}
+
+\begin{frame}[shrink]{Nuevo problema --- sensor industrial}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_sensor_intro.png}
+  \end{center}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    Cambiamos de problema. Ahora tenemos un \textbf{sensor de presion en una caldera},
+    medido cada hora. No hay tendencia clara, no hay estacionalidad fija.
+    La dinamica esta ``adentro'' de la propia serie.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink]{Zoom --- el patron es OSCILATORIO pero NO ESTACIONAL}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_sensor_zoom.png}
+  \end{center}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+  Cada ciclo es distinto. El valor de hoy depende fuertemente de las mediciones
+  de las ultimas $\sim 17$ horas, pero NO de un calendario.}
+\end{frame}
+
+\begin{frame}[shrink]{Aplicamos Prophet --- y se rompe feo}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_sensor_prophet_falla.png}
+  \end{center}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    MAPE $23\%$. Prophet aplana el forecast porque no puede ver el patron:
+    su modelo es funcion del tiempo, no de los valores pasados.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink]{Por que Prophet falla --- el modelo no mira hacia atras}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_por_que_prophet_falla.png}
+  \end{center}
+  \vspace{2pt}
+  {\footnotesize\color{arcaDark}
+  \textbf{Lo que necesitamos:} un modelo que reciba los $k$ valores pasados de la serie
+  como input y aprenda la funcion $f$ \emph{no lineal} que produce el siguiente valor.
+  Eso es exactamente lo que hace una \textbf{red neuronal recurrente (LSTM)}.}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 8 - LSTM AL RESCATE
+% =============================================================================
+\sectionframe{Bloque 8}{LSTM al rescate\\redes con memoria para series}
+
+\begin{frame}[shrink]{Que es una LSTM --- analogia practica}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=6pt, bottom=6pt]
+    {\small\color{arcaDark}
+    Imaginate \textbf{alguien tomando notas en una reunion larga}:\par}
+    \vspace{4pt}
+    \begin{itemize}\setlength{\itemsep}{4pt}
+      \footnotesize
+      \item Lee cada parrafo nuevo (el dato $x_t$ que llega).
+      \item Mira su libreta de notas (la \textbf{memoria}: lo que viene del pasado).
+      \item Decide \textbf{que tachar} de las notas viejas (lo que ya no es relevante).
+      \item Decide \textbf{que anotar nuevo} en la libreta.
+      \item Decide \textbf{que decir} al grupo en ese momento (el output).
+      \item Pasa al siguiente parrafo con la libreta actualizada.
+    \end{itemize}
+  \end{tcolorbox}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\small\color{arcaDark}\bfseries
+    Una LSTM hace exactamente eso, paso a paso, pero aprendido por la red.
+    Su gran ventaja: la \emph{libreta} (memoria) sobrevive bien a traves de muchos pasos
+    --- algo que las redes neuronales simples no logran.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink]{La LSTM como caja con memoria}
+  \begin{center}
+  \begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=5pt, draw=arcaDark, fill=#1,
+                text=white, font=\bfseries\small, minimum width=2.4cm,
+                minimum height=1.0cm, align=center},
+    arrow/.style={->, >=Stealth, line width=1.4pt, color=arcaDark}]
+
+    \node[box=codeBlue!85] (in) at (0, 0) {Nuevo dato\\$x_t$};
+    \node[box=arcaRed, minimum width=3.4cm, minimum height=1.4cm] (cell) at (5, 0)
+      {LSTM cell\\con MEMORIA};
+    \node[box=codeGreen!85] (out) at (10, 0) {Prediccion\\$h_t$};
+
+    \draw[arrow] (in) -- (cell);
+    \draw[arrow] (cell) -- (out);
+
+    \draw[arrow, dashed, color=textMuted, line width=1pt]
+      (cell.south) -- ++(0, -0.7) -| node[below, font=\scriptsize, pos=0.25]
+      {la memoria pasa al siguiente paso} (cell.south east);
+
+    \node[font=\scriptsize, color=textMuted, align=center] at (5, 1.4)
+      {\textbf{Que decide la celda:}\\que olvidar $\,\cdot\,$ que anotar $\,\cdot\,$ que devolver};
+  \end{tikzpicture}
+  \end{center}
+  \vspace{6pt}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \footnotesize
+    \item Cada paso, la celda recibe un dato nuevo y la memoria del paso anterior.
+    \item Combina los dos y produce: una memoria actualizada + una prediccion.
+    \item Apilamos muchas celdas en cadena (una por cada paso de la ventana).
+    \item La red \textbf{aprende sola} que olvidar, que recordar y que predecir.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[shrink]{Por que LSTM funciona donde Prophet no}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    Compara como ataca cada uno el problema del sensor:\par}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+    \toprule
+    \footnotesize\textbf{\color{arcaRed} Prophet} & \footnotesize\textbf{\color{codeGreen} LSTM}\\
+    \midrule
+    \scriptsize Modela $y(t) = $ trend + estacion + holidays. Su input es \emph{el tiempo}.
+    & \scriptsize Modela $y(t) = f(y(t-1), \ldots, y(t-k))$. Su input son \emph{los valores pasados}.\\
+    \\
+    \scriptsize Captura patrones que dependen del calendario.
+    & \scriptsize Captura patrones que dependen de la \emph{dinamica interna} de la serie.\\
+    \\
+    \scriptsize Es aditivo: trend + estacion + ruido. La relacion es \textbf{lineal} en sus piezas.
+    & \scriptsize Combina inputs con funciones \textbf{NO lineales} (sigmoides, tanh).\\
+    \\
+    \scriptsize Componentes interpretables (puedes mostrar trend, estacion).
+    & \scriptsize Es una caja negra. La interpretabilidad se pierde.\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    El sensor industrial requiere lo segundo. Por eso LSTM gana.
+    Cuando la serie es ``tendencia + estacionalidad'' limpia, Prophet sigue siendo
+    la mejor eleccion --- mas simple, mas rapido, mas interpretable.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink]{Como se entrena --- ventanas deslizantes sobre la serie}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_lstm_ventanas.png}
+  \end{center}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    Cada ejemplo de entrenamiento es \textbf{(ventana de $k$ pasos, valor siguiente)}.
+    Asi la LSTM aprende: \emph{``dadas estas $k$ mediciones, cual es la proxima?''}.
+    En el sensor usamos $k=50$.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile, shrink]{LSTM en codigo --- 10 lineas con Keras}
+  \begin{pyblock}
+import tensorflow as tf
+from tensorflow.keras import layers, Sequential
+
+WINDOW = 50
+
+model = Sequential([
+    layers.Input(shape=(WINDOW, 1)),
+    layers.LSTM(32),
+    layers.Dense(1),
+])
+model.compile(optimizer="adam", loss="mse")
+model.fit(X_train, y_train, epochs=20, batch_size=64, validation_split=0.1)
+
+pred = model.predict(X_test)
+  \end{pyblock}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+  Una capa LSTM de 32 unidades + Dense final = un modelo capaz de aprender
+  dinamicas no lineales de hasta 50 pasos atras. \emph{Todo el preprocesamiento}
+  (normalizacion + ventanas) lo veras en el notebook.}
+\end{frame}
+
+\begin{frame}[shrink]{La LSTM sobre el mismo sensor --- captura la dinamica}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_lstm_forecast.png}
+  \end{center}
+  \vspace{2pt}
+  {\footnotesize\color{arcaDark}
+  La linea verde (LSTM) sigue casi perfectamente la linea negra (real).
+  La LSTM \emph{aprendio} la regla interna del sensor sin que le digamos nada
+  sobre frecuencia, fase o estacionalidad.}
+\end{frame}
+
+\begin{frame}[shrink]{Lado a lado --- Prophet vs LSTM sobre la MISMA serie}
+  \begin{center}
+    \includegraphics[width=0.97\textwidth]{fig_lstm_vs_prophet.png}
+  \end{center}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    LSTM mejora $\sim 85\%$ sobre Prophet (MAPE $3\%$ vs $23\%$).
+    Cuando la dinamica esta dentro de la serie (no en el calendario),
+    redes con memoria > modelos aditivos.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink]{Cuando vale la pena pasar de Prophet a LSTM}
+  \begin{itemize}\setlength{\itemsep}{6pt}
+    \footnotesize
+    \item \textbf{Si:} la serie tiene dependencia no lineal de sus pasados
+    (sensores, dinamicas fisicas, financieros caoticos).
+    \item \textbf{Si:} tenes muchos datos (LSTM necesita miles de observaciones para
+    aprender una dinamica no trivial; Prophet funciona con cientos).
+    \item \textbf{Si:} tenes features exogenas que interactuan de forma compleja
+    (clima, precios, eventos --- todos juntos).
+    \item \textbf{Si:} la interpretabilidad NO es el requisito principal
+    (LSTM es caja negra; Prophet te muestra componentes).
+    \item \textbf{NO:} si la serie es ``simple'' (tendencia + estacionalidad + holidays)
+    --- ahi Prophet gana en simplicidad y costo de mantenimiento.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\small\color{arcaDark}\bfseries
+    Regla del oficio: prueba Prophet primero. Solo pasa a LSTM si Prophet falla y tenes
+    los datos para entrenar bien.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 9 - CIERRE
+% =============================================================================
+\sectionframe{Bloque 9}{Cierre --- decision tree\\y que viene en clase 33}
 
 \begin{frame}[shrink]{Cuando usar cada modelo --- la guia practica}
   \begin{center}
@@ -601,16 +841,18 @@ forecast = m.predict(m.make_future_dataframe(periods=26, freq="W"))
     cada una con su uso especifico.
     \item \textbf{La prediccion es un rango, no un punto.} El \textbf{costo asimetrico}
     decide el percentil que entregas.
-    \item Cuando los clasicos no bastan (regimen cambia, no-linealidad, multivariado):
-    \textbf{redes neuronales (clase 33)}.
+    \item Cuando los clasicos no bastan (dinamica no lineal, sensores, multivariado):
+    \textbf{LSTM}. Hoy probamos una con $\sim 10$ lineas de Keras y vimos
+    como pasa de MAPE $23\%$ a $3\%$ sobre el sensor.
   \end{itemize}
 
   \vspace{6pt}
   \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
     boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
     {\small\color{arcaDark}\bfseries
-    Proxima clase: redes neuronales para series temporales
-    (LSTM, Transformer, NeuralProphet) --- para los casos donde los clasicos se quedan cortos.}
+    Clase 33: profundizamos en redes para series --- GRU, Transformer,
+    multivariate, NeuralProphet, features de lag con XGBoost. Construimos sobre
+    la LSTM minima que ya entendimos hoy.}
   \end{tcolorbox}
 \end{frame}
 

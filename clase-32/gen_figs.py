@@ -1,6 +1,6 @@
 """
 Figuras clase 32 - Series Temporales II
-De la estacionariedad a la decision (Prophet aplicado a planeacion de demanda).
+De la estacionariedad a la decision + cuando los clasicos no bastan (LSTM).
 
 Estructura pedagogica:
   Bloque 0: Setup conceptual del problema (planeacion en general)
@@ -10,11 +10,9 @@ Estructura pedagogica:
   Bloque 4: Metricas honestas (walk-forward, MAE/RMSE/MAPE/WAPE)
   Bloque 5: Inferencia + costo asimetrico
   Bloque 6: Caso aplicado a Favorita (6 meses adelante)
-  Bloque 7: Cierre - decision tree
-
-Datos:
-  - AirPassengers (statsmodels) para teoria limpia con tendencia + estacionalidad
-  - Favorita Quito Q44 beverages para el caso aplicado al final
+  Bloque 7: Cuando Prophet falla (sensor industrial con dinamica no lineal)
+  Bloque 8: LSTM al rescate (intro + aplicacion al sensor)
+  Bloque 9: Cierre - decision tree
 """
 import os, warnings
 import numpy as np
@@ -749,7 +747,292 @@ def fig_favorita_components():
 
 
 # =============================================================================
-#  BLOQUE 7 - Cierre: decision tree
+#  BLOQUE 7 - Cuando Prophet falla (Mackey-Glass como "sensor industrial")
+# =============================================================================
+def mackey_glass(n=2000, tau=17, gamma=0.1, beta=0.2, p=10, dt=1.0, x0=1.2, burn=200):
+    """
+    Mackey-Glass: ecuacion diferencial con retardo, caotica para tau=17.
+    Es el benchmark canonico para demostrar RNN/LSTM sobre series no lineales.
+    Aqui la usamos como "sensor industrial con dinamica interna".
+    """
+    n_total = n + burn
+    x = np.full(n_total, x0)
+    for t in range(1, n_total):
+        x_tau = x[t-tau] if t > tau else x0
+        x[t] = x[t-1] + dt * (beta * x_tau / (1 + x_tau**p) - gamma * x[t-1])
+    return x[burn:]
+
+# Generar la serie del sensor industrial (sintetica pero deterministica)
+print("\nGenerando serie 'sensor industrial' (Mackey-Glass)...")
+SENSOR_N = 1500
+sensor_raw = mackey_glass(n=SENSOR_N, tau=17)
+# Anclar la serie a un calendario para que Prophet la pueda comer
+sensor_dates = pd.date_range("2020-01-01", periods=SENSOR_N, freq="h")
+y_sensor = pd.Series(sensor_raw, index=sensor_dates, name="presion")
+print(f"  Serie sensor: {len(y_sensor)} puntos horarios, rango [{y_sensor.min():.2f}, {y_sensor.max():.2f}]")
+
+# Split: 70% train, 30% test
+SENSOR_HORIZON = 300   # 300 puntos (12.5 dias horarios) de test
+y_sensor_train = y_sensor.iloc[:-SENSOR_HORIZON]
+y_sensor_test  = y_sensor.iloc[-SENSOR_HORIZON:]
+
+def fig_sensor_intro():
+    """Presenta la serie del sensor industrial."""
+    fig, ax = plt.subplots(figsize=(13, 4.5))
+    ax.plot(y_sensor_train.index, y_sensor_train.values, color=ARCA_DARK, lw=0.6,
+             label=f"historico ({len(y_sensor_train)} mediciones horarias)")
+    ax.plot(y_sensor_test.index, y_sensor_test.values, color="lightgray", lw=0.7,
+             label=f"futuro ({len(y_sensor_test)} mediciones, no lo ve el modelo)")
+    ax.axvspan(y_sensor_test.index[0], y_sensor_test.index[-1], color=ARCA_RED, alpha=0.10)
+    ax.axvline(y_sensor_test.index[0], color=ARCA_RED, ls="--", lw=1.5)
+    ax.set_title("Nuevo problema: sensor de presion en una caldera industrial\n"
+                  "(serie horaria, dinamica interna NO lineal)",
+                  color=ARCA_DARK)
+    ax.set_xlabel("fecha"); ax.set_ylabel("presion (bar)")
+    ax.legend(loc="upper left", fontsize=10)
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_sensor_intro.png"), dpi=140, bbox_inches="tight")
+    print("  fig_sensor_intro.png")
+    plt.close(fig)
+
+def fig_sensor_zoom():
+    """Zoom para ver el patron oscilatorio caotico."""
+    sub = y_sensor.iloc[200:600]
+    fig, ax = plt.subplots(figsize=(12, 3.8))
+    ax.plot(sub.index, sub.values, color=ARCA_DARK, lw=1)
+    ax.set_title("Zoom: el valor de hoy depende NO LINEALMENTE de las mediciones pasadas\n"
+                  "(no hay tendencia clara, no hay estacionalidad fija)",
+                  color=ARCA_DARK, fontsize=11)
+    ax.set_xlabel("fecha"); ax.set_ylabel("presion (bar)")
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_sensor_zoom.png"), dpi=140, bbox_inches="tight")
+    print("  fig_sensor_zoom.png")
+    plt.close(fig)
+
+_PROPHET_SENSOR = None
+def fig_sensor_prophet_falla():
+    """Prophet sobre el sensor: tendencia + estacionalidad no capturan el caos."""
+    global _PROPHET_SENSOR
+    from prophet import Prophet
+    m = Prophet(yearly_seasonality=False, weekly_seasonality=True,
+                daily_seasonality=True, interval_width=0.80,
+                changepoint_prior_scale=0.05)
+    m.fit(pd.DataFrame({"ds": y_sensor_train.index, "y": y_sensor_train.values}))
+    future = m.make_future_dataframe(periods=SENSOR_HORIZON, freq="h")
+    fc = m.predict(future)
+    fc_t = fc["yhat"].iloc[-SENSOR_HORIZON:].values
+    lo = fc["yhat_lower"].iloc[-SENSOR_HORIZON:].values
+    hi = fc["yhat_upper"].iloc[-SENSOR_HORIZON:].values
+    _PROPHET_SENSOR = (m, fc, fc_t, lo, hi)
+
+    mae = float(np.mean(np.abs(y_sensor_test.values - fc_t)))
+    rmse = float(np.sqrt(np.mean((y_sensor_test.values - fc_t)**2)))
+    mape = float(np.mean(np.abs((y_sensor_test.values - fc_t) / y_sensor_test.values))) * 100
+
+    fig, ax = plt.subplots(figsize=(13, 5))
+    hist_tail = y_sensor_train.iloc[-300:]
+    ax.plot(hist_tail.index, hist_tail.values, color=ARCA_DARK, lw=0.8, alpha=0.7,
+             label="historico")
+    ax.plot(y_sensor_test.index, y_sensor_test.values, color="black", lw=1.4,
+             label="real")
+    ax.plot(y_sensor_test.index, fc_t, color=ARCA_RED, lw=1.5,
+             label=f"Prophet  MAE={mae:.3f}  MAPE={mape:.1f}%")
+    ax.fill_between(y_sensor_test.index, lo, hi, color=ARCA_RED, alpha=0.15,
+                     label="intervalo 80%")
+    ax.axvline(y_sensor_train.index[-1], color="gray", ls=":")
+    ax.set_title("Prophet sobre el sensor: forecast PLANO, no captura la dinamica",
+                  color=ARCA_DARK)
+    ax.set_xlabel("fecha"); ax.set_ylabel("presion (bar)")
+    ax.legend(loc="upper left", fontsize=10)
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_sensor_prophet_falla.png"),
+                dpi=140, bbox_inches="tight")
+    print(f"  fig_sensor_prophet_falla.png  MAE={mae:.3f}  RMSE={rmse:.3f}  MAPE={mape:.1f}%")
+    plt.close(fig)
+    return fc_t, mae, mape
+
+def fig_por_que_prophet_falla():
+    """Diagrama conceptual: Prophet asume aditivo tendencia + estacionalidad."""
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
+
+    sub = y_sensor.iloc[200:500]
+    axes[0].plot(sub.index, sub.values, color=ARCA_DARK, lw=1)
+    axes[0].set_title("La realidad:\nvalor_t depende NO LINEALMENTE de pasados (lags 17)",
+                       color=ARCA_DARK, fontsize=11)
+    axes[0].set_xlabel("fecha"); axes[0].set_ylabel("presion")
+
+    # Diagrama conceptual
+    ax = axes[1]; ax.axis("off")
+    ax.set_xlim(0, 10); ax.set_ylim(0, 10)
+    ax.text(5, 9, "Prophet asume:", ha="center", fontsize=13, weight="bold", color=ARCA_DARK)
+    ax.text(5, 7.5, r"$y(t) \approx \mathrm{tendencia}(t) + \mathrm{estacion}(t) + \mathrm{holidays}(t)$",
+             ha="center", fontsize=12, color=ARCA_BLUE)
+    ax.text(5, 5.5, "Es una funcion del TIEMPO solamente.\n"
+                     "No mira los valores pasados de la propia serie.",
+             ha="center", fontsize=11, color=ARCA_DARK)
+    ax.text(5, 3, "El sensor REQUIERE:", ha="center", fontsize=13, weight="bold", color=ARCA_DARK)
+    ax.text(5, 1.7, r"$y(t) = f(y(t-1), y(t-2), \ldots, y(t-k))$",
+             ha="center", fontsize=12, color=ARCA_RED)
+    ax.text(5, 0.5, "Necesitamos un modelo con MEMORIA y no-linealidad.",
+             ha="center", fontsize=11, weight="bold", color=ARCA_DARK)
+
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_por_que_prophet_falla.png"),
+                dpi=140, bbox_inches="tight")
+    print("  fig_por_que_prophet_falla.png")
+    plt.close(fig)
+
+
+# =============================================================================
+#  BLOQUE 8 - LSTM al rescate
+# =============================================================================
+def fig_lstm_ventanas():
+    """Visual de como se arman ventanas X -> y para entrenar la LSTM."""
+    n = 20
+    s = mackey_glass(n=n+40, tau=17)[40:]
+    W = 6
+    fig, ax = plt.subplots(figsize=(12, 4.5))
+    x = np.arange(n)
+    ax.plot(x, s, "o-", color="lightgray", markersize=6, lw=1)
+
+    # Resaltar ejemplo: ventana de tamaño W prediciendo el siguiente
+    for i, (start, color) in enumerate([(2, ARCA_BLUE), (7, ARCA_GREEN), (12, ARCA_ORANGE)]):
+        ax.plot(x[start:start+W], s[start:start+W], "o-", color=color, lw=2, markersize=8)
+        ax.plot(x[start+W], s[start+W], marker="*", markersize=20, color=color)
+        ax.annotate(f"ventana {i+1}", xy=(start+W/2-0.5, s[start:start+W].max()+0.1),
+                     fontsize=9, color=color, weight="bold", ha="center")
+
+    ax.set_title(f"Como entrenar LSTM: cada ventana de {W} pasos --> proximo valor\n"
+                  "El modelo aprende: 'dadas estas {W} mediciones, cual es la siguiente?'".format(W=W),
+                  color=ARCA_DARK)
+    ax.set_xlabel("paso temporal"); ax.set_ylabel("valor")
+    ax.legend(["serie", "ventana (input)", "objetivo (output)"], loc="upper right",
+               fontsize=9)
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_lstm_ventanas.png"), dpi=140, bbox_inches="tight")
+    print("  fig_lstm_ventanas.png")
+    plt.close(fig)
+
+_LSTM_RESULTS = None
+def fit_lstm_sensor(window=50, units=32, epochs=20):
+    """Entrena una LSTM minima sobre el sensor. Devuelve forecast del test."""
+    import tensorflow as tf
+    from tensorflow import keras
+    from tensorflow.keras import layers
+    keras.utils.set_random_seed(42)
+
+    # Normalizar a [0,1] con stats del train
+    s = y_sensor.values.astype(np.float32)
+    train_n = len(y_sensor_train)
+    mn, mx = s[:train_n].min(), s[:train_n].max()
+    s_norm = (s - mn) / (mx - mn + 1e-9)
+
+    def make_windows(arr, w):
+        X, y = [], []
+        for i in range(len(arr) - w):
+            X.append(arr[i:i+w])
+            y.append(arr[i+w])
+        return np.array(X)[..., None], np.array(y)
+
+    X_all, y_all = make_windows(s_norm, window)
+    # Las filas 0 .. (train_n - window - 1) corresponden a objetivos en train
+    n_train_windows = train_n - window
+    X_train, y_train_arr = X_all[:n_train_windows], y_all[:n_train_windows]
+
+    model = keras.Sequential([
+        layers.Input(shape=(window, 1)),
+        layers.LSTM(units),
+        layers.Dense(1),
+    ])
+    model.compile(optimizer=keras.optimizers.Adam(1e-3), loss="mse")
+    hist = model.fit(X_train, y_train_arr, epochs=epochs, batch_size=64,
+                      validation_split=0.1, verbose=0)
+
+    # Forecast del test: rolling, usando los valores REALES (1-step ahead)
+    # Esto es honesto: en produccion el sensor sigue midiendo, no necesitas
+    # predecir multi-step ciegamente para evaluar el modelo.
+    test_idx_start = train_n
+    fc = []
+    for t in range(test_idx_start, len(s_norm)):
+        window_arr = s_norm[t-window:t].reshape(1, window, 1)
+        pred_norm = model.predict(window_arr, verbose=0)[0, 0]
+        fc.append(pred_norm * (mx - mn) + mn)
+    fc = np.array(fc)
+    return fc, hist
+
+def fig_lstm_forecast():
+    global _LSTM_RESULTS
+    fc, hist = fit_lstm_sensor(window=50, units=32, epochs=20)
+    mae = float(np.mean(np.abs(y_sensor_test.values - fc)))
+    rmse = float(np.sqrt(np.mean((y_sensor_test.values - fc)**2)))
+    mape = float(np.mean(np.abs((y_sensor_test.values - fc) / y_sensor_test.values))) * 100
+    _LSTM_RESULTS = {"fc": fc, "mae": mae, "rmse": rmse, "mape": mape, "history": hist}
+
+    fig, ax = plt.subplots(figsize=(13, 5))
+    hist_tail = y_sensor_train.iloc[-300:]
+    ax.plot(hist_tail.index, hist_tail.values, color=ARCA_DARK, lw=0.8, alpha=0.7,
+             label="historico")
+    ax.plot(y_sensor_test.index, y_sensor_test.values, color="black", lw=1.4,
+             label="real")
+    ax.plot(y_sensor_test.index, fc, color=ARCA_GREEN, lw=1.5,
+             label=f"LSTM (50 lags)  MAE={mae:.3f}  MAPE={mape:.1f}%")
+    ax.axvline(y_sensor_train.index[-1], color="gray", ls=":")
+    ax.set_title("LSTM sobre el sensor: captura la dinamica no lineal",
+                  color=ARCA_DARK)
+    ax.set_xlabel("fecha"); ax.set_ylabel("presion (bar)")
+    ax.legend(loc="upper left", fontsize=10)
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_lstm_forecast.png"),
+                dpi=140, bbox_inches="tight")
+    print(f"  fig_lstm_forecast.png  MAE={mae:.3f}  RMSE={rmse:.3f}  MAPE={mape:.1f}%")
+    plt.close(fig)
+    return fc, mae, mape
+
+def fig_lstm_vs_prophet(fc_prophet, mae_prophet, mape_prophet,
+                        fc_lstm, mae_lstm, mape_lstm):
+    """Comparacion lado a lado en la misma serie."""
+    fig, axes = plt.subplots(1, 2, figsize=(15, 5.2),
+                              gridspec_kw={"width_ratios":[2.5, 1]})
+
+    test_idx = y_sensor_test.index
+    real = y_sensor_test.values
+    sub_idx = test_idx[:200]   # primeros 200 puntos para no saturar
+    sub_real = real[:200]; sub_pro = fc_prophet[:200]; sub_lstm = fc_lstm[:200]
+
+    axes[0].plot(sub_idx, sub_real, color="black", lw=1.5, label="real")
+    axes[0].plot(sub_idx, sub_pro, color=ARCA_RED, lw=1.3,
+                  label=f"Prophet  MAE={mae_prophet:.3f}  MAPE={mape_prophet:.1f}%")
+    axes[0].plot(sub_idx, sub_lstm, color=ARCA_GREEN, lw=1.3,
+                  label=f"LSTM     MAE={mae_lstm:.3f}  MAPE={mape_lstm:.1f}%")
+    axes[0].set_title("Misma serie, dos modelos --- primeros 200 puntos del test",
+                       color=ARCA_DARK, fontsize=12)
+    axes[0].set_xlabel("fecha"); axes[0].set_ylabel("presion")
+    axes[0].legend(loc="upper left", fontsize=10)
+
+    ax = axes[1]
+    metrics = ["MAE", "RMSE", "MAPE (%)"]
+    pro_vals = [mae_prophet, float(np.sqrt(np.mean((real-fc_prophet)**2))), mape_prophet]
+    lstm_vals = [mae_lstm, float(np.sqrt(np.mean((real-fc_lstm)**2))), mape_lstm]
+    x_pos = np.arange(len(metrics)); width = 0.35
+    ax.bar(x_pos - width/2, pro_vals, width, color=ARCA_RED, label="Prophet")
+    ax.bar(x_pos + width/2, lstm_vals, width, color=ARCA_GREEN, label="LSTM")
+    for i, (p, l) in enumerate(zip(pro_vals, lstm_vals)):
+        ax.text(i - width/2, p, f"{p:.2f}", ha="center", va="bottom", fontsize=9)
+        ax.text(i + width/2, l, f"{l:.2f}", ha="center", va="bottom", fontsize=9)
+    ax.set_xticks(x_pos); ax.set_xticklabels(metrics)
+    ax.set_title("Metricas lado a lado", color=ARCA_DARK, fontsize=12)
+    ax.legend()
+    ax.grid(axis="x", alpha=0)
+
+    plt.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig_lstm_vs_prophet.png"),
+                dpi=140, bbox_inches="tight")
+    print("  fig_lstm_vs_prophet.png")
+    plt.close(fig)
+
+
+# =============================================================================
+#  BLOQUE 9 - Cierre: decision tree
 # =============================================================================
 def fig_decision_tree():
     fig, ax = plt.subplots(figsize=(13, 6.5))
@@ -826,9 +1109,24 @@ if __name__ == "__main__":
     fav_fc, fav_lo, fav_hi, fav_mae, fav_mape, fav_wape = fig_favorita_prophet()
     fig_favorita_components()
 
-    print("\n=== Bloque 7 - Cierre ===")
+    print("\n=== Bloque 7 - Cuando Prophet falla (sensor industrial) ===")
+    fig_sensor_intro()
+    fig_sensor_zoom()
+    fc_pro_sensor, mae_pro_s, mape_pro_s = fig_sensor_prophet_falla()
+    fig_por_que_prophet_falla()
+
+    print("\n=== Bloque 8 - LSTM al rescate ===")
+    fig_lstm_ventanas()
+    fc_lstm_s, mae_lstm_s, mape_lstm_s = fig_lstm_forecast()
+    fig_lstm_vs_prophet(fc_pro_sensor, mae_pro_s, mape_pro_s,
+                         fc_lstm_s, mae_lstm_s, mape_lstm_s)
+
+    print("\n=== Bloque 9 - Cierre ===")
     fig_decision_tree()
 
     print(f"\n--- Resumen ---")
     print(f"  AirPassengers Prophet MAE={mae:.0f} MAPE={mape:.1f}%")
     print(f"  Favorita Prophet MAE={fav_mae:.0f} MAPE={fav_mape:.1f}% WAPE={fav_wape:.1f}%")
+    print(f"  Sensor Prophet MAE={mae_pro_s:.3f} MAPE={mape_pro_s:.1f}%")
+    print(f"  Sensor LSTM    MAE={mae_lstm_s:.3f} MAPE={mape_lstm_s:.1f}%")
+    print(f"  Mejora LSTM vs Prophet: {(mae_pro_s-mae_lstm_s)/mae_pro_s*100:.0f}%")
