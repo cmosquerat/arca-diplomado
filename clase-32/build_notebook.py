@@ -9,8 +9,11 @@ OUT = os.path.join(ROOT, "Clase_32_Series_Temporales.ipynb")
 
 cells = []
 def md(text):
-    cells.append({"cell_type": "markdown", "metadata": {},
-                  "source": text.strip().split("\n")})
+    # Cada linea del source DEBE terminar en \n: Colab concatena los strings tal cual
+    # (sin agregar separador). Sin el \n, todo el markdown colapsa en una sola linea.
+    lines = text.strip("\n").split("\n")
+    src = [(s + "\n") for s in lines[:-1]] + [lines[-1]]
+    cells.append({"cell_type": "markdown", "metadata": {}, "source": src})
 def code(text):
     src = text.strip("\n").split("\n")
     src = [(s + "\n") for s in src[:-1]] + [src[-1]]
