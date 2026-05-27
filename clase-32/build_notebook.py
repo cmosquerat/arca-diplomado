@@ -51,22 +51,20 @@ md("## 0. Setup --- corre esta celda primero")
 
 code(f"""
 # Setup compatible local + Colab
-import sys, os, urllib.request
+import sys
 
 IN_COLAB = "google.colab" in sys.modules
 
 if IN_COLAB:
     print("Detectamos Colab --- instalando dependencias...")
+    import os
     os.system("pip install -q prophet holidays")
     print("Listo.")
 
-# Descargar el CSV de Favorita si no esta local
-DATA_URL = "{REPO}/quito44_beverages_daily.csv"
-DATA_FILE = "quito44_beverages_daily.csv"
-if not os.path.exists(DATA_FILE):
-    print(f"Descargando {{DATA_FILE}} desde GitHub...")
-    urllib.request.urlretrieve(DATA_URL, DATA_FILE)
-    print("Listo.")
+# El CSV de Favorita se lee DIRECTO desde GitHub (plug-and-play en Colab).
+# pandas.read_csv acepta una URL, asi que no hace falta descargar el archivo.
+CSV_FAVORITA = "{REPO}/quito44_beverages_daily.csv"
+print(f"Fuente de datos Favorita:\\n  {{CSV_FAVORITA}}")
 """)
 
 code("""
@@ -199,6 +197,12 @@ print(f"ADF delta       : p = {adfuller(diff)[1]:.4f}")
 """)
 
 md("""
+**Interpretacion del resultado:** el ADF de la temperatura cruda da un p alto
+(NO estacionaria: tiene tendencia y oscilacion). Al diferenciar (el delta dia a dia),
+el p cae muy por debajo de 0.05: la serie del **cambio** SI es estacionaria. Visualmente
+se ve clarisimo: el panel izquierdo deambula, el derecho oscila estable alrededor de 0.
+Esa es toda la magia de diferenciar.
+
 ### Tres tipos de diferenciacion
 
 1. **log(y)** estabiliza VARIANZA cuando crece con el nivel
@@ -383,6 +387,12 @@ ax.legend(); plt.tight_layout(); plt.show()
 """)
 
 md("""
+**Interpretacion:** mira como cada modelo "ataca" el problema. El naive (gris) es una
+linea horizontal: repite el ultimo valor y se queda muy abajo. La media movil (morado)
+tambien aplana. El seasonal naive (azul) ya copia la forma estacional pero sin la tendencia
+creciente, asi que queda corto. **Prophet (verde) es el unico que sube CON la tendencia
+y replica los picos de verano** --- por eso gana en todas las metricas.
+
 ### Cuando usar cada metrica
 
 - **MAE**: facil de interpretar, robusta a outliers.
@@ -439,6 +449,12 @@ plt.tight_layout(); plt.show()
 """)
 
 md("""
+**Interpretacion:** las barras suben de P50 (verde) a P90 (rojo). Fijate en la leyenda:
+cada percentil tiene un "total" mayor. La linea negra (real) cae casi siempre por encima
+del P50 --- por eso entregar el P50 te deja corto la mitad del tiempo. Cuanto mas alto el
+percentil, menos riesgo de stockout pero mas capital atado. **El percentil correcto NO sale
+de la matematica: sale del costo relativo de cada error en tu negocio.**
+
 ### Tabla de tradeoffs
 
 | Percentil | Riesgo stockout | Capital atado | Cuando usarlo |
@@ -461,8 +477,8 @@ numero para los proximos **6 meses (26 semanas)**.
 """)
 
 code("""
-# Cargar Favorita y convertir a semanal
-df_fav = pd.read_csv("quito44_beverages_daily.csv",
+# Cargar Favorita DIRECTO desde GitHub (CSV_FAVORITA es una URL raw) y convertir a semanal
+df_fav = pd.read_csv(CSV_FAVORITA,
                       parse_dates=["date"], index_col="date").asfreq("D")
 df_fav["unit_sales"] = df_fav["unit_sales"].interpolate(method="time")
 
@@ -488,6 +504,13 @@ ax.axvline(y_fav_test.index[0], color=ARCA_RED, ls="--")
 ax.set_title("Favorita Quito Q44 bebidas --- el caso del planeador")
 ax.set_xlabel("fecha"); ax.set_ylabel("ventas semanales (cajas)")
 ax.legend(); plt.tight_layout(); plt.show()
+""")
+
+md("""
+**Interpretacion:** a diferencia del sensor que veremos luego, esta SI es una serie
+"clasica" de negocio: tiene tendencia creciente clara (la tienda vende mas cada anio)
+y un patron estacional anual. El tramo gris (test) arranca en septiembre 2016 y cubre
+navidad + anio nuevo --- justo el periodo de mayor variacion. Es un buen examen para Prophet.
 """)
 
 code("""
@@ -570,6 +593,12 @@ print(f"Despacho P90:              {p90.sum():>10,.0f} cajas  ({(p90.sum()-real_
 """)
 
 md("""
+**Interpretacion:** todos los despachos superan al total real (porcentaje positivo),
+porque incluso el P50 acumula sobre 26 semanas. Lo importante es el GRADIENTE: el P80
+te deja un colchon razonable (~10-15% extra) que cubre las semanas pico sin inflar
+demasiado el inventario. El P90 protege mas pero ata mucho mas capital. El planeador
+elige el punto segun cuanto le duele cada tipo de error.
+
 > **Ejercicio final.** Si en tu empresa el costo de stockout fuera 5x el costo
 > de vencido, que percentil entregarias? Y si fuera al reves?
 
@@ -653,11 +682,54 @@ ax.legend(); plt.tight_layout(); plt.show()
 """)
 
 md("""
-**Prophet predice una linea casi plana** porque su modelo es funcion del tiempo
-(tendencia + estacionalidad), no de los valores pasados. La serie del sensor
-necesita lo contrario: $y_t = f(y_{t-1}, y_{t-2}, \\ldots, y_{t-k})$ con $f$ NO lineal.
+### Por que Prophet se APLANA --- la explicacion completa
 
-Necesitamos un modelo que tenga **memoria** y aprenda **patrones no lineales**.
+El forecast de Prophet es casi una linea recta. No es un bug: es exactamente lo que
+Prophet *puede* hacer. Veamos por que, paso a paso.
+
+**1. Prophet solo sabe mirar el calendario.** Su formula es
+
+$y(t) = \\text{tendencia}(t) + \\text{estacionalidad}(t) + \\text{holidays}(t)$
+
+Todas las piezas son funciones de **la fecha/hora** $t$. Prophet NO recibe como input
+los valores pasados de la serie ($y_{t-1}, y_{t-2}, \\ldots$). Solo sabe "que dia y hora es".
+
+**2. Las estacionalidades de Prophet tienen periodo FIJO** (diaria = 24h, semanal = 7 dias,
+anual = 365 dias). Para que sirvan, el patron se tiene que repetir SIEMPRE en el mismo
+horario: por ejemplo "todos los lunes a las 9am sube".
+
+**3. Pero el sensor NO se repite con el calendario.** Mackey-Glass oscila con un periodo
+"casi" regular de ~50 pasos, que *no* esta alineado con 24h ni 7 dias y ademas se corre un
+poco en cada ciclo. Entonces, cuando Prophet intenta ajustar su estacionalidad diaria,
+encuentra que un pico cae a las 3am en un ciclo, a las 11am en otro, a las 18h en otro...
+
+**4. Al promediar ciclos desalineados, se cancelan.** Como cada pico cae en una hora distinta,
+el promedio sobre todo el entrenamiento es ~0. La estacionalidad ajustada queda casi plana.
+Lo unico que sobrevive es la tendencia (casi constante) -> **forecast = linea horizontal
+cerca de la media**.
+
+Vamoslo con los propios componentes que Prophet ajusto:
+""")
+
+code("""
+# Que estacionalidad encontro Prophet en el sensor? (spoiler: casi nada util)
+fig = m_sensor.plot_components(fc_sensor)
+fig.set_size_inches(11, 6)
+plt.tight_layout(); plt.show()
+""")
+
+md("""
+**Interpretacion de los componentes:** la amplitud de la estacionalidad diaria/semanal que
+Prophet encontro es **diminuta** comparada con el rango real de la serie (que va de ~0.4 a
+~1.3 bar). Prophet "buscó" un patron de calendario y no lo hay, asi que su mejor apuesta es
+quedarse cerca del promedio. Por eso aplana.
+
+**La serie del sensor necesita lo contrario:** un modelo cuya prediccion dependa de los
+valores recientes de la propia serie,
+
+$y_t = f(y_{t-1}, y_{t-2}, \\ldots, y_{t-k})$ con $f$ **no lineal**.
+
+Eso es justo lo que hace una red con memoria: la **LSTM**.
 
 ---
 
@@ -744,6 +816,13 @@ ax.set_title("Entrenamiento LSTM"); ax.set_xlabel("epoca"); ax.set_ylabel("MSE")
 ax.legend(); plt.tight_layout(); plt.show()
 """)
 
+md("""
+**Interpretacion:** ambas curvas (train y validacion) bajan juntas y se estabilizan.
+Eso es senal de un entrenamiento sano: el modelo aprende sin sobre-ajustar (si la curva
+de validacion subiera mientras la de train baja, tendriamos overfitting). El MSE final
+bajo nos dice que la LSTM ya capturo la dinamica.
+""")
+
 code("""
 # Forecast del test (1-step ahead con los valores reales como ventana)
 fc_lstm = []
@@ -789,8 +868,15 @@ axes[1].legend(); plt.tight_layout(); plt.show()
 """)
 
 md("""
-**LSTM mejora ~85% sobre Prophet** (MAPE 3% vs 23%). Cuando la dinamica esta
-dentro de la serie y no en el calendario, redes con memoria > modelos aditivos.
+**Interpretacion:** la diferencia es brutal y visible. La linea verde (LSTM) se monta
+casi encima de la real: aprendio la regla interna del sensor. La roja (Prophet) sigue
+plana, sin enterarse de las oscilaciones. Las barras de la derecha lo confirman:
+**LSTM mejora ~85% sobre Prophet** (MAPE 3% vs 23%).
+
+La leccion no es "LSTM > Prophet" en general --- es que **cada herramienta sirve para
+un tipo de serie**. Cuando la dinamica esta DENTRO de la serie (no en el calendario),
+las redes con memoria ganan. Cuando la serie es tendencia + estacionalidad limpia,
+Prophet gana en simplicidad.
 
 ### Cuando vale la pena pasar de Prophet a LSTM
 
