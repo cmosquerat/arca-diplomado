@@ -65,6 +65,7 @@ __pycache__/
 *.pyo
 .ipynb_checkpoints/
 .venv/
+.venv_build/
 venv/
 env/
 *.egg-info/
