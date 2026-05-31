@@ -1161,6 +1161,74 @@ model.fit(X, y, epochs=10)                # X = ventanas, y = siguiente caracter
   \end{tcolorbox}
 \end{frame}
 
+\begin{frame}[fragile, shrink]{La estructura del REQUEST --- qué le mandás al LLM}
+  \vspace{2pt}
+  \begin{pyblock}
+request = {
+    "model":       "llama-3.1-8b-instant",
+    "messages": [
+        {"role": "system", "content": "Eres asistente de planta de Arca."},
+        {"role": "user",   "content": "Da 3 causas de vibracion de una llenadora."}
+    ],
+    "temperature": 0.3,
+    "max_tokens":  300,
+}
+  \end{pyblock}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \footnotesize
+    \item \texttt{model}: qué modelo del provider usás (\texttt{llama-3.1-8b-instant}, \texttt{llama-3.3-70b-versatile}\dots).
+    \item \texttt{messages}: lista ordenada. \textbf{Roles}: \texttt{system} (instrucción de comportamiento),
+    \texttt{user} (tu pregunta), \texttt{assistant} (respuestas previas en chat multi-turno).
+    \item \texttt{temperature}: 0.0 determinista (clasificar, extraer) $\leftrightarrow$ 0.7+ creativo (escribir, sugerir).
+    \item \texttt{max\_tokens}: tope de salida (cortar antes para limitar costo y latencia).
+  \end{itemize}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Eso es \emph{todo} lo que viaja a un endpoint OpenAI-compatible.
+    Es un POST con este JSON.}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile, shrink]{La estructura del RESPONSE --- qué te devuelve el LLM}
+  \vspace{2pt}
+  \begin{pyblock}
+response = {
+    "id":      "chatcmpl-abc123",
+    "model":   "llama-3.1-8b-instant",
+    "choices": [
+        {
+            "index": 0,
+            "message":       {"role": "assistant", "content": "1. Pernos sueltos..."},
+            "finish_reason": "stop",
+        }
+    ],
+    "usage": {
+        "prompt_tokens":     42,
+        "completion_tokens": 87,
+        "total_tokens":      129,
+    },
+}
+  \end{pyblock}
+  \vspace{2pt}
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \footnotesize
+    \item Lo que querés está en \texttt{response.choices[0].message.content}.
+    \item \texttt{finish\_reason}: \texttt{stop} (terminó bien) vs \texttt{length} (se quedó sin tokens).
+    \item \texttt{usage}: cuántos tokens consumiste (=~ \$). Útil para estimar costo en producción.
+  \end{itemize}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}
+    \textbf{Este JSON es el estándar.} Groq, OpenAI, Together, Fireworks, vLLM\dots
+    todos te devuelven la \emph{misma forma}. Tu código de negocio NO cambia al cambiar
+    de provider --- sólo el \texttt{base\_url} y el \texttt{api\_key}.}
+  \end{tcolorbox}
+\end{frame}
+
 \begin{frame}[fragile, shrink]{El demo --- 5 líneas Python contra Groq}
   \begin{pyblock}
 from openai import OpenAI
