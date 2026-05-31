@@ -1,0 +1,14 @@
+{
+  "acc_tfidf": 0.8435114503816794,
+  "acc_transformer": 0.5152671755725191,
+  "params_transformer": 837057,
+  "vocab_size": 12000,
+  "maxlen": 80,
+  "dim": 64,
+  "heads": 2,
+  "ff": 128,
+  "dropout": 0.3,
+  "epochs": 10,
+  "trampa_tfidf_correct": 4,
+  "trampa_transformer_correct": 4
+}

@@ -1,0 +1,17 @@
+{
+  "frase": "no me gustó nada la trama",
+  "tokens": [
+    "[CLS]",
+    "no",
+    "me",
+    "gustó",
+    "nada",
+    "la",
+    "trama",
+    "[SEP]"
+  ],
+  "best_layer": 7,
+  "best_head": 9,
+  "model": "dccuchile/bert-base-spanish-wwm-uncased",
+  "params": 109850880
+}

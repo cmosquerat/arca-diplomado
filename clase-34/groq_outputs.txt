@@ -1,0 +1,32 @@
+# Groq verification — modelo llama-3.1-8b-instant
+
+=== generacion (1.97s, 360 tokens) ===
+Aquí te presento un plan de mantenimiento preventivo semanal para una llenadora industrial en una planta embotelladora:
+
+• **Lunes: Verificación de la línea de llenado**:
+ + Verificar el estado de los tubos y conexiones de la línea de llenado.
+ + Revisar la presión de los sistemas de bombeo y la estanqueidad de los válvulas.
+ + Verificar la temperatura de los tanques de almacenamiento de agua y el sistema de enfriamiento.
+
+• **Miércoles: Mantenimiento de los sistemas de control**:
+ + Verificar la estanqueidad de los controles electrónicos y la conectividad con la red de control.
+ + Revisar la programación y configuración de los controles de llenado y cierre de válvulas.
+ + Verificar la integridad de los cables y conectores de los sistemas de control.
+
+• **Viernes: Verificación de la limpieza y desinfección**:
+ + Verificar la limpieza y desinfección de los tanques de almacenamiento de agua y los sistemas de llenado.
+ + Revisar la calidad del agua y la efectividad de la desinfección.
+ + Verificar la estanqueidad de los sistemas de llenado y la ausencia de residuos y contaminantes.
+
+=== clasificacion (0.34s, 115 tokens) ===
+NEGATIVO
+POSITIVO
+NEGATIVO
+
+=== extraccion_json (0.9s, 147 tokens) ===
+{
+  "equipo": "compresor número 3",
+  "problema": "echando vapor",
+  "urgencia": "alta"
+}
+

@@ -1,0 +1,66 @@
+[
+  {
+    "frase": "no me gustó nada la trama, qué decepción",
+    "real": 0,
+    "tfidf": 0,
+    "transformer": 1,
+    "tfidf_correct": true,
+    "transformer_correct": false
+  },
+  {
+    "frase": "no es para nada mala, me sorprendió",
+    "real": 1,
+    "tfidf": 0,
+    "transformer": 1,
+    "tfidf_correct": false,
+    "transformer_correct": true
+  },
+  {
+    "frase": "esperaba mucho más, no la recomiendo",
+    "real": 0,
+    "tfidf": 0,
+    "transformer": 1,
+    "tfidf_correct": true,
+    "transformer_correct": false
+  },
+  {
+    "frase": "no podría estar más contento con esta película",
+    "real": 1,
+    "tfidf": 0,
+    "transformer": 1,
+    "tfidf_correct": false,
+    "transformer_correct": true
+  },
+  {
+    "frase": "ni una sola escena aburrida, brillante",
+    "real": 1,
+    "tfidf": 0,
+    "transformer": 1,
+    "tfidf_correct": false,
+    "transformer_correct": true
+  },
+  {
+    "frase": "no entiendo cómo a alguien le puede gustar esto",
+    "real": 0,
+    "tfidf": 0,
+    "transformer": 1,
+    "tfidf_correct": true,
+    "transformer_correct": false
+  },
+  {
+    "frase": "no me arrepiento de haberla visto",
+    "real": 1,
+    "tfidf": 0,
+    "transformer": 1,
+    "tfidf_correct": false,
+    "transformer_correct": true
+  },
+  {
+    "frase": "buena fotografía pero no, no funciona",
+    "real": 0,
+    "tfidf": 0,
+    "transformer": 1,
+    "tfidf_correct": true,
+    "transformer_correct": false
+  }
+]

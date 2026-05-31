@@ -1,0 +1,36 @@
+{
+  "model": "llama-3.1-8b-instant",
+  "outputs": [
+    {
+      "tipo": "generacion",
+      "prompt_resumen": "mantenimiento preventivo llenadora",
+      "content": "Aquí te presento un plan de mantenimiento preventivo semanal para una llenadora industrial en una planta embotelladora:\n\n• **Lunes: Verificación de la línea de llenado**:\n + Verificar el estado de los tubos y conexiones de la línea de llenado.\n + Revisar la presión de los sistemas de bombeo y la estanqueidad de los válvulas.\n + Verificar la temperatura de los tanques de almacenamiento de agua y el sistema de enfriamiento.\n\n• **Miércoles: Mantenimiento de los sistemas de control**:\n + Verificar la estanqueidad de los controles electrónicos y la conectividad con la red de control.\n + Revisar la programación y configuración de los controles de llenado y cierre de válvulas.\n + Verificar la integridad de los cables y conectores de los sistemas de control.\n\n• **Viernes: Verificación de la limpieza y desinfección**:\n + Verificar la limpieza y desinfección de los tanques de almacenamiento de agua y los sistemas de llenado.\n + Revisar la calidad del agua y la efectividad de la desinfección.\n + Verificar la estanqueidad de los sistemas de llenado y la ausencia de residuos y contaminantes.",
+      "latency_s": 1.97,
+      "prompt_tokens": 74,
+      "completion_tokens": 286,
+      "total_tokens": 360
+    },
+    {
+      "tipo": "clasificacion",
+      "reseñas": [
+        "no me gustó nada la trama, qué decepción",
+        "no es para nada mala, me sorprendió",
+        "buena fotografía pero la historia no funciona"
+      ],
+      "content": "NEGATIVO\nPOSITIVO\nNEGATIVO",
+      "latency_s": 0.34,
+      "prompt_tokens": 104,
+      "completion_tokens": 11,
+      "total_tokens": 115
+    },
+    {
+      "tipo": "extraccion_json",
+      "ticket": "El compresor número 3 de la línea 2 está echando vapor desde anoche y la presión bajó. Urge revisión antes de la mañana.",
+      "content": "{\n  \"equipo\": \"compresor número 3\",\n  \"problema\": \"echando vapor\",\n  \"urgencia\": \"alta\"\n}",
+      "latency_s": 0.9,
+      "prompt_tokens": 112,
+      "completion_tokens": 35,
+      "total_tokens": 147
+    }
+  ]
+}
