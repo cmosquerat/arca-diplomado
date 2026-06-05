@@ -1,48 +1,48 @@
 """
-Verifica en vivo los demos de clase 36:
-  1. pdf_a_texto sobre manual LIMPIO y ESCANEADO
-  2. Scout caption sobre 3 fotos (panel, compresor, etiquetadora)
-  3. Chroma persistente + metadata filter
-  4. RAG multimodal: ERR-007 con texto y con foto
+verify_demos.py — reproduce los demos clave de clase 36 en vivo.
 
 Uso:
     export GROQ_API_KEY=gsk_...
     python verify_demos.py
-"""
-import os, sys, base64, re, shutil
 
+Reproduce 4 demos:
+  1. PyPDF crudo sobre el reporte real → texto sucio
+  2. pymupdf4llm sobre el mismo reporte → markdown limpio + figuras
+  3. Llama 4 Scout captioning sobre 3 figuras del reporte
+  4. RAG end-to-end: indexar texto + captions en Chroma, hacer 4 queries
+"""
+import os, sys, base64, re, glob, shutil, time
 if "GROQ_API_KEY" not in os.environ:
     sys.exit("Necesitas exportar GROQ_API_KEY (gratis en console.groq.com).")
 
-import fitz, pandas as pd, numpy as np
+import numpy as np
 from openai import OpenAI
 from pypdf import PdfReader
+import pymupdf4llm
 from sentence_transformers import SentenceTransformer
 import chromadb
 
-CORPUS = "corpus"
-DB     = "./_mtto_arca_db"
+# El verify_demos.py vive en clase-36/. Usamos paths relativos.
+HERE = os.path.dirname(os.path.abspath(__file__))
+PDF = os.path.join(HERE, "corpus/reporte_arca_2025_capitulo.pdf")
+DB  = os.path.join(HERE, "_arca_db_verify")
 
 client = OpenAI(api_key=os.environ["GROQ_API_KEY"],
                 base_url="https://api.groq.com/openai/v1")
-
 TXT_MODEL    = "llama-3.1-8b-instant"
 VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 
-# --- helpers ------------------------------------------------------------------
 def chat(s, u, t=0.0, max_t=400):
-    r = client.chat.completions.create(
-        model=TXT_MODEL, max_tokens=max_t, temperature=t,
+    r = client.chat.completions.create(model=TXT_MODEL, max_tokens=max_t, temperature=t,
         messages=[{"role": "system", "content": s},
                   {"role": "user",   "content": u}])
     return r.choices[0].message.content.strip()
 
 
-def chat_vision(prompt, img_bytes, t=0.0, max_t=600):
-    b64 = base64.b64encode(img_bytes).decode()
-    r = client.chat.completions.create(
-        model=VISION_MODEL, max_tokens=max_t, temperature=t,
+def chat_vision(prompt, image_bytes, t=0.0, max_t=300):
+    b64 = base64.b64encode(image_bytes).decode()
+    r = client.chat.completions.create(model=VISION_MODEL, max_tokens=max_t, temperature=t,
         messages=[{"role": "user", "content": [
             {"type": "text",      "text": prompt},
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
@@ -50,34 +50,11 @@ def chat_vision(prompt, img_bytes, t=0.0, max_t=600):
     return r.choices[0].message.content.strip()
 
 
-def pdf_a_texto(path, dpi=140):
-    pages = [p.extract_text() or "" for p in PdfReader(path).pages]
-    if sum(len(p) for p in pages) >= 80 * len(pages):
-        return "\n".join(pages), "pypdf"
-    doc = fitz.open(path); out = []
-    for p in doc:
-        ocr = chat_vision("OCR de esta imagen. Solo el texto.",
-                          p.get_pixmap(dpi=dpi).tobytes("png"), t=0.0, max_t=900)
-        out.append(ocr)
-    doc.close()
-    return "\n\n".join(out), "scout-ocr"
-
-
-def caption_imagen(path):
+def caption(path, prompt=None):
+    if prompt is None:
+        prompt = "Describí en 1-2 frases. Citá codigos, modelos o marcas si los ves."
     with open(path, "rb") as f:
-        return chat_vision(
-            "Describe esta imagen en una frase. Citá codigos de error o modelo si los ves.",
-            f.read(), t=0.0, max_t=200)
-
-
-def sliding(t, tam=300, overlap=60):
-    t = re.sub(r"\s+", " ", t).strip()
-    out, i = [], 0
-    while i < len(t):
-        c = t[i:i+tam].strip()
-        if len(c) > 80: out.append(c)
-        i += tam - overlap
-    return out
+        return chat_vision(prompt, f.read(), t=0.0, max_t=180)
 
 
 def banner(t):
@@ -87,90 +64,81 @@ def banner(t):
 
 
 # =============================================================================
-banner("DEMO 1 — pdf_a_texto() LIMPIO vs ESCANEADO")
-clean, modo_c = pdf_a_texto(f"{CORPUS}/manual_mtto_arca.pdf")
-print(f"LIMPIO    -> modo={modo_c:9s}  chars={len(clean)}")
-esc, modo_e = pdf_a_texto(f"{CORPUS}/manual_mtto_arca_ESCANEADO.pdf")
-print(f"ESCANEADO -> modo={modo_e:9s}  chars={len(esc)}")
-# Esperamos: pypdf para limpio, scout-ocr para escaneado
+banner("DEMO 1 — PyPDF crudo sobre el reporte (texto sucio)")
+pages = [p.extract_text() or "" for p in PdfReader(PDF).pages]
+print(f"PyPDF: {len(pages)} páginas, {sum(len(p) for p in pages):,} chars")
+print(f"\nPreview de la página 44 (la 4 del capítulo):\n{pages[3][:500]!r}")
+print("\n→ Fijate cómo 'Sostenible' queda partido en 'S\\nostenible'.")
 
 # =============================================================================
-banner("DEMO 2 — caption con Scout (3 fotos)")
-fotos = [f"{CORPUS}/fotos/panel_control.png",
-         f"{CORPUS}/fotos/compresor.png",
-         f"{CORPUS}/fotos/etiquetadora.png"]
+banner("DEMO 2 — pymupdf4llm sobre el mismo reporte")
+FIGS = "/tmp/_verify_figs"
+shutil.rmtree(FIGS, ignore_errors=True)
+os.makedirs(FIGS, exist_ok=True)
+t0 = time.time()
+md_full = pymupdf4llm.to_markdown(PDF, write_images=True,
+                                   image_path=FIGS, image_format="png", dpi=110)
+print(f"pymupdf4llm: {len(md_full):,} chars markdown · "
+      f"{len(os.listdir(FIGS))} figs extraídas · {time.time()-t0:.1f}s")
+
+# =============================================================================
+banner("DEMO 3 — Llama 4 Scout captioning sobre 3 figuras")
+figs_big = sorted(glob.glob(f"{FIGS}/*.png"), key=os.path.getsize, reverse=True)[:3]
 caps = []
-for f in fotos:
-    c = caption_imagen(f)
+for f in figs_big:
+    c = caption(f)
     caps.append(c)
-    print(f"{os.path.basename(f):25s} -> {c[:120]}")
+    print(f"\n{os.path.basename(f)} ({os.path.getsize(f)/1024:.0f} KB)")
+    print(f"  -> {c}")
 
 # =============================================================================
-banner("DEMO 3 — Chroma persistente con 3 modalidades")
-if os.path.exists(DB): shutil.rmtree(DB)
+banner("DEMO 4 — RAG end-to-end (Chroma + texto + captions)")
 embedder = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
+if os.path.exists(DB):
+    shutil.rmtree(DB)
 chroma = chromadb.PersistentClient(path=DB)
-col = chroma.get_or_create_collection("mtto", metadata={"hnsw:space": "cosine"})
+col = chroma.get_or_create_collection("rep", metadata={"hnsw:space": "cosine"})
 
-# texto
-chunks = sliding(clean)
+def sliding(t, tam=400, overlap=80):
+    t = re.sub(r"\s+", " ", t).strip()
+    out, i = [], 0
+    while i < len(t):
+        c = t[i:i+tam].strip()
+        if len(c) > 80: out.append(c)
+        i += tam - overlap
+    return out
+
+chunks = sliding(md_full)
 col.add(documents=chunks,
         embeddings=embedder.encode(chunks, normalize_embeddings=True).tolist(),
-        metadatas=[{"modalidad": "texto", "fuente": "manual"} for _ in chunks],
-        ids=[f"txt_{i}" for i in range(len(chunks))])
-# imagenes
+        metadatas=[{"modalidad": "texto"} for _ in chunks],
+        ids=[f"t{i}" for i in range(len(chunks))])
 col.add(documents=caps,
         embeddings=embedder.encode(caps, normalize_embeddings=True).tolist(),
-        metadatas=[{"modalidad": "imagen", "path": p} for p in fotos],
-        ids=[f"img_{i}" for i in range(len(fotos))])
-# tabla
-df = pd.read_csv(f"{CORPUS}/codigos_error.csv")
-docs_t = [f"{r['codigo']} ({r['equipo']}): {r['causa']}. Accion: {r['accion']}"
-          for _, r in df.iterrows()]
-col.add(documents=docs_t,
-        embeddings=embedder.encode(docs_t, normalize_embeddings=True).tolist(),
-        metadatas=[{"modalidad": "tabla", "fuente": "codigos",
-                    "codigo": r["codigo"], "equipo": r["equipo"]}
-                   for _, r in df.iterrows()],
-        ids=df["codigo"].tolist())
-print(f"Total en collection: {col.count()}")
+        metadatas=[{"modalidad": "figura", "path": f} for f in figs_big],
+        ids=[f"i{i}" for i in range(len(caps))])
+print(f"docs en Chroma: {col.count()}  ({len(chunks)} texto + {len(caps)} figura)")
 
-# Reabrir
-col2 = chromadb.PersistentClient(path=DB).get_collection("mtto")
-print(f"Reabrir desde disco -> count = {col2.count()}  (persistencia OK)")
+SYS = ("Eres asistente sobre el Reporte Anual Arca 2025. "
+       "Responde UNICAMENTE con CONTEXTO. Si no aparece, di 'No aparece en mi base'. "
+       "Cita modalidad (texto/figura). Sé conciso.")
 
-# =============================================================================
-banner("DEMO 4 — RAG multimodal: ERR-007 con texto y con foto")
-SYSTEM = ("Eres asistente de mantenimiento Arca. Responde UNICAMENTE con CONTEXTO. "
-          "Si no aparece, di 'No aparece en mi base'. Cita la modalidad. "
-          "Sé conciso. Termina con la accion correctiva.")
-
-
-def rag(p, foto=None, k=4, where=None):
-    q = p
-    if foto:
-        with open(foto, "rb") as f:
-            cap = chat_vision("Describi en una frase. Cita codigos visibles.",
-                              f.read(), t=0.0, max_t=120)
-        q = f"[FOTO] {cap}\n[PREGUNTA] {p}"
+def rag(q, k=4):
     qe = embedder.encode([q], normalize_embeddings=True).tolist()
-    r = col.query(query_embeddings=qe, n_results=k, where=where)
+    r = col.query(query_embeddings=qe, n_results=k)
     ctx = "\n---\n".join(f"[{m['modalidad']}] {d}"
                         for d, m in zip(r["documents"][0], r["metadatas"][0]))
-    return chat(SYSTEM, f"CONTEXTO:\n{ctx}\n\n<USUARIO>\n{q}\n</USUARIO>",
-                t=0.0, max_t=400)
+    return chat(SYS, f"CONTEXTO:\n{ctx}\n\nPREGUNTA: {q}", t=0.0, max_t=400)
 
 
-for label, kwargs in [
-    ("Q1: ERR-007 que hago?",                       dict(p="ERR-007 que hago?")),
-    ("Q2: verificaciones del compresor (texto)",     dict(p="verificaciones de rutina del compresor",
-                                                          where={"modalidad": "texto"})),
-    ("Q3: fuera de scope (cuenta proveedor X)",      dict(p="cuanto pagamos al proveedor X el mes pasado?")),
-    ("Q4: FOTO panel + 'que hago?'",                 dict(p="Que tengo que hacer?",
-                                                          foto=f"{CORPUS}/fotos/panel_control.png")),
+for q in [
+    "¿En qué índices ESG está Arca Continental?",
+    "¿Qué iniciativas de sostenibilidad tienen?",
+    "¿Arca tiene presencia en mercados de Latinoamérica?",
+    "¿Cuánto cobramos al proveedor X el mes pasado?",
 ]:
-    print(f"\n--- {label} ---")
-    print(rag(**kwargs)[:400])
+    print(f"\n[Q] {q}")
+    print(f"[A] {rag(q)[:400]}")
 
 print("\n" + "=" * 72)
 print("✓ TODOS LOS DEMOS PASARON")
