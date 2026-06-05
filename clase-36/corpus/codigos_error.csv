@@ -1,0 +1,16 @@
+codigo,equipo,causa,accion
+ERR-001,Compresor,Vibración fuera de rango (>75 Hz),Verificar rodamientos. Cambiar si supera 50.000 h de operación.
+ERR-002,Compresor,Presión de descarga por debajo del mínimo,Revisar filtro de entrada. Limpieza correctiva.
+ERR-003,Compresor,Temperatura del aceite supera 85 °C,Verificar enfriador. Comprobar nivel y calidad del aceite.
+ERR-004,Llenadora,Cabezal sin presión (bajo umbral),Inspeccionar electroválvula del cabezal. Reemplazar empaque si hay fuga.
+ERR-005,Llenadora,Volumen llenado fuera de tolerancia ±2 %,"Calibrar sensor de nivel. Si persiste, reemplazar pistón."
+ERR-006,Llenadora,Botella detectada sin tapa al salir,Validar sensor óptico de tapa. Limpiar lente.
+ERR-007,Llenadora,Pérdida sostenida de presión en cabezal 2,"Parar línea, inspeccionar sello del cabezal 2, reemplazar O-ring."
+ERR-008,Etiquetadora,Etiqueta aplicada con desviación >3°,Calibrar rodillo aplicador. Verificar tensión del rollo de etiqueta.
+ERR-009,Etiquetadora,Sin etiqueta en botella,Verificar sensor de presencia y rollo de etiquetas.
+ERR-010,Etiquetadora,Pegamento por debajo del nivel mínimo,"Reponer adhesivo en el tanque, purgar línea de aplicador."
+ERR-011,Transportador,Banda con sobrecarga,Verificar acumulación aguas abajo. Pausar entrada.
+ERR-012,Transportador,Velocidad inconsistente,Revisar variador de frecuencia y acoples del motor.
+ERR-013,PLC,Pérdida de comunicación con HMI,Reiniciar red Ethernet industrial. Verificar cable apantallado.
+ERR-014,PLC,Watchdog timeout,"Reiniciar PLC. Si persiste, contactar a soporte Siemens/Allen-Bradley."
+ERR-015,General,Botón de emergencia accionado,"Inspeccionar la línea, liberar emergencia con personal autorizado."

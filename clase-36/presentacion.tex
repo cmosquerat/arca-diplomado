@@ -1,0 +1,1448 @@
+% =============================================================================
+%  Diplomado en Data Science Aplicada con Python para la Toma de Decisiones
+%  Clase 36: RAG multimodal — PDFs sucios, imágenes, tablas y Chroma
+%  Arca Continental Ecuador | UDLA
+% =============================================================================
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc,
+  calc, fit, decorations.pathreplacing, backgrounds, matrix, chains}
+\usepackage{fontawesome5}
+\usepackage{minted}
+\usepackage{tcolorbox}
+\tcbuselibrary{minted, skins, breakable}
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{calc}
+\usepackage{amsmath}
+
+\definecolor{arcaRed}{HTML}{C82B40}
+\definecolor{arcaDark}{HTML}{6B1525}
+\definecolor{arcaGray}{HTML}{F5F5F5}
+\definecolor{arcaLightGray}{HTML}{EBEBEB}
+\definecolor{textDark}{HTML}{2D2D2D}
+\definecolor{textMuted}{HTML}{6B7280}
+\definecolor{codeGreen}{HTML}{16A34A}
+\definecolor{codeBlue}{HTML}{2563EB}
+\definecolor{codeOrange}{HTML}{EA580C}
+\definecolor{codePurple}{HTML}{7C3AED}
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\setbeamercolor{normal text}{fg=textDark}
+\setbeamercolor{frametitle}{fg=arcaRed, bg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white!85}
+\setbeamercolor{author}{fg=white!80}
+\setbeamercolor{date}{fg=white!70}
+\setbeamercolor{item}{fg=arcaRed}
+\setbeamercolor{subitem}{fg=arcaDark}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{title}{size=\huge, series=\bfseries}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamertemplate{itemize item}{\scriptsize\raise1.5pt\hbox{\color{arcaRed}$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1pt\hbox{\color{arcaDark}$\bullet$}}
+\setbeamertemplate{enumerate items}[default]
+\setbeamercolor{enumerate item}{fg=arcaRed}
+
+\setbeamertemplate{headline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.north west) rectangle
+      ([yshift=-0.7cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=0.6cm, yshift=-0.35cm]current page.north west)
+      {\includegraphics[height=0.45cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-0.6cm, yshift=-0.35cm]current page.north east)
+      {\includegraphics[height=0.45cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}%
+  \vspace{0.7cm}%
+}
+
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, font=\scriptsize\bfseries\color{arcaRed}] at
+      ([xshift=-0.5cm, yshift=0.15cm]current page.south east)
+      {\insertframenumber};
+  \end{tikzpicture}%
+  \vspace{0.3cm}%
+}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.25cm}%
+  \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle%
+  \par\vspace{2pt}%
+  \begin{tikzpicture}
+    \fill[arcaRed] (0,0) rectangle (3cm, 1.5pt);
+    \fill[arcaLightGray] (3cm,0) rectangle (\textwidth, 0.5pt);
+  \end{tikzpicture}%
+  \vspace{0.1cm}%
+}
+
+\newtcblisting{pyblock}[1][]{%
+  listing engine=minted, minted language=python, minted style=friendly,
+  minted options={fontsize=\small, linenos=false, breaklines=true, python3=true},
+  colback=arcaGray, colframe=arcaRed, left=4pt, right=4pt, top=4pt, bottom=4pt,
+  boxrule=0pt, leftrule=3pt, arc=2pt, listing only, #1}
+
+\newcommand{\sectionframe}[2]{%
+  \begingroup
+  \setbeamertemplate{headline}{}%
+  \setbeamertemplate{footline}{}%
+  \begin{frame}[plain, noframenumbering]
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[arcaRed] (current page.south west) rectangle (current page.north east);
+      \node[anchor=center, text=white, font=\Huge\bfseries, text width=12cm,
+            align=center] at ([yshift=0.5cm]current page.center) {#1};
+      \node[anchor=center, text=white!80, font=\large, text width=10cm,
+            align=center] at ([yshift=-0.8cm]current page.center) {#2};
+    \end{tikzpicture}
+  \end{frame}
+  \endgroup
+}
+
+\tikzset{
+  arrowR/.style={-{Stealth[length=2.5mm]}, arcaRed, thick},
+  arrowD/.style={-{Stealth[length=2.5mm]}, arcaDark, thick},
+  arrowG/.style={-{Stealth[length=2.5mm]}, color=textMuted, thick, dashed},
+  boxA/.style={rectangle, rounded corners=4pt, draw=arcaDark, fill=arcaGray,
+               align=center, font=\footnotesize, inner sep=4pt, minimum height=0.9cm},
+  boxRed/.style={rectangle, rounded corners=4pt, draw=arcaDark, fill=arcaRed,
+                 text=white, align=center, font=\bfseries\footnotesize,
+                 inner sep=5pt, minimum height=0.9cm},
+  boxBlue/.style={rectangle, rounded corners=4pt, draw=arcaDark, fill=codeBlue,
+                  text=white, align=center, font=\bfseries\footnotesize,
+                  inner sep=5pt, minimum height=0.9cm},
+  boxGreen/.style={rectangle, rounded corners=4pt, draw=arcaDark, fill=codeGreen,
+                   text=white, align=center, font=\bfseries\footnotesize,
+                   inner sep=5pt, minimum height=0.9cm},
+  boxOrange/.style={rectangle, rounded corners=4pt, draw=arcaDark, fill=codeOrange,
+                    text=white, align=center, font=\bfseries\footnotesize,
+                    inner sep=5pt, minimum height=0.9cm},
+  boxPurple/.style={rectangle, rounded corners=4pt, draw=arcaDark, fill=codePurple,
+                    text=white, align=center, font=\bfseries\footnotesize,
+                    inner sep=5pt, minimum height=0.9cm},
+}
+
+\title{Diplomado en Data Science Aplicada\\con Python para la Toma de Decisiones}
+\subtitle{Clase 36: RAG multimodal --- PDFs sucios, imágenes, tablas y Chroma}
+\author{Carlos Enrique Mosquera Trujillo}
+\date{9 de Junio, 2026}
+
+\begin{document}
+
+% =====================================================================
+%  F1 — PORTADA
+% =====================================================================
+{
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \fill[arcaRed] ([yshift=-3.5cm]current page.north west) rectangle
+      ([yshift=-4.2cm]current page.north east);
+    \node[anchor=west, inner sep=0pt] at
+      ([xshift=1cm, yshift=-1.5cm]current page.north west)
+      {\includegraphics[height=1cm]{../logo_udla_white.png}};
+    \node[anchor=east, inner sep=0pt] at
+      ([xshift=-1cm, yshift=-1.5cm]current page.north east)
+      {\includegraphics[height=1cm]{../ArcaContinental_white.png}};
+  \end{tikzpicture}
+  \vspace{2.5cm}
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+    \vspace{0.4cm}
+    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}
+    \vspace{0.6cm}
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}
+    \vspace{0.15cm}
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}
+  \end{center}
+\end{frame}
+}
+
+% =====================================================================
+%  F2 — Dónde quedamos en clase 35
+% =====================================================================
+\begin{frame}[shrink]{Dónde quedamos en la clase 35}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[node distance=0.3cm and 0.4cm, font=\scriptsize]
+    \node[boxBlue] (a) {3 peligros\\(mentir, engañar, filtrar)};
+    \node[boxOrange, right=of a] (b) {3 defensas\\(prompt + temp 0)};
+    \node[boxGreen, right=of b] (c) {Embeddings\\mpnet 768d};
+    \node[boxPurple, right=of c] (d) {RAG mínimo\\NumPy + cosine};
+    \node[boxRed, right=of d] (e) {Chatbot Arca\\Ética blindado};
+    \draw[arrowR] (a) -- (b); \draw[arrowR] (b) -- (c);
+    \draw[arrowR] (c) -- (d); \draw[arrowR] (d) -- (e);
+  \end{tikzpicture}
+  \end{center}
+  \vspace{10pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    Construimos el asistente Arca que cita el \textbf{Código de Ética y
+    Cumplimiento} y rechaza los 3 ataques. PDF de texto plano + NumPy + cosine.
+    Funcionó.}
+  \end{tcolorbox}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Hoy: en planta los datos no vienen así de limpios. PDFs escaneados, fotos
+    de pizarra, tablas en imagen. Y queremos algo que persista.}
+  \end{tcolorbox}
+\end{frame}
+
+% =====================================================================
+%  F3 — La pregunta del día
+% =====================================================================
+\begin{frame}[shrink]{La pregunta del día}
+  \vspace{10pt}
+  \begin{center}
+  \begin{tcolorbox}[colback=arcaDark, colframe=arcaDark, sharp corners,
+    boxrule=0pt, left=14pt, right=14pt, top=10pt, bottom=10pt, width=0.92\textwidth]
+    {\normalsize\color{white}\bfseries
+    Tu RAG de clase 35 indexó un PDF de texto plano sobre Ética. Pero en planta,
+    los datos vienen sucios: manuales escaneados, fotos del compresor, tablas
+    de códigos de error. ¿Cómo los convertís a vectores, dónde los guardás,
+    y armás un asistente de mantenimiento Arca que entiende todo eso?\par}
+  \end{tcolorbox}
+  \end{center}
+  \vspace{12pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item \textbf{Codificar} — PDF (limpio o escaneado), imagen, tabla $\to$ texto.
+    \item \textbf{Almacenar} — vector DB (Chroma) que persiste y filtra por metadata.
+    \item \textbf{Recuperar} — RAG multimodal sobre 3 tipos de contenido a la vez.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Nos acompaña en las 6 paradas de hoy. Cierre con respuesta.}
+  \end{tcolorbox}
+\end{frame}
+
+% =====================================================================
+%  F4 — Arco
+% =====================================================================
+\begin{frame}[shrink]{El arco --- 6 paradas hacia el RAG multimodal}
+  \vspace{4pt}
+  \begin{center}
+  \includegraphics[width=0.96\textwidth]{fig_arco.png}
+  \end{center}
+  \vspace{6pt}
+  \begin{enumerate}\setlength{\itemsep}{2pt}
+    \footnotesize
+    \item[\textbf{0.}] \textbf{El dolor} --- 3 casos donde el RAG de clase 35 se cae.
+    \item[\textbf{1.}] \textbf{PDFs} --- texto extraíble vs escaneado. PyPDF o Scout OCR.
+    \item[\textbf{2.}] \textbf{Imágenes} --- captioning con Llama 4 Scout.
+    \item[\textbf{3.}] \textbf{Tablas} --- breve, 3 enfoques.
+    \item[\textbf{4.}] \textbf{Chroma} --- el primer vector DB de verdad.
+    \item[\textbf{5.}] \textbf{Asistente Arca} --- el chatbot de mantenimiento.
+  \end{enumerate}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 0 — El dolor
+% =============================================================================
+\sectionframe{Bloque 0}{El dolor:\\por qué el RAG de clase 35 se rompe}
+
+% F6 — 3 casos donde clase-35 falla
+\begin{frame}[shrink]{3 casos donde el RAG de clase 35 falla}
+  \vspace{6pt}
+  \begin{center}
+  \begin{tikzpicture}[node distance=0.4cm and 0.5cm, font=\footnotesize]
+    \node[fill=arcaRed!15, draw=arcaRed, rounded corners=4pt, minimum width=3.8cm,
+          minimum height=1.7cm, align=center, font=\bfseries\footnotesize]
+          (a) {\faFilePdf\\PDF \emph{escaneado}\\\tiny PyPDF devuelve vacío};
+    \node[fill=arcaRed!15, draw=arcaRed, rounded corners=4pt, minimum width=3.8cm,
+          minimum height=1.7cm, align=center, font=\bfseries\footnotesize,
+          right=of a] (b) {\faImage\\imagen del compresor\\\tiny no es texto};
+    \node[fill=arcaRed!15, draw=arcaRed, rounded corners=4pt, minimum width=3.8cm,
+          minimum height=1.7cm, align=center, font=\bfseries\footnotesize,
+          right=of b] (c) {\faTable\\tabla de códigos error\\\tiny pierde estructura};
+  \end{tikzpicture}
+  \end{center}
+  \vspace{14pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=6pt, bottom=6pt]
+    {\footnotesize\color{arcaDark}
+    El RAG de clase 35 daba por sentado: \textbf{(1)} el PDF tiene texto incrustado
+    extraíble, \textbf{(2)} todo el contenido es texto, \textbf{(3)} no hay
+    estructura tabular. En planta, las 3 asunciones se rompen el primer día.}
+  \end{tcolorbox}
+\end{frame}
+
+% F7 — Misma query a 2 corpus distintos
+\begin{frame}[fragile, shrink]{Demo: misma pregunta, dos corpus, dos resultados}
+  \vspace{2pt}
+  \begin{pyblock}
+texto_limpio    = "".join(p.extract_text() for p in PdfReader("manual.pdf").pages)
+texto_escaneado = "".join(p.extract_text() for p in PdfReader("manual_ESCANEADO.pdf").pages)
+
+print(f"limpio:    {len(texto_limpio)} chars")    # → 3624
+print(f"escaneado: {len(texto_escaneado)} chars") # → 0 (!!)
+  \end{pyblock}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Output real ejecutado: PyPDF extrae 3624 caracteres del PDF nativo,
+    \textbf{cero} del escaneado. Mismo libro, dos archivos, dos universos.}
+  \end{tcolorbox}
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+  El RAG de clase 35 sobre el escaneado responde \emph{``no aparece''} a todo ---
+  porque \emph{no encuentra ningún chunk}. Necesitamos otra ruta para extraer.}
+\end{frame}
+
+% F8 — ¿Qué me llevo? B0
+\begin{frame}[shrink]{\faIndustry\ ¿Qué me llevo a Arca? --- Bloque 0}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries Verdad incómoda:\par}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item Un \textbf{PDF nativo} (Word $\to$ Exportar PDF) tiene texto incrustado.
+    PyPDF lo extrae en milisegundos.
+    \item Un \textbf{PDF escaneado} (foto/scanner $\to$ PDF) es una imagen disfrazada.
+    PyPDF devuelve vacío.
+    \item En planta Arca, \textbf{los manuales útiles suelen ser escaneados de los años 90}.
+    Si tu chatbot sólo procesa PDFs nativos, sirve para Ética pero NO para mantenimiento.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \emph{El RAG de clase 35 funciona si el PDF es limpio. En planta no lo es.}
+    \faArrowRight\;Bloque 1: una sola función \texttt{pdf\_a\_texto()} que decide.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 1 — PDFs
+% =============================================================================
+\sectionframe{Bloque 1}{Codificar PDFs:\\nativos y escaneados, mismo pipeline}
+
+% F10 — Anatomía de un PDF
+\begin{frame}[shrink]{Anatomía mínima de un PDF}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[node distance=0.4cm and 0.5cm, font=\footnotesize]
+    \node[fill=codeGreen!15, draw=codeGreen, rounded corners=4pt, minimum width=4.5cm,
+          minimum height=2.0cm, align=center]
+          (a) {\textbf{PDF NATIVO}\\\tiny generado por Word, LaTeX,\\\tiny exportador de software\\\tiny\\\tiny\bfseries\color{codeGreen}objeto ``Text'' incrustado};
+    \node[fill=arcaRed!15, draw=arcaRed, rounded corners=4pt, minimum width=4.5cm,
+          minimum height=2.0cm, align=center, right=of a]
+          (b) {\textbf{PDF ESCANEADO}\\\tiny foto/scanner $\to$ PDF\\\tiny o página renderizada\\\tiny\\\tiny\bfseries\color{arcaRed}objeto ``Image'', sin texto};
+  \end{tikzpicture}
+  \end{center}
+  \vspace{10pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    \textbf{Heurística rápida:} si al abrir el PDF podés seleccionar texto con el
+    mouse $\to$ es nativo. Si te selecciona un rectángulo $\to$ es escaneado.
+    PyPDF respeta esa misma frontera.}
+  \end{tcolorbox}
+\end{frame}
+
+% F11 — PDF nativo: PyPDF en 3 líneas
+\begin{frame}[fragile, shrink]{PDF nativo --- PyPDF en 3 líneas}
+  \begin{pyblock}
+from pypdf import PdfReader
+
+texto = "\n".join(p.extract_text() for p in PdfReader("manual.pdf").pages)
+print(texto[:200])
+# Manual de Mantenimiento — Planta Embotelladora
+# Arca Continental Ecuador · Versión 2026.06
+# 1. Compresor Atlas Copco GA-160 VSD
+  \end{pyblock}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=codeGreen!8, colframe=codeGreen, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Mismo patrón que clase 35. Sale texto limpio listo para chunkear y embeber.}
+  \end{tcolorbox}
+\end{frame}
+
+% F12 — PDF escaneado: PyPDF devuelve vacío
+\begin{frame}[fragile, shrink]{PDF escaneado --- PyPDF devuelve nada}
+  \begin{pyblock}
+texto = "".join(p.extract_text() for p in PdfReader("manual_ESCANEADO.pdf").pages)
+print(len(texto), "caracteres extraidos")
+# 0 caracteres extraidos
+  \end{pyblock}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Cero caracteres. PyPDF no inventa texto, lee lo que está en el PDF. En el
+    escaneado el contenido vive como \emph{imagen} dentro de cada página.}
+  \end{tcolorbox}
+  \vspace{6pt}
+  {\footnotesize\color{arcaDark}
+  Necesitamos un paso previo: convertir cada página a una imagen (\texttt{pymupdf})
+  y pedirle a un \textbf{modelo de visión (VLM)} que ``lea'' la imagen y devuelva
+  texto. Eso es OCR moderno.}
+\end{frame}
+
+% F13 — Convertir página a imagen con pymupdf
+\begin{frame}[fragile, shrink]{Paso intermedio --- página $\to$ imagen con \texttt{pymupdf}}
+  \begin{pyblock}
+import fitz, base64
+doc = fitz.open("manual_ESCANEADO.pdf")
+pix = doc[0].get_pixmap(dpi=140)        # renderiza pagina 1
+png_bytes = pix.tobytes("png")
+b64 = base64.b64encode(png_bytes).decode()
+print(f"PNG: {len(png_bytes)} bytes,  base64: {len(b64)} chars")
+  \end{pyblock}
+  \vspace{6pt}
+  \begin{itemize}\setlength{\itemsep}{3pt}
+    \footnotesize
+    \item \texttt{pymupdf} (módulo \texttt{fitz}): rendea cada página como mapa de pixels.
+    \item \texttt{dpi=140} es buen balance calidad/tamaño para OCR.
+    \item \textbf{Base64} convierte los bytes binarios a string para mandar al API.
+  \end{itemize}
+\end{frame}
+
+% F14 — Scout como VLM OCR
+\begin{frame}[fragile, shrink]{Scout como VLM OCR --- anatomía del request}
+  \begin{pyblock}
+client.chat.completions.create(
+    model="meta-llama/llama-4-scout-17b-16e-instruct",   # VLM, no chat normal
+    messages=[{"role": "user", "content": [
+        {"type": "text",      "text": "OCR de esta imagen. Solo el texto."},
+        {"type": "image_url", "image_url": {
+            "url": f"data:image/png;base64,{b64}"
+        }},
+    ]}],
+    max_tokens=900, temperature=0,
+)
+  \end{pyblock}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Mismo cliente OpenAI-compatible de clase 34-35. Cambia el \texttt{model} y
+    el formato del \texttt{content}: una lista con \emph{texto + image\_url}
+    (que acepta \texttt{data:} URI con base64).}
+  \end{tcolorbox}
+\end{frame}
+
+% F15 — Output real de Scout OCR
+\begin{frame}[shrink]{Output real de Scout OCR}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeBlue, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Pagina 1 del manual ESCANEADO (PyPDF = 0 chars)},
+    coltitle=white, colbacktitle=codeBlue, fonttitle=\scriptsize]
+    {\footnotesize\color{textDark}
+    \itshape (la pagina se ve como una imagen en el PDF)}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Respuesta REAL de Scout (714 chars)},
+    coltitle=white, colbacktitle=codeGreen, fonttitle=\scriptsize]
+    {\scriptsize\color{textDark}
+    \itshape ``Manual de Mantenimiento --- Planta Embotelladora\par
+    Arca Continental Ecuador --- Versión 2026.06\par
+    \vspace{2pt}
+    1. Compresor Atlas Copco GA-160 VSD\par
+    \vspace{2pt}
+    El compresor GA-160 VSD es la fuente principal de aire comprimido de la Línea 2.
+    Opera a presión nominal de 8.5 bar con frecuencia variable\ldots''}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \faCheckSquare\;Recupera presión nominal (8.5 bar), modelo (GA-160 VSD),
+    sección, número de línea. \emph{Listo para chunkear.}}
+  \end{tcolorbox}
+\end{frame}
+
+% F16 — Pipeline pdf_a_texto()
+\begin{frame}[shrink]{Pipeline universal --- \texttt{pdf\_a\_texto()}}
+  \vspace{4pt}
+  \begin{center}
+  \includegraphics[width=0.92\textwidth]{fig_pdf_pipeline.png}
+  \end{center}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    Una función, dos caminos. \textbf{Heurística:} ¿PyPDF devolvió $<$80 chars?
+    $\to$ caer a OCR con Scout. Si no $\to$ usar el texto que vino.}
+  \end{tcolorbox}
+\end{frame}
+
+% F17 — Cuándo usar uno u otro
+\begin{frame}[shrink]{Cuándo usar cada uno}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tabular}{p{4.0cm} p{4.4cm} p{4.6cm}}
+    \toprule
+    \scriptsize\textbf{Tipo de PDF} & \scriptsize\textbf{Mejor herramienta} & \scriptsize\textbf{Costo aprox} \\
+    \midrule
+    \scriptsize nativo (Word, LaTeX) & \scriptsize PyPDF & \scriptsize free, $<$1 s por PDF\\
+    \scriptsize escaneado limpio & \scriptsize Scout OCR & \scriptsize $\sim$0.5 s por página, free tier Groq\\
+    \scriptsize escaneado borroso & \scriptsize Scout OCR con prompt cuidadoso & \scriptsize idem + revisión humana\\
+    \scriptsize formularios complejos & \scriptsize Cloud Doc AI / Textract & \scriptsize \$0.01-0.05 por página\\
+    \scriptsize PDF protegido / cifrado & \scriptsize romper protección antes & \scriptsize manual\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{10pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \faLightbulb~Default: \texttt{PyPDF} primero, \texttt{Scout} de fallback.
+    Cubrís el 95\,\% de los casos en Arca con esa lógica.}
+  \end{tcolorbox}
+\end{frame}
+
+% F18 — Cierre B1
+\begin{frame}[shrink]{\faIndustry\ ¿Qué me llevo a Arca? --- Bloque 1}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries El lunes ya puedes:\par}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item \textbf{Ingestar un manual escaneado} de los años 90 sin tirarlo a la basura.
+    \item Una sola función \texttt{pdf\_a\_texto()} que decide entre PyPDF y Scout OCR.
+    \item Costo: \textbf{free tier Groq alcanza} para procesar miles de páginas mensuales.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \emph{PDF con texto $\to$ PyPDF. PDF escaneado $\to$ VLM. Mismo pipeline.}
+    \faArrowRight\;Bloque 2: imágenes \emph{sueltas} (no en PDF).}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 2 — Imágenes
+% =============================================================================
+\sectionframe{Bloque 2}{Imágenes: captioning con VLM\\(porque hasta ahora todo era texto)}
+
+% F20 — 2 paradigmas
+\begin{frame}[shrink]{Dos paradigmas para indexar imágenes}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tabular}{p{4.6cm} p{4.6cm} p{3.6cm}}
+    \toprule
+    \scriptsize\textbf{Approach} & \scriptsize\textbf{Cómo} & \scriptsize\textbf{Mejor para}\\
+    \midrule
+    \scriptsize\textbf{(a) Embedding visual} (CLIP) & \scriptsize imagen $\to$ vector directo (mismo espacio que texto) & \scriptsize ``buscame fotos parecidas a esta foto''\\
+    \scriptsize\textbf{(b) Captioning + texto} & \scriptsize imagen $\to$ descripción $\to$ embed texto & \scriptsize ``mi RAG ya es de texto y quiero meter imágenes''\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{12pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    \textbf{Hoy vamos por (b)}. Llama 4 Scout describe la imagen en texto, la
+    metés en el \emph{mismo} corpus de texto, y la búsqueda semántica de
+    clase 35 sigue funcionando sin tocar nada del retrieval.}
+  \end{tcolorbox}
+\end{frame}
+
+% F21 — Por qué caption gana en RAG-texto
+\begin{frame}[shrink]{Por qué \emph{captioning} gana cuando el RAG ya es de texto}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item \textbf{Reusás} el mismo embedder (mpnet) y la misma Chroma.
+    Cero infraestructura nueva.
+    \item \textbf{Mezclás} en el mismo \texttt{top-K}: una foto del compresor y un párrafo
+    del manual quedan en el mismo espacio.
+    \item El VLM \textbf{razona sobre la imagen} en español: lee códigos de error,
+    identifica modelos de equipo, describe colores y estados.
+    \item Costo \textbf{predecible}: una sola llamada por imagen al ingerir,
+    cero llamadas extra al \emph{query}.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Trade-off honesto: si el contenido visual es \emph{muy} importante (colores,
+    formas), CLIP gana. Para mantenimiento donde el texto del cartel es lo
+    decisivo, captioning gana.}
+  \end{tcolorbox}
+\end{frame}
+
+% F22 — Scout como captioner
+\begin{frame}[fragile, shrink]{Scout como \emph{captioner} --- una función}
+  \begin{pyblock}
+def caption_imagen(path, prompt="Describe esta imagen en una frase. Si ves un codigo de error, citalo."):
+    with open(path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    r = client.chat.completions.create(
+        model="meta-llama/llama-4-scout-17b-16e-instruct",
+        messages=[{"role": "user", "content": [
+            {"type": "text",      "text": prompt},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+        ]}],
+        max_tokens=150, temperature=0,
+    )
+    return r.choices[0].message.content.strip()
+  \end{pyblock}
+  \vspace{2pt}
+  {\footnotesize\color{arcaDark}
+  Idéntica forma a la de OCR. \emph{Mismo modelo, distinto prompt.}}
+\end{frame}
+
+% F23 — Demo panel de control
+\begin{frame}[shrink]{Demo --- foto del panel de control \texttt{Línea 2}}
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.42\textwidth}
+      \begin{center}
+      \includegraphics[width=\textwidth]{corpus/fotos/panel_control.png}
+      \end{center}
+    \end{column}
+    \begin{column}{0.55\textwidth}
+      \begin{tcolorbox}[colback=arcaGray, colframe=codeBlue, leftrule=3pt,
+        boxrule=0pt, sharp corners, left=6pt, right=6pt, top=4pt, bottom=4pt,
+        title={\tiny\color{white}\bfseries prompt},
+        coltitle=white, colbacktitle=codeBlue, fonttitle=\tiny]
+        {\scriptsize\color{textDark}\ttfamily
+        ``Describe esta imagen en una frase.\par
+        Si ves codigo de error, citalo.''}
+      \end{tcolorbox}
+      \vspace{4pt}
+      \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=3pt,
+        boxrule=0pt, sharp corners, left=6pt, right=6pt, top=4pt, bottom=4pt,
+        title={\tiny\color{white}\bfseries respuesta REAL de Scout},
+        coltitle=white, colbacktitle=codeGreen, fonttitle=\tiny]
+        {\scriptsize\color{textDark}
+        \itshape ``La imagen muestra un panel de control con una pantalla verde
+        que indica \textbf{ERR-007} y \textbf{PRES BAJA CAB-2}, acompañado de
+        cuatro botones de colores: rojo, verde, azul y amarillo, bajo el titular
+        PANEL CONTROL · LÍNEA 2.''}
+      \end{tcolorbox}
+    \end{column}
+  \end{columns}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \faCheckSquare~Capturó el código de error, la descripción, la línea, los colores
+    de los botones. Esa frase $\to$ embedder $\to$ vector $\to$ Chroma.}
+  \end{tcolorbox}
+\end{frame}
+
+% F24 — Demo compresor
+\begin{frame}[shrink]{Demo --- foto del compresor (otro caso)}
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.42\textwidth}
+      \begin{center}
+      \includegraphics[width=\textwidth]{corpus/fotos/compresor.png}
+      \end{center}
+    \end{column}
+    \begin{column}{0.55\textwidth}
+      \begin{tcolorbox}[colback=arcaGray, colframe=codeBlue, leftrule=3pt,
+        boxrule=0pt, sharp corners, left=6pt, right=6pt, top=4pt, bottom=4pt,
+        title={\tiny\color{white}\bfseries prompt},
+        coltitle=white, colbacktitle=codeBlue, fonttitle=\tiny]
+        {\scriptsize\color{textDark}\ttfamily
+        ``Describe esta imagen en una frase.\par
+        Qué modelo/equipo es?''}
+      \end{tcolorbox}
+      \vspace{4pt}
+      \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=3pt,
+        boxrule=0pt, sharp corners, left=6pt, right=6pt, top=4pt, bottom=4pt,
+        title={\tiny\color{white}\bfseries respuesta REAL de Scout},
+        coltitle=white, colbacktitle=codeGreen, fonttitle=\tiny]
+        {\scriptsize\color{textDark}
+        \itshape ``La imagen muestra un compresor \textbf{GA-160 VSD}.''}
+      \end{tcolorbox}
+      \vspace{6pt}
+      {\scriptsize\color{textMuted}\itshape
+      Corto y al punto. Si querés más detalle, pedís más en el prompt.}
+    \end{column}
+  \end{columns}
+  \vspace{8pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    \textbf{Truco}: cuanto más específico el prompt, más útil el caption.
+    \emph{``Lista cualquier código, marca o nivel visible''} $>$ \emph{``Describí esto''}.}
+  \end{tcolorbox}
+\end{frame}
+
+% F25 — Pipeline imagen
+\begin{frame}[shrink]{Pipeline completo --- imagen $\to$ vector}
+  \begin{center}
+  \includegraphics[width=\textwidth]{fig_imagen_pipeline.png}
+  \end{center}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}
+    \textbf{Importante:} guardamos en Chroma el caption \emph{como un documento más},
+    con \texttt{metadata=\{\textquotedbl modalidad\textquotedbl:\,\textquotedbl imagen\textquotedbl, \textquotedbl path\textquotedbl:\,...\}}.
+    En el query, el resultado nos dice de dónde vino.}
+  \end{tcolorbox}
+\end{frame}
+
+% F26 — Cierre B2
+\begin{frame}[shrink]{\faIndustry\ ¿Qué me llevo a Arca? --- Bloque 2}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries El lunes ya puedes:\par}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item \textbf{Indexar fotos de equipos} de las pizarras de planta y dejarlas
+    en el mismo Chroma que los manuales.
+    \item Usar Scout para \emph{leer códigos de error visibles en pantalla}
+    aunque vengan de una foto del operador con el celular.
+    \item Pensar el prompt del captioner como una \emph{plantilla} dependiente
+    del dominio (mantenimiento $\neq$ marketing).
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \emph{Una imagen vale mil palabras; con un VLM, vale un vector.}
+    \faArrowRight\;Bloque 3: y las tablas, sin morirnos.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 3 — Tablas (breve)
+% =============================================================================
+\sectionframe{Bloque 3}{Tablas:\\3 caminos, brevedad}
+
+% F28 — 3 enfoques
+\begin{frame}[shrink]{3 enfoques para tablas (de menor a mayor complejidad)}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tabular}{p{4.6cm} p{5.2cm} p{3.4cm}}
+    \toprule
+    \scriptsize\textbf{Enfoque} & \scriptsize\textbf{Cómo} & \scriptsize\textbf{Cuándo}\\
+    \midrule
+    \scriptsize\textbf{(1) tabla entera $\to$ markdown} & \scriptsize \texttt{pandas.read\_csv().to\_markdown()} $\to$ 1 vector & \scriptsize tabla chica ($<$50 filas)\\
+    \scriptsize\textbf{(2) una fila por documento} & \scriptsize cada fila $\to$ texto $\to$ 1 vector & \scriptsize tabla grande, queries por fila\\
+    \scriptsize\textbf{(3) tabla como imagen $\to$ VLM} & \scriptsize captura $\to$ Scout describe $\to$ 1 vector & \scriptsize tabla en PDF escaneado\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{10pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Default Arca: \textbf{(2) una fila por documento}. La gente pregunta por casos
+    puntuales (``¿qué pasa con ERR-007?''), no por la tabla entera.}
+  \end{tcolorbox}
+\end{frame}
+
+% F29 — Ejemplo CSV → markdown
+\begin{frame}[fragile, shrink]{Ejemplo --- \texttt{codigos\_error.csv} fila por fila}
+  \begin{pyblock}
+import pandas as pd
+df = pd.read_csv("codigos_error.csv")
+
+docs, metas, ids = [], [], []
+for _, row in df.iterrows():
+    docs.append(f"{row['codigo']} ({row['equipo']}): "
+                f"{row['causa']}. Accion: {row['accion']}")
+    metas.append({"modalidad": "tabla", "codigo": row["codigo"], "equipo": row["equipo"]})
+    ids.append(row["codigo"])
+
+print(docs[6])
+# 'ERR-007 (Llenadora): Perdida sostenida de presion en cabezal 2.
+#  Accion: Parar linea, inspeccionar sello del cabezal 2, reemplazar O-ring.'
+  \end{pyblock}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+  Cada fila $\to$ una frase compacta. La metadata permite filtrar después:
+  \texttt{where=\{\textquotedbl equipo\textquotedbl:\,\textquotedbl Llenadora\textquotedbl\}}.}
+\end{frame}
+
+% F30 — Por fila vs por tabla
+\begin{frame}[shrink]{Por fila vs por tabla entera --- cuándo cada uno}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Una fila por doc \,---\, default},
+    coltitle=white, colbacktitle=codeGreen, fonttitle=\scriptsize]
+    {\footnotesize\color{textDark}
+    \textbf{Pro}: query precisa, ``ERR-007'' va a la fila exacta. Metadata por
+    equipo. Escala a miles de filas.\par
+    \textbf{Contra}: pierde la vista global (``cuántos errores hay del compresor'').}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeOrange, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Tabla entera \,---\, exception},
+    coltitle=white, colbacktitle=codeOrange, fonttitle=\scriptsize]
+    {\footnotesize\color{textDark}
+    \textbf{Pro}: una sola consulta devuelve la estructura completa.\par
+    \textbf{Contra}: si la tabla pasa de 50 filas, el chunk se vuelve enorme y
+    pierde precisión semántica.}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \faLightbulb~Para Arca con manuales de planta: \texttt{una\_fila\_por\_doc}
+    y arriba un \emph{document}-resumen con la tabla en markdown como bonus.}
+  \end{tcolorbox}
+\end{frame}
+
+% F31 — Cierre B3
+\begin{frame}[shrink]{\faIndustry\ ¿Qué me llevo a Arca? --- Bloque 3}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item Tablas \textbf{NO son ciencia rara}. Default: una fila por documento.
+    \item Si la tabla está en un PDF escaneado, podés capturarla como imagen y
+    pasársela a Scout (mismo pipeline que en B2).
+    \item Si la tabla es muy grande, dividís por equipo o por sección.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \emph{Para tablas: brevedad. Tres caminos, uno por defecto.}
+    \faArrowRight\;Bloque 4: el primer vector DB real --- Chroma.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 4 — Embeddings + Chroma
+% =============================================================================
+\sectionframe{Bloque 4}{Vector DB: Chroma\\(qué te da que NumPy no)}
+
+% F33 — Refresco embeddings
+\begin{frame}[shrink]{Refresco rápido --- embeddings de clase 35}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tikzpicture}[node distance=0.3cm and 0.4cm, font=\footnotesize]
+    \node[boxA, minimum width=2.8cm] (a) {oración};
+    \node[boxOrange, right=of a, minimum width=2.8cm] (b) {mpnet\\(transformer encoder)};
+    \node[boxGreen, right=of b, minimum width=2.4cm] (c) {vector\\$\in \mathbb{R}^{768}$};
+    \draw[arrowR] (a) -- (b); \draw[arrowR] (b) -- (c);
+  \end{tikzpicture}
+  \end{center}
+  \vspace{10pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item Misma idea de clase 35. \texttt{paraphrase-multilingual-mpnet-base-v2}.
+    \item 768 dimensiones. Distancia coseno $\leftrightarrow$ distancia semántica.
+    \item Hoy reusamos exactamente este embedder, sólo cambia \emph{dónde guardamos
+    los vectores}.
+  \end{itemize}
+\end{frame}
+
+% F34 — NumPy alcanza para 100 docs
+\begin{frame}[fragile, shrink]{NumPy + cosine ya está --- ¿por qué cambiar?}
+  \begin{pyblock}
+docs_emb = embedder.encode(chunks, normalize_embeddings=True)  # (N, 768)
+def top_k(q, k=3):
+    q_emb = embedder.encode([q], normalize_embeddings=True)[0]
+    return np.argsort(-(docs_emb @ q_emb))[:k]
+  \end{pyblock}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Esto SIGUE FUNCIONANDO para $\leq 1.000$ docs. No es un error.\par
+    \vspace{2pt}
+    Lo que no te da: \textbf{persistencia} (al cerrar el notebook se pierde el índice),
+    \textbf{filtros por metadata} (modalidad, equipo, fecha), ni \textbf{escalado}
+    a 100k docs sin custom code.}
+  \end{tcolorbox}
+\end{frame}
+
+% F35 — Qué te da Chroma
+\begin{frame}[shrink]{Qué te da un \emph{vector DB} de verdad}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tabular}{p{3.0cm} p{4.4cm} p{5.0cm}}
+    \toprule
+    \scriptsize\textbf{Capability} & \scriptsize\textbf{NumPy + cosine} & \scriptsize\textbf{Chroma}\\
+    \midrule
+    \scriptsize persistencia & \scriptsize manual (\texttt{np.save}/\texttt{pickle}) & \scriptsize SQLite + ANN index en disco\\
+    \scriptsize filtros metadata & \scriptsize $\sim$ con pandas + máscara & \scriptsize \texttt{where=\{\textquotedbl modalidad\textquotedbl:\,\textquotedbl imagen\textquotedbl\}}\\
+    \scriptsize incremental ingest & \scriptsize re-construir el array & \scriptsize \texttt{.add()} y listo\\
+    \scriptsize escalado & \scriptsize $\sim$1k docs OK, 100k cae & \scriptsize hasta millones (HNSW index)\\
+    \scriptsize comparte entre runs & \scriptsize archivo nuevo cada vez & \scriptsize abrís la misma colección\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{10pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Chroma es \emph{el siguiente paso natural} de NumPy. Sin servidor,
+    \texttt{pip install chromadb}, vive en el mismo proceso.}
+  \end{tcolorbox}
+\end{frame}
+
+% F36 — Chroma anatomy
+\begin{frame}[shrink]{Anatomía de Chroma --- \texttt{.add()} y \texttt{.query()}}
+  \begin{center}
+  \includegraphics[width=0.94\textwidth]{fig_chroma_anatomy.png}
+  \end{center}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}
+    Dos métodos cubren el 95\,\% del uso. Lo demás es metadata
+    (\texttt{where=\{...\}}), filtros de texto (\texttt{where\_document}) y
+    operaciones de housekeeping.}
+  \end{tcolorbox}
+\end{frame}
+
+% F37 — Add en código
+\begin{frame}[fragile, shrink]{\texttt{.add()} --- el indexador en 6 líneas}
+  \begin{pyblock}
+import chromadb
+client = chromadb.PersistentClient(path="./mtto_arca_db")
+col = client.get_or_create_collection("mtto", metadata={"hnsw:space": "cosine"})
+
+embs = embedder.encode(chunks, normalize_embeddings=True).tolist()
+col.add(documents=chunks, embeddings=embs,
+        metadatas=[{"modalidad": "texto"} for _ in chunks],
+        ids=[f"doc_{i}" for i in range(len(chunks))])
+
+print(col.count(), "documentos indexados")
+  \end{pyblock}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+  Pasamos \texttt{embeddings=} explícito para usar \textbf{nuestro mpnet}, no el
+  embedder default de Chroma. Coherente con clase 35.}
+\end{frame}
+
+% F38 — Query en código
+\begin{frame}[fragile, shrink]{\texttt{.query()} --- recuperar con filtro}
+  \begin{pyblock}
+q = "como soluciono presion baja en el cabezal 2"
+q_emb = embedder.encode([q], normalize_embeddings=True).tolist()
+
+res = col.query(
+    query_embeddings=q_emb, n_results=3,
+    where={"modalidad": "tabla"},                    # solo entradas de la tabla
+)
+
+for doc, meta, dist in zip(res["documents"][0], res["metadatas"][0], res["distances"][0]):
+    print(f"[{meta['codigo']}] dist={dist:.3f}  {doc[:60]}")
+# [ERR-007] dist=0.32  ERR-007 (Llenadora): Perdida sostenida de presion...
+  \end{pyblock}
+  \vspace{2pt}
+  {\footnotesize\color{arcaDark}
+  El filtro \texttt{where} acota a la modalidad ``tabla''. La query semántica
+  encuentra ERR-007 aunque la pregunta diga ``cabezal 2'' (no ``CAB-2'').}
+\end{frame}
+
+% F39 — Persistencia y metadata
+\begin{frame}[fragile, shrink]{Persistencia + reabrir desde disco}
+  \begin{pyblock}
+# Día 1: ingestamos
+client = chromadb.PersistentClient(path="./mtto_arca_db")
+col = client.get_or_create_collection("mtto")
+col.add(...)
+
+# Día 2 (otro notebook, otra máquina):
+client = chromadb.PersistentClient(path="./mtto_arca_db")
+col = client.get_collection("mtto")     # ya esta indexada
+print(col.count())                       # → todos los documentos siguen ahi
+  \end{pyblock}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \faCheckSquare~Indexás \emph{una vez}, consultás \emph{para siempre}. Compatible
+    con git si las DB son pequeñas; con S3 / volumen montado si son grandes.}
+  \end{tcolorbox}
+\end{frame}
+
+% F40 — Demo en vivo del query
+\begin{frame}[shrink]{Demo en vivo --- query con metadata filter}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeBlue, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Query},
+    coltitle=white, colbacktitle=codeBlue, fonttitle=\scriptsize]
+    {\footnotesize\color{textDark}\ttfamily
+    ``equipo industrial vibrando'', \texttt{where=\{\textquotedbl fuente\textquotedbl:\,\textquotedbl manual\textquotedbl\}}}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Top-2 (output real ejecutado)},
+    coltitle=white, colbacktitle=codeGreen, fonttitle=\scriptsize]
+    {\scriptsize\color{textDark}
+    1.\;\itshape``Compresor 3 con vibracion alta a 80 Hz''\quad
+    \upshape\textbf{dist=0.464}\par
+    2.\;\itshape``Llenadora pierde presion cabezal 2''\quad
+    \upshape\textbf{dist=0.659}\par
+    \vspace{2pt}
+    \upshape\bfseries(la política de regalos fue filtrada por \texttt{where})}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Sin el filtro, el RAG mezcla manuales con ética. Con el filtro,
+    el asistente \emph{de mantenimiento} contesta sólo con manuales.}
+  \end{tcolorbox}
+\end{frame}
+
+% F41 — Cierre B4
+\begin{frame}[shrink]{\faIndustry\ ¿Qué me llevo a Arca? --- Bloque 4}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}\bfseries El lunes ya puedes:\par}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item \textbf{Migrar el chatbot de clase 35 a Chroma} en 30 minutos sin tocar
+    el retrieval ni el embedder.
+    \item Hacer la DB \textbf{persistente}: indexás una vez, querias todos los días.
+    \item Filtrar por \textbf{modalidad / equipo / fecha / área} con
+    \texttt{where=\{...\}}.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \emph{Lo que NumPy te dejaba probar, Chroma te lo deja persistir.}
+    \faArrowRight\;Bloque 5: el asistente Arca de mantenimiento.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 5 — Asistente Arca multimodal
+% =============================================================================
+\sectionframe{Bloque 5}{El asistente de mantenimiento Arca:\\3 ingestas + 1 query}
+
+% F43 — Arquitectura
+\begin{frame}[shrink]{Arquitectura completa}
+  \vspace{2pt}
+  \begin{center}
+  \includegraphics[width=0.96\textwidth]{fig_rag_multimodal.png}
+  \end{center}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Cada pieza ya la viste por separado. Ahora se compone.}
+  \end{tcolorbox}
+\end{frame}
+
+% F44 — Ingesta texto
+\begin{frame}[fragile, shrink]{Ingesta 1 --- texto del manual (PDF + OCR)}
+  \begin{pyblock}
+texto = pdf_a_texto("manual_mtto_arca.pdf")        # PyPDF
+chunks = sliding_window(texto, tam=300, overlap=60)
+
+embs = embedder.encode(chunks, normalize_embeddings=True).tolist()
+col.add(
+    documents=chunks, embeddings=embs,
+    metadatas=[{"modalidad":"texto","fuente":"manual"} for _ in chunks],
+    ids=[f"txt_{i}" for i in range(len(chunks))],
+)
+  \end{pyblock}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+  Si el manual viniera escaneado, la única línea que cambia es la primera:
+  \texttt{pdf\_a\_texto()} detecta y cae a Scout OCR.}
+\end{frame}
+
+% F45 — Ingesta imágenes
+\begin{frame}[fragile, shrink]{Ingesta 2 --- fotos de equipos (Scout caption)}
+  \begin{pyblock}
+fotos = ["panel_control.png", "compresor.png", "etiquetadora.png"]
+captions = [caption_imagen(p) for p in fotos]   # Scout en cada foto
+
+embs = embedder.encode(captions, normalize_embeddings=True).tolist()
+col.add(
+    documents=captions, embeddings=embs,
+    metadatas=[{"modalidad":"imagen","path":p} for p in fotos],
+    ids=[f"img_{p}" for p in fotos],
+)
+  \end{pyblock}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+  3 fotos, 3 llamadas a Scout, 3 captions, 3 embeddings, 3 documents en
+  la misma collection.}
+\end{frame}
+
+% F46 — Ingesta tabla
+\begin{frame}[fragile, shrink]{Ingesta 3 --- tabla de códigos (CSV $\to$ una fila por doc)}
+  \begin{pyblock}
+df = pd.read_csv("codigos_error.csv")
+filas = [
+    f"{r.codigo} ({r.equipo}): {r.causa}. Accion: {r.accion}"
+    for _, r in df.iterrows()
+]
+embs = embedder.encode(filas, normalize_embeddings=True).tolist()
+col.add(
+    documents=filas, embeddings=embs,
+    metadatas=[{"modalidad":"tabla","codigo":r.codigo,"equipo":r.equipo}
+               for _, r in df.iterrows()],
+    ids=df["codigo"].tolist(),
+)
+  \end{pyblock}
+  \vspace{4pt}
+  {\footnotesize\color{arcaDark}
+  Después de las 3 ingestas, la collection tiene un universo unificado:
+  texto + imagen + tabla, todos vectores 768d.}
+\end{frame}
+
+% F47 — Metadata por modalidad
+\begin{frame}[shrink]{La metadata es el truco --- modalidad por documento}
+  \vspace{4pt}
+  \begin{center}
+  \begin{tabular}{p{3.4cm} p{4.4cm} p{4.6cm}}
+    \toprule
+    \scriptsize\textbf{Modalidad} & \scriptsize\textbf{Documents (en Chroma)} & \scriptsize\textbf{Metadata extra}\\
+    \midrule
+    \scriptsize\textbf{texto} & \scriptsize chunks del manual & \scriptsize fuente=manual, seccion=...\\
+    \scriptsize\textbf{imagen} & \scriptsize captions de Scout & \scriptsize path=fotos/compresor.png\\
+    \scriptsize\textbf{tabla} & \scriptsize una fila por código & \scriptsize codigo=ERR-007, equipo=Llenadora\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{10pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    En el query podés decir ``solo imágenes'', ``solo la tabla'', ``texto del
+    compresor''. La metadata te da \emph{vistas} de la misma base.}
+  \end{tcolorbox}
+\end{frame}
+
+% F48 — Query texto
+\begin{frame}[shrink]{Query \#1 --- pregunta de texto}
+  \vspace{2pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeBlue, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Pregunta del técnico},
+    coltitle=white, colbacktitle=codeBlue, fonttitle=\scriptsize]
+    {\footnotesize\color{textDark}
+    \itshape``ERR-007 que hago?''}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeOrange, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Top-3 (Chroma) --- mezcla las 3 modalidades},
+    coltitle=white, colbacktitle=codeOrange, fonttitle=\scriptsize]
+    {\scriptsize\color{textDark}
+    \textbf{[tabla]} ERR-007 (Llenadora): Perdida sostenida de presion en cabezal 2.\par
+    \textbf{[texto]} Caso típico: cabezal 2 pierde presión sostenidamente (ERR-007)\ldots\par
+    \textbf{[imagen]} Panel con pantalla verde ``ERR-007 PRES BAJA CAB-2''\ldots}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries Respuesta del LLM (con cita)},
+    coltitle=white, colbacktitle=codeGreen, fonttitle=\scriptsize]
+    {\scriptsize\color{textDark}
+    Parar la línea. Inspeccionar el sello del cabezal 2 de la llenadora.
+    Reemplazar el O-ring (pieza KHS-OR-024 en stock).
+    \textit{Fuente: tabla ERR-007 + sección 2 del manual.}}
+  \end{tcolorbox}
+\end{frame}
+
+% F49 — Query híbrida
+\begin{frame}[fragile, shrink]{Query \#2 --- foto del panel + pregunta}
+  \begin{pyblock}
+# El operador subió una foto del panel
+caption = caption_imagen("foto_operador.png")   # Scout describe la foto
+pregunta = "Que hago?"
+query = f"{caption} | {pregunta}"
+
+res = col.query(query_embeddings=embed(query), n_results=3)
+respuesta = llm(SYSTEM, build_context(res) + f"\n\nPREGUNTA: {pregunta}")
+  \end{pyblock}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \faCheckSquare~\textbf{Truco simple:} convertir la foto a caption \emph{antes}
+    de buscar. La query queda en texto $+$ texto, tu RAG no cambia.}
+  \end{tcolorbox}
+\end{frame}
+
+% F50 — Output real
+\begin{frame}[shrink]{Output real --- caso completo}
+  \vspace{2pt}
+  \begin{columns}[T]
+    \begin{column}{0.42\textwidth}
+      \begin{center}
+      \includegraphics[width=\textwidth]{corpus/fotos/panel_control.png}
+      \end{center}
+      \vspace{4pt}
+      {\scriptsize\color{textMuted}
+      \itshape Foto que mandó el operador desde su celular}
+    \end{column}
+    \begin{column}{0.55\textwidth}
+      \begin{tcolorbox}[colback=arcaGray, colframe=codeOrange, leftrule=3pt,
+        boxrule=0pt, sharp corners, left=6pt, right=6pt, top=3pt, bottom=3pt,
+        title={\tiny\color{white}\bfseries Scout caption},
+        coltitle=white, colbacktitle=codeOrange, fonttitle=\tiny]
+        {\scriptsize\color{textDark}\itshape
+        ``Panel con ERR-007 PRES BAJA CAB-2\ldots''}
+      \end{tcolorbox}
+      \vspace{3pt}
+      \begin{tcolorbox}[colback=arcaGray, colframe=codeBlue, leftrule=3pt,
+        boxrule=0pt, sharp corners, left=6pt, right=6pt, top=3pt, bottom=3pt,
+        title={\tiny\color{white}\bfseries Top-K Chroma},
+        coltitle=white, colbacktitle=codeBlue, fonttitle=\tiny]
+        {\scriptsize\color{textDark}\itshape
+        Tabla ERR-007 + Sección 2 manual\par
+        + caption de su propia foto}
+      \end{tcolorbox}
+      \vspace{3pt}
+      \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=3pt,
+        boxrule=0pt, sharp corners, left=6pt, right=6pt, top=3pt, bottom=3pt,
+        title={\tiny\color{white}\bfseries Respuesta},
+        coltitle=white, colbacktitle=codeGreen, fonttitle=\tiny]
+        {\scriptsize\color{textDark}\itshape
+        ``Detectaste ERR-007 (presión baja cabezal 2). Parar línea, inspeccionar
+        sello, reemplazar O-ring KHS-OR-024.''}
+      \end{tcolorbox}
+    \end{column}
+  \end{columns}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    El asistente \emph{reconoce el código en la foto} y devuelve el procedimiento del manual.}
+  \end{tcolorbox}
+\end{frame}
+
+% F51 — 6 piezas
+\begin{frame}[shrink]{El notebook trae todo esto en 6 piezas}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=4pt,
+    boxrule=0pt, sharp corners, left=10pt, right=10pt, top=6pt, bottom=6pt]
+    \begin{enumerate}\setlength{\itemsep}{3pt}
+      \footnotesize
+      \item[\textbf{1.}] \textbf{\texttt{pdf\_a\_texto(path)}} --- PyPDF o Scout OCR según contenido.
+      \item[\textbf{2.}] \textbf{\texttt{caption\_imagen(path)}} --- Scout describe la imagen.
+      \item[\textbf{3.}] \textbf{\texttt{tabla\_a\_docs(csv)}} --- pandas + una fila por documento.
+      \item[\textbf{4.}] \textbf{\texttt{ingest(col, manual, fotos, tabla)}} --- las 3 ingestas en una llamada.
+      \item[\textbf{5.}] \textbf{\texttt{rag(pregunta, foto=None)}} --- query texto o multimodal.
+      \item[\textbf{6.}] \textbf{Gradio} --- interface con upload de imagen.
+    \end{enumerate}
+  \end{tcolorbox}
+\end{frame}
+
+% F52 — Gradio
+\begin{frame}[fragile, shrink]{Gradio en 8 líneas}
+  \begin{pyblock}
+import gradio as gr
+
+def chatbot(pregunta, foto):
+    return rag(pregunta, foto=foto)
+
+gr.Interface(
+    fn=chatbot,
+    inputs=[gr.Textbox(label="Pregunta"),
+            gr.Image(type="filepath", label="Foto (opcional)")],
+    outputs=gr.Textbox(label="Respuesta"),
+    title="Asistente Mantenimiento Arca",
+).launch(share=True)
+  \end{pyblock}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    URL pública de Colab, lo mostrás al supervisor el martes. Sin despliegue.}
+  \end{tcolorbox}
+\end{frame}
+
+% F53 — Cierre B5
+\begin{frame}[shrink]{\faIndustry\ ¿Qué me llevo a Arca? --- Bloque 5}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item Un asistente que \textbf{lee texto, imágenes y tablas} del mismo manual.
+    \item Se entiende con el técnico de planta \emph{en su lenguaje} --- texto o foto.
+    \item Vive en Chroma persistente. Lo entrenás una vez, lo usás todos los días.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \emph{Un solo asistente lee texto, imagen y tabla del mismo manual.}
+    \faArrowRight\;Bloque 6: lo armás en el notebook ahora.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  BLOQUE 6 — Build + PBL
+% =============================================================================
+\sectionframe{Bloque 6}{Build en vivo + PBL}
+
+% F55 — Notebook celdas
+\begin{frame}[shrink]{Cómo abrir el notebook}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \texttt{github.com/cmosquerat/arca-diplomado/tree/main/clase-36}\par
+    \vspace{2pt}
+    \textnormal{Abrilo en Colab, pegá tu \texttt{GROQ\_API\_KEY} cuando \texttt{getpass} lo pida.}}
+  \end{tcolorbox}
+  \vspace{8pt}
+  {\footnotesize\color{arcaDark}\textbf{Las 6 piezas del Bloque 5 ya están en el notebook}:}
+  \vspace{2pt}
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \footnotesize
+    \item[\faCheckSquare] Sección 1 --- \texttt{pdf\_a\_texto()} y \texttt{caption\_imagen()}.
+    \item[\faCheckSquare] Sección 2 --- \texttt{tabla\_a\_docs()}.
+    \item[\faCheckSquare] Sección 3 --- \texttt{ingest()} + Chroma persistente.
+    \item[\faCheckSquare] Sección 4 --- \texttt{rag(pregunta, foto=None)} con metadata filter.
+    \item[\faCheckSquare] Sección 5 --- Gradio con upload de imagen.
+    \item[\faCheckSquare] Sección 6 --- PBL: los 3 ejercicios siguientes.
+  \end{itemize}
+\end{frame}
+
+% F56 — 3 ejercicios PBL
+\begin{frame}[shrink]{3 ejercicios PBL --- para hoy}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeBlue, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries E1 --- migrar el chatbot Ética de clase 35 a Chroma},
+    coltitle=white, colbacktitle=codeBlue, fonttitle=\scriptsize]
+    {\footnotesize\color{textDark}
+    Sustituí NumPy por Chroma persistente. Recargá los chunks de Ética del notebook
+    de clase 35. \emph{Criterio:} las 3 queries de la sección 6.5 de clase 35
+    siguen funcionando.}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeOrange, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries E2 --- agregá una foto tuya al corpus},
+    coltitle=white, colbacktitle=codeOrange, fonttitle=\scriptsize]
+    {\footnotesize\color{textDark}
+    Tomá una foto de cualquier equipo / placa / pantalla y captionealo con Scout.
+    Indexalo en la misma Chroma. \emph{Criterio:} una query semántica relevante
+    a tu foto la recupera en top-1.}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=codeGreen, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt,
+    title={\scriptsize\color{white}\bfseries E3 --- tu dominio},
+    coltitle=white, colbacktitle=codeGreen, fonttitle=\scriptsize]
+    {\footnotesize\color{textDark}
+    Cambiá el corpus por uno tuyo: PDF + 3 imágenes + 1 CSV. Cualquier área de Arca.
+    \emph{Criterio:} 5 queries, una de cada tipo (texto, imagen, tabla, híbrida, fuera-de-scope).}
+  \end{tcolorbox}
+\end{frame}
+
+% F57 — Cierre B6
+\begin{frame}[shrink]{\faIndustry\ ¿Qué me llevo a Arca? --- Bloque 6}
+  \vspace{4pt}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \footnotesize
+    \item Un \textbf{notebook plantilla} multimodal listo para tu dominio.
+    \item Una \textbf{Chroma persistente} compartida entre runs.
+    \item 3 \textbf{ejercicios PBL} acotados que terminás en una tarde.
+  \end{itemize}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=4pt, bottom=4pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    \emph{Lo armás esta tarde y lo mostrás el lunes.}
+    \faArrowRight\;Cierre.}
+  \end{tcolorbox}
+\end{frame}
+
+% =============================================================================
+%  CIERRE
+% =============================================================================
+\sectionframe{Cierre}{Lo que te llevas}
+
+% F59 — Respuesta a la pregunta
+\begin{frame}[shrink]{La respuesta a la pregunta del día}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaDark, colframe=arcaDark, sharp corners,
+    boxrule=0pt, left=10pt, right=10pt, top=5pt, bottom=5pt]
+    {\footnotesize\color{white}\itshape
+    Tu RAG de clase 35 indexó un PDF de texto plano sobre Ética. Pero en planta,
+    los datos vienen sucios: manuales escaneados, fotos del compresor, tablas
+    de códigos de error. ¿Cómo los convertís a vectores, dónde los guardás,
+    y armás un asistente de mantenimiento Arca que entiende todo eso?\par}
+  \end{tcolorbox}
+  \vspace{8pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=6pt, bottom=6pt]
+    {\small\color{arcaDark}\bfseries
+    \textbf{Convertir:} PyPDF o Scout OCR según contenido (texto, escaneado, imagen).\par
+    \vspace{2pt}
+    \textbf{Guardar:} Chroma persistente con metadata por modalidad.\par
+    \vspace{2pt}
+    \textbf{Armar:} 3 ingestas $+$ 1 query $+$ LLM con cita.\par
+    \vspace{2pt}
+    \emph{Producción real $=$ ingesta sucia $+$ vector DB $+$ RAG multimodal.}}
+  \end{tcolorbox}
+\end{frame}
+
+% F60 — Checklist producción multimodal
+\begin{frame}[shrink]{Checklist de producción multimodal}
+  \vspace{6pt}
+  \begin{tcolorbox}[colback=arcaGray, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=6pt, bottom=6pt]
+    {\footnotesize
+    \faCheckSquare~\textbf{1.}~\texttt{pdf\_a\_texto()} con fallback automático (PyPDF $\to$ Scout OCR).\par\vspace{4pt}
+    \faCheckSquare~\textbf{2.}~Captioning de imágenes con \emph{prompt específico al dominio}.\par\vspace{4pt}
+    \faCheckSquare~\textbf{3.}~Tablas: una fila por documento + metadata por equipo/código.\par\vspace{4pt}
+    \faCheckSquare~\textbf{4.}~Chroma persistente, con metadata \texttt{modalidad}.\par\vspace{4pt}
+    \faCheckSquare~\textbf{5.}~System prompt blindado heredado de clase 35.\par\vspace{4pt}
+    \faCheckSquare~\textbf{6.}~Citas de la modalidad en la respuesta (``de tabla ERR-007 + manual'').\par\vspace{4pt}
+    \faCheckSquare~\textbf{7.}~Re-ingest incremental cuando hay manual nuevo, sin re-construir todo.}
+  \end{tcolorbox}
+  \vspace{4pt}
+  \begin{tcolorbox}[colback=arcaRed!8, colframe=arcaRed, leftrule=3pt,
+    boxrule=0pt, sharp corners, left=8pt, right=8pt, top=3pt, bottom=3pt]
+    {\footnotesize\color{arcaDark}\bfseries
+    Imprimí esta lista, pegala al lado del monitor.}
+  \end{tcolorbox}
+\end{frame}
+
+% F61 — Gracias
+\begin{frame}[plain, noframenumbering]
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[arcaDark] (current page.south west) rectangle (current page.north east);
+    \node[anchor=center, text=white, font=\Huge\bfseries] at
+      ([yshift=1cm]current page.center) {Gracias};
+    \node[anchor=center, text=white!85, font=\Large] at
+      ([yshift=-0.2cm]current page.center) {Preguntas?};
+    \node[anchor=center, text=white!70, font=\small] at
+      ([yshift=-1.5cm]current page.center)
+      {Clase 36 --- RAG multimodal · Asistente de mantenimiento Arca};
+    \node[anchor=center, text=white!60, font=\scriptsize] at
+      ([yshift=-2cm]current page.center)
+      {github.com/cmosquerat/arca-diplomado/tree/main/clase-36};
+  \end{tikzpicture}
+\end{frame}
+
+\end{document}
