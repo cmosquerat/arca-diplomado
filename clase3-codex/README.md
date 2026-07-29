@@ -10,7 +10,7 @@ Abrir el notebook publicado desde:
 
 La primera celda descarga automáticamente el dataset desde:
 
-<https://raw.githubusercontent.com/cmosquerat/arca-diplomado/agent/modulo3-clase3-codex/clase3-codex/operacion_pozos_volve.csv>
+<https://raw.githubusercontent.com/cmosquerat/arca-diplomado/refs/heads/agent/modulo3-clase3-codex/clase3-codex/operacion_pozos_volve.csv>
 
 No requiere montar Google Drive ni subir archivos manualmente.
 

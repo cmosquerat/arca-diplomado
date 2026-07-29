@@ -136,11 +136,11 @@ def code(text):
 
 def notebook():
     volve_url = (
-        "https://raw.githubusercontent.com/cmosquerat/arca-diplomado/"
+        "https://raw.githubusercontent.com/cmosquerat/arca-diplomado/refs/heads/"
         "agent/modulo3-clase3-codex/clase3-codex/operacion_pozos_volve.csv"
     )
     force_url = (
-        "https://raw.githubusercontent.com/cmosquerat/arca-diplomado/"
+        "https://raw.githubusercontent.com/cmosquerat/arca-diplomado/refs/heads/"
         "agent/modulo3-clase3-codex/clase3-codex/litologia_force2020.csv"
     )
     cells = [
